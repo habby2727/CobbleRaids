@@ -1,0 +1,89 @@
+repositories {
+    mavenCentral()
+    // Make sure getting lombok jar from maven central (instead of forge repo or so)
+    // ref: https://discuss.gradle.org/t/how-to-make-gradle-stop-getting-a-not-existing-jar-from-a-third-party-maven-repo/48290/4
+    exclusiveContent {
+        forRepository {
+            mavenCentral()
+        }
+        filter {
+            includeGroup "org.projectlombok"
+        }
+    }
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'Modrinth'
+                url = 'https://api.modrinth.com/maven'
+            }
+        }
+        filter {
+            includeGroup 'maven.modrinth'
+        }
+    }
+}
+
+architectury {
+    common("fabric")
+    common("neoforge")
+}
+
+
+dependencies {
+
+    modImplementation("com.cobblemon:fabric:${property("cobblemon_version")}")
+    // alL fabric dependencies:
+    modImplementation("net.fabricmc:fabric-loader:${property("fabric_loader_version")}")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:${property("fabric_version")}")
+    modImplementation("net.neoforged:neoforge:${rootProject.neoforge_version}")
+    modImplementation("dev.architectury:architectury:${property("architectury_version")}")
+    modImplementation("ca.landonjw.gooeylibs:fabric-api-repack:${property("gooeylibs_version")}")
+    modImplementation(files("libs/CobbleUtils-1.21.1-common-1.1.3.jar"))
+
+
+    // PlaceholderAPI
+    modImplementation("eu.pb4:placeholder-api:${property("placeholder_api_version_fabricandforge")}")
+    modImplementation("me.clip:placeholderapi:${property("placeholder_api_version_spigot")}")
+
+    // Lombok
+    annotationProcessor("org.projectlombok:lombok:${property("lombok_version")}")
+    implementation("org.projectlombok:lombok:${property("lombok_version")}")
+
+
+    // Kyori Adventure
+    api("net.kyori:adventure-text-serializer-gson:${property("kyori_version")}")
+    api("net.kyori:adventure-text-minimessage:${property("kyori_version")}")
+    // Loom project
+    modCompileOnly("net.kyori:adventure-platform-mod-shared-fabric-repack:6.0.0") // for Minecraft 1.21.2-1.21.4
+
+    // NeoGradle/ModDevGradle/VanillaGradle project
+    compileOnly("net.kyori:adventure-platform-mod-shared:6.0.0") // for Minecraft 1.21.2-1.21.4
+
+    // ! Tests
+    testCompileOnly 'org.projectlombok:lombok:1.18.30'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
+
+    // dependent on log4j for dynamic changing
+    implementation 'org.apache.logging.log4j:log4j-api:2.22.1'
+    implementation 'org.apache.logging.log4j:log4j-core:2.22.1'
+
+    // Unit test dependencies
+    testImplementation "org.junit.jupiter:junit-jupiter:5.10.0"
+    testImplementation "org.junit.jupiter:junit-jupiter-params:5.10.0"
+    testImplementation "org.assertj:assertj-core:3.24.2"
+    testImplementation "org.mockito:mockito-core:5.4.0"
+    testImplementation "org.mockito:mockito-junit-jupiter:5.4.0"
+
+    // benchmark dependencies
+    testImplementation "org.openjdk.jmh:jmh-core:1.37"
+    testAnnotationProcessor "org.openjdk.jmh:jmh-generator-annprocess:1.37"
+}
+
+test {
+    useJUnitPlatform()
+    // Since JDK 21
+    // ref: https://stackoverflow.com/questions/77951485/getting-a-java-agent-has-been-loaded-warning-in-intellij-after-upgrading-jdk-17
+    jvmArgs("-XX:+EnableDynamicAgentLoading")
+}
+
+
