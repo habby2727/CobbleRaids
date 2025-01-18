@@ -1,16 +1,22 @@
 package com.kingpixel.cobbleraids.model;
 
 import com.cobblemon.mod.common.Cobblemon;
-import com.cobblemon.mod.common.api.moves.Move;
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleutils.CobbleUtils;
+import com.kingpixel.cobbleutils.util.AdventureTranslator;
+import kotlin.Unit;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
+import net.minecraft.entity.Entity;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Vec3d;
 
 import java.util.List;
 
@@ -19,32 +25,30 @@ import java.util.List;
  */
 @Getter
 @Setter
+@ToString
 public class PokemonRaid {
   private String pokemon;
   private Double chance;
   private Integer life;
   private float size;
-  private List<String> pokemonBlackList;
-  private List<String> abilityBlackList;
-  private List<String> moveBlackList;
-  private List<String> itemBlackList;
+  private BlackListRaid banned;
 
   PokemonRaid() {
     this.pokemon = "pikachu";
     this.chance = 0.1;
     this.life = 10000;
     this.size = 1.0f;
-    this.pokemonBlackList = List.of("pikachu", "magikarp");
-    this.abilityBlackList = List.of("ability1", "ability2");
-    this.moveBlackList = List.of("move1", "move2");
-    this.itemBlackList = List.of("item1", "item2");
+    this.banned = new BlackListRaid();
   }
 
+  public Pokemon genPokemon() {
+    return PokemonProperties.Companion.parse(pokemon + " uncatchable=yes").create();
+  }
 
-  public PokemonEntity genPokemonEntity(Raid raid) {
+  public static ServerWorld getWorld(Raid raid) {
     ServerWorld serverWorld = null;
     for (ServerWorld world : CobbleRaids.server.getWorlds()) {
-      String nameSpace = world.getRegistryKey().getValue().getNamespace();
+      String nameSpace = world.getRegistryKey().getValue().getPath();
       if (CobbleRaids.config.isDebug()) {
         CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "World: " + nameSpace);
       }
@@ -53,14 +57,45 @@ public class PokemonRaid {
         break;
       }
     }
+    return serverWorld;
+  }
+
+  public PokemonEntity genPokemonEntity(Raid raid) {
+    ServerWorld serverWorld = getWorld(raid);
+
     if (serverWorld == null) {
       CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "World not found: " + raid.getWorld());
       return null;
     }
-    PokemonEntity pokemonEntity = PokemonProperties.Companion.parse(pokemon + " uncatchable=yes").createEntity(serverWorld);
-    Pokemon pokemon = pokemonEntity.getPokemon();
-
-    pokemon.setScaleModifier(size);
+    Vec3d pos = new Vec3d(raid.getPosRaid().x, raid.getPosRaid().y, raid.getPosRaid().z);
+    if (CobbleRaids.config.isDebug()) {
+      CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Pos: " + pos);
+    }
+    List<Entity> entities = serverWorld.getOtherEntities(null, Box.of(pos, 32, 32, 32));
+    for (Entity entity : entities) {
+      if (entity instanceof PokemonEntity pokemonEntity) {
+        NbtCompound nbt = pokemonEntity.getPokemon().getPersistentData();
+        if (nbt.getBoolean(CobbleRaids.TAG_RAID) || nbt.getBoolean(CobbleRaids.TAG_FAKERAID)) {
+          entity.remove(Entity.RemovalReason.DISCARDED);
+        }
+      }
+    }
+    Pokemon raidPokemon = PokemonProperties.Companion.parse(pokemon + " uncatchable=yes").create();
+    raidPokemon.getPersistentData().putBoolean(CobbleRaids.TAG_RAID, true);
+    raidPokemon.setScaleModifier(size);
+    PokemonEntity pokemonEntity = raidPokemon
+      .sendOut(serverWorld, pos, null,
+        pokemonEntity1 -> Unit.INSTANCE);
+    if (pokemonEntity == null) {
+      CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Pokemon not found: " + pokemonEntity);
+      return null;
+    }
+    pokemonEntity.setCustomName(AdventureTranslator.toNative(raid.getName()));
+    pokemonEntity.setMovementSpeed(0);
+    pokemonEntity.setNoGravity(true);
+    pokemonEntity.setAiDisabled(true);
+    pokemonEntity.setGlowing(true);
+    pokemonEntity.teleport(raid.getPosRaid().x, raid.getPosRaid().y, raid.getPosRaid().z, false);
     return pokemonEntity;
   }
 
@@ -71,23 +106,11 @@ public class PokemonRaid {
    *
    * @return true if the player is permited to join the raid
    */
-  public boolean isPermited(ServerPlayerEntity player) {
-    boolean isPermited = true;
+  public boolean isPermitted(ServerPlayerEntity player) {
     for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getParty(player)) {
-      if (CobbleRaids.config.getGlobalPokemonBlackList().contains(pokemon.showdownId())) return false;
-      if (CobbleRaids.config.getGlobalAbilitiesBlackList().contains(pokemon.getAbility().getName())) return false;
-      for (Move move : pokemon.getMoveSet()) {
-        if (CobbleRaids.config.getGlobalMovesBlackList().contains(move.getName())) return false;
-      }
-      if (CobbleRaids.config.getGlobalItemsBlackList().contains(pokemon.getHeldItem$common().getTranslationKey().replace("item.", "")))
-        return false;
-      if (pokemonBlackList.contains(pokemon.showdownId())) return false;
-      if (abilityBlackList.contains(pokemon.getAbility().getName())) return false;
-      for (Move move : pokemon.getMoveSet()) {
-        if (moveBlackList.contains(move.getName())) return false;
-      }
-      if (itemBlackList.contains(pokemon.getHeldItem$common().getTranslationKey().replace("item.", ""))) return false;
+      if (CobbleRaids.config.getBanned().isBanned(player, pokemon)) return false;
+      if (CobbleRaids.battleManager.getPokemonRaid().getBanned().isBanned(player, pokemon)) return false;
     }
-    return isPermited;
+    return true;
   }
 }

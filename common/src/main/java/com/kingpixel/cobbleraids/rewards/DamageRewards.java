@@ -1,6 +1,5 @@
 package com.kingpixel.cobbleraids.rewards;
 
-import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleutils.Model.AdvancedItemChance;
 import lombok.Getter;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -16,7 +15,7 @@ import java.util.regex.Pattern;
  * Improved by GitHub Copilot
  */
 @Getter
-public class DamageRewards implements RaidRewards {
+public class DamageRewards extends RaidRewards {
   private boolean active;
   private Map<String, AdvancedItemChance> rewards;
 
@@ -33,6 +32,7 @@ public class DamageRewards implements RaidRewards {
   @Override
   public void giveRewards(Map<UUID, Integer> players) {
     if (!active) return;
+    if (players.isEmpty()) return;
     // Sort players by damage in descending order
     List<Map.Entry<UUID, Integer>> sortedPlayers = players.entrySet().stream()
       .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
@@ -74,9 +74,8 @@ public class DamageRewards implements RaidRewards {
     }
   }
 
-  private void giveRewardToPlayer(UUID playerUUID, AdvancedItemChance reward) {
-    ServerPlayerEntity player = CobbleRaids.server.getPlayerManager().getPlayer(playerUUID);
-    if (player == null) return;
-    reward.giveRewards(player);
+  @Override public void open(ServerPlayerEntity player) {
+
   }
+
 }

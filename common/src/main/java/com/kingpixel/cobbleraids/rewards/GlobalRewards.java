@@ -12,20 +12,40 @@ import java.util.UUID;
  * @author Carlos Varas Alonso - 17/01/2025 22:58
  */
 @Getter
-public class GlobalRewards implements RaidRewards {
+public class GlobalRewards extends RaidRewards {
   private boolean active;
-  private AdvancedItemChance rewards;
+  private RewardGiven rewardGiven;
+  private AdvancedItemChance reward;
+
+  enum RewardGiven {
+    PARTICIPANTS,
+    ALL
+  }
+
 
   public GlobalRewards() {
     this.active = true;
-    this.rewards = new AdvancedItemChance();
+    this.rewardGiven = RewardGiven.ALL;
+    this.reward = new AdvancedItemChance();
   }
 
   @Override public void giveRewards(Map<UUID, Integer> players) {
     if (active) {
-      for (ServerPlayerEntity player : CobbleUtils.server.getPlayerManager().getPlayerList()) {
-        rewards.giveRewards(player);
+      if (players.isEmpty()) return;
+      if (rewardGiven == null) return;
+      if (rewardGiven == RewardGiven.PARTICIPANTS) {
+        for (Map.Entry<UUID, Integer> playerEntry : players.entrySet()) {
+          giveRewardToPlayer(playerEntry.getKey(), reward);
+        }
+      } else {
+        for (ServerPlayerEntity player : CobbleUtils.server.getPlayerManager().getPlayerList()) {
+          reward.giveRewards(player);
+        }
       }
     }
+  }
+
+  @Override public void open(ServerPlayerEntity player) {
+
   }
 }

@@ -29,6 +29,10 @@ architectury {
 }
 
 
+loom {
+    accessWidenerPath = file("src/main/resources/cobbleraids.accesswidener")
+}
+
 dependencies {
 
     modImplementation("com.cobblemon:fabric:${property("cobblemon_version")}")

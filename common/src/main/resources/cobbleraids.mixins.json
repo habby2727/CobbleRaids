@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.kingpixel.cobbleraids.mixins",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "AttackRaidMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

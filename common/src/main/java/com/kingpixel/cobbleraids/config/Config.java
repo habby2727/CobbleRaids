@@ -2,6 +2,7 @@ package com.kingpixel.cobbleraids.config;
 
 import com.google.gson.Gson;
 import com.kingpixel.cobbleraids.CobbleRaids;
+import com.kingpixel.cobbleraids.model.BlackListRaid;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
@@ -26,10 +27,7 @@ public class Config {
   private int cooldown;
   private int startShowBar;
   private List<String> commands;
-  private List<String> globalItemsBlackList;
-  private List<String> globalPokemonBlackList;
-  private List<String> globalAbilitiesBlackList;
-  private List<String> globalMovesBlackList;
+  private BlackListRaid banned;
 
   public Config() {
     debug = false;
@@ -37,10 +35,7 @@ public class Config {
     lang = "en";
     cooldown = 30;
     commands = List.of("cobbleraids");
-    globalItemsBlackList = List.of("item1", "item2");
-    globalPokemonBlackList = List.of("pokemon1", "pokemon2");
-    globalAbilitiesBlackList = List.of("ability1", "ability2");
-    globalMovesBlackList = List.of("move1", "move2");
+    banned = new BlackListRaid();
   }
 
   public void init() {
@@ -69,9 +64,7 @@ public class Config {
         CobbleUtils.LOGGER.fatal(CobbleRaids.MOD_ID, "Could not write config.json file for " + CobbleRaids.MOD_NAME + ".");
       }
     }
-    if (CobbleRaids.startDate != null) {
-      CobbleRaids.startDate = new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(cooldown));
-    }
+
 
   }
 }

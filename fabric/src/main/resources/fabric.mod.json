@@ -11,9 +11,12 @@
   },
   "entrypoints": {
     "main": [
-      "com.kingpixel.cobbletags.fabric.CobbleTagsFabric"
+      "com.kingpixel.cobbleraids.fabric.CobbleRaidsFabric"
     ]
   },
+  "mixins": [
+    "cobbleraids.mixins.json"
+  ],
   "license": "${license}",
   "environment": "*",
   "depends": {
