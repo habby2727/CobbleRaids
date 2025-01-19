@@ -4,6 +4,7 @@ import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.model.Raid;
 import com.kingpixel.cobbleraids.rewards.DamageRewards;
 import com.kingpixel.cobbleraids.rewards.GlobalRewards;
+import com.kingpixel.cobbleraids.rewards.KillRewards;
 import com.kingpixel.cobbleraids.rewards.RaidRewards;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.Utils;
@@ -42,6 +43,7 @@ public class RaidsConfig {
             raid.setRewards(new ArrayList<>());
             addDamageReward(raid);
             addGlobalReward(raid);
+            addKillReward(raid);
             raids.add(raid);
             for (RaidRewards reward : raid.getRewards()) {
               if (CobbleUtils.config.isDebug()) {
@@ -77,12 +79,26 @@ public class RaidsConfig {
       raid.getRewards().add(globalRewards);
     } else {
       GlobalRewards globalRewards = new GlobalRewards();
+
       raid.getRewards().add(globalRewards);
       CobbleUtils.LOGGER.warn(CobbleRaids.MOD_ID, "No global rewards found for raid " + raid.getId() + ". Creating default.");
       Utils.writeFileAsync(CobbleRaids.PATH_RAID_GLOBAL_REWARDS, raid.getId() + ".json", Utils.newGson().toJson(globalRewards));
     }
   }
 
+
+  private void addKillReward(Raid raid) throws IOException {
+    File file = Utils.getAbsolutePath(CobbleRaids.PATH_RAID_KILL_REWARDS + raid.getId() + ".json");
+    if (file.exists()) {
+      KillRewards killRewards = Utils.newGson().fromJson(Utils.readFileSync(file), KillRewards.class);
+      raid.getRewards().add(killRewards);
+    } else {
+      KillRewards killRewards = new KillRewards();
+      raid.getRewards().add(killRewards);
+      CobbleUtils.LOGGER.warn(CobbleRaids.MOD_ID, "No kill rewards found for raid " + raid.getId() + ". Creating default.");
+      Utils.writeFileAsync(CobbleRaids.PATH_RAID_KILL_REWARDS, raid.getId() + ".json", Utils.newGson().toJson(killRewards));
+    }
+  }
 
   private void createDefaultRaids() {
     raids.add(new Raid());

@@ -9,10 +9,8 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.ToString;
 
-import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Carlos Varas Alonso - 29/04/2024 0:14
@@ -34,6 +32,7 @@ public class Config {
     prefix = "§7[§6CobbleRaids§7] ";
     lang = "en";
     cooldown = 30;
+    startShowBar = 5;
     commands = List.of("cobbleraids");
     banned = new BlackListRaid();
   }

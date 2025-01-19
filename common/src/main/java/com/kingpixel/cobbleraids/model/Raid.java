@@ -16,6 +16,7 @@ import java.util.List;
 @Setter
 @ToString
 public class Raid {
+  private boolean active;
   private boolean heal;
   private String id;
   private String name;
@@ -30,6 +31,7 @@ public class Raid {
 
 
   public Raid() {
+    this.active = true;
     this.heal = true;
     this.id = "default";
     this.name = "&cdefault";

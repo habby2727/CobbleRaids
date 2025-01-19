@@ -34,15 +34,11 @@ public class PokemonRaid {
   private BlackListRaid banned;
 
   PokemonRaid() {
-    this.pokemon = "pikachu";
+    this.pokemon = "pikachu level=70 shiny=true";
     this.chance = 0.1;
-    this.life = 10000;
-    this.size = 1.0f;
+    this.life = 2000;
+    this.size = 5.0f;
     this.banned = new BlackListRaid();
-  }
-
-  public Pokemon genPokemon() {
-    return PokemonProperties.Companion.parse(pokemon + " uncatchable=yes").create();
   }
 
   public static ServerWorld getWorld(Raid raid) {

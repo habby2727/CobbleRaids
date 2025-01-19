@@ -17,6 +17,9 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.TypeFilter;
 
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
+
 public class CobbleRaids {
   public static final String MOD_ID = "cobbleraids";
   public static final String MOD_NAME = "CobbleRaids";
@@ -26,6 +29,7 @@ public class CobbleRaids {
   private static final String PATH_REWARDS = PATH + "/rewards";
   public static final String PATH_RAID_DAMAGE_REWARDS = PATH_REWARDS + "/damageRewards/";
   public static final String PATH_RAID_GLOBAL_REWARDS = PATH_REWARDS + "/globalRewards";
+  public static final String PATH_RAID_KILL_REWARDS = PATH_REWARDS + "/killRewards";
   public static final String TAG_RAID = "raid";
   public static final String TAG_FAKERAID = "fakeRaid";
   public static MinecraftServer server;
@@ -33,6 +37,7 @@ public class CobbleRaids {
   public static Lang language = new Lang();
   public static RaidsConfig raidsConfig = new RaidsConfig();
   public static BattleManager battleManager;
+  public static Date startDate;
   public static Task removeOldRaidsTask;
 
   public static void init() {
@@ -42,9 +47,13 @@ public class CobbleRaids {
   public static void load() {
     files();
     tasks();
+    startDate = new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(config.getCooldown()));
   }
 
   private static void tasks() {
+    if (removeOldRaidsTask != null) {
+      removeOldRaidsTask.setExpired();
+    }
     removeOldRaidsTask = Task.builder()
       .execute(() -> {
         if (battleManager != null) return;
@@ -64,6 +73,7 @@ public class CobbleRaids {
       .interval(20 * 60)
       .infinite()
       .build();
+
   }
 
 

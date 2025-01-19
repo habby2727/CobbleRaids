@@ -13,8 +13,8 @@ public class BossBarModel {
   private BossBar.Style style;
 
   public BossBarModel() {
-    this.title = "Raid Boss -> %boss% <- %hp% / %max_hp%";
-    this.color = BossBar.Color.WHITE;
-    this.style = BossBar.Style.PROGRESS;
+    this.title = "§cR§6a§ei§ad §bB§9o§5s§ds -> §c%boss% §r<- §a%hp% §r/ §a%hp_max%";
+    this.color = BossBar.Color.PINK;
+    this.style = BossBar.Style.NOTCHED_10;
   }
 }

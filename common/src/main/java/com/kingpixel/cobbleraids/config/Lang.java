@@ -2,6 +2,7 @@ package com.kingpixel.cobbleraids.config;
 
 import com.google.gson.Gson;
 import com.kingpixel.cobbleraids.CobbleRaids;
+import com.kingpixel.cobbleraids.ui.MenuDamageRewards;
 import com.kingpixel.cobbleraids.ui.MenuRewards;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.Utils;
@@ -14,6 +15,14 @@ import java.util.concurrent.CompletableFuture;
 @Setter
 public class Lang {
   private String messageReload;
+  private String messageLastHit;
+  private String messageTableDamage;
+  private String formatTableDamage;
+  private String messageNotTeleport;
+  private String messageStartingRaid;
+  private String messageStartRaid;
+  private String messageRaidFinishing;
+  private String messageFinishRaid;
   private String messageBannedPokemon;
   private String messageBannedAbility;
   private String messageBannedItem;
@@ -21,19 +30,29 @@ public class Lang {
   private String messageBannedNature;
   private String messageBannedType;
   private MenuRewards menuRewards;
+  private MenuDamageRewards menuDamageRewards;
 
   /**
    * Constructor to generate a file if one doesn't exist.
    */
   public Lang() {
-    this.messageReload = "&aReloaded!";
-    this.messageBannedPokemon = "&cYour Pokémon %pokemon% is banned!";
-    this.messageBannedAbility = "&cYour Pokémon %pokemon% has a banned ability: %ability%!";
-    this.messageBannedItem = "&cYour Pokémon %pokemon% is holding a banned item: %item%!";
-    this.messageBannedMove = "&cYour Pokémon %pokemon% has this move: %move% in the moveSet!";
-    this.messageBannedNature = "&cYour Pokémon %pokemon% has a banned nature: %nature%!";
-    this.messageBannedType = "&cYour Pokémon %pokemon% is of a banned type: %type%!";
+    this.messageReload = "%prefix% &aReloaded!";
+    this.messageLastHit = "%prefix% &aLast hit: %player%!";
+    this.messageTableDamage = "%prefix% &aDamage table:\n %table%";
+    this.formatTableDamage = " &f- &a%player%&7: &c%damage%";
+    this.messageNotTeleport = "%prefix% &cNot raid active!";
+    this.messageStartingRaid = "%prefix% &aStarting raid in: %cooldown%!";
+    this.messageStartRaid = "%prefix% &aRaid started!";
+    this.messageRaidFinishing = "%prefix% &aRaid finishing in: %cooldown%!";
+    this.messageFinishRaid = "%prefix% &aRaid finished!";
+    this.messageBannedPokemon = "%prefix% &cYour Pokémon %pokemon% is banned!";
+    this.messageBannedAbility = "%prefix% &cYour Pokémon %pokemon% has a banned ability: %ability%!";
+    this.messageBannedItem = "%prefix% &cYour Pokémon %pokemon% is holding a banned item: %item%!";
+    this.messageBannedMove = "%prefix% &cYour Pokémon %pokemon% has this move: %move% in the moveSet!";
+    this.messageBannedNature = "%prefix% &cYour Pokémon %pokemon% has a banned nature: %nature%!";
+    this.messageBannedType = "%prefix% &cYour Pokémon %pokemon% is of a banned type: %type%!";
     this.menuRewards = new MenuRewards();
+    this.menuDamageRewards = new MenuDamageRewards();
   }
 
   /**

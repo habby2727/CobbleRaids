@@ -4,7 +4,10 @@ import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.managers.BattleManager;
 import com.kingpixel.cobbleraids.model.PokemonRaid;
 import com.kingpixel.cobbleraids.model.Raid;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.api.PermissionApi;
+import com.kingpixel.cobbleutils.util.PlayerUtils;
+import com.kingpixel.cobbleutils.util.TypeMessage;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -46,6 +49,17 @@ public class CommandTree {
                 PermissionApi.hasPermission(source, List.of(CobbleRaids.MOD_ID + ".admin"), 2))
               .executes(context -> {
                 CobbleRaids.load();
+                if (context.getSource().isExecutedByPlayer()) {
+                  PlayerUtils.sendMessage(
+                    context.getSource().getPlayer(),
+                    CobbleRaids.language.getMessageReload(),
+                    CobbleRaids.config.getPrefix(),
+                    TypeMessage.CHAT
+                  );
+                } else {
+                  CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, CobbleRaids.language.getMessageReload()
+                    .replace("%prefix%", CobbleRaids.config.getPrefix()));
+                }
                 return 1;
               })
           )
@@ -78,6 +92,25 @@ public class CommandTree {
                 }
                 return 1;
               })
+          ).then(
+            CommandManager.literal("tp")
+              .requires(source ->
+                PermissionApi.hasPermission(source, List.of(CobbleRaids.MOD_ID + ".admin"), 2))
+              .then(
+                CommandManager.argument("raid", StringArgumentType.string())
+                  .executes(context -> {
+                    if (!context.getSource().isExecutedByPlayer()) return 0;
+                    Raid raid = CobbleRaids.raidsConfig.getRaid(StringArgumentType.getString(context,
+                      "raid"));
+                    Vector3d pos = raid.getPosPlayer();
+                    if (context.getSource().isExecutedByPlayer()) {
+                      ServerPlayerEntity player = context.getSource().getPlayer();
+                      player.teleport(PokemonRaid.getWorld(raid), pos.x(), pos.y(), pos.z(), player.getYaw(),
+                        player.getPitch());
+                    }
+                    return 1;
+                  })
+              )
           )
       );
 

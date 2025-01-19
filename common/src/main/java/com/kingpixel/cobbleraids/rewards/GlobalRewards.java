@@ -1,5 +1,6 @@
 package com.kingpixel.cobbleraids.rewards;
 
+import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.AdvancedItemChance;
 import lombok.Getter;
@@ -27,6 +28,7 @@ public class GlobalRewards extends RaidRewards {
     this.active = true;
     this.rewardGiven = RewardGiven.ALL;
     this.reward = new AdvancedItemChance();
+    reward.setTitle("Global Reward");
   }
 
   @Override public void giveRewards(Map<UUID, Integer> players) {
@@ -46,6 +48,9 @@ public class GlobalRewards extends RaidRewards {
   }
 
   @Override public void open(ServerPlayerEntity player) {
-
+    reward.openMenu(player, template -> {
+    }, close -> {
+      CobbleRaids.language.getMenuRewards().open(player);
+    });
   }
 }
