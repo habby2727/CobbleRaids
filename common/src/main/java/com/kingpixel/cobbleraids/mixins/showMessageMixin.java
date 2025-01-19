@@ -39,6 +39,11 @@ public class showMessageMixin {
       showMessage(text);
       if (battleManager.getFinishTime().before(new Date())) {
         CobbleRaids.battleManager.finishRaid();
+        var finishText = AdventureTranslator.toNative(
+          CobbleRaids.language.getMessageFinishRaid()
+            .replace("%prefix%", CobbleRaids.config.getPrefix())
+        );
+        showMessage(finishText);
       }
     } else if (CobbleRaids.startDate != null) {
       // Raid empieza en
@@ -51,6 +56,14 @@ public class showMessageMixin {
             .replace("%prefix%", CobbleRaids.config.getPrefix())
         );
         showMessage(text);
+      }
+      if (timeLeft <= 0) {
+        BattleManager.startRaid(null);
+        var startText = AdventureTranslator.toNative(
+          CobbleRaids.language.getMessageStartRaid()
+            .replace("%prefix%", CobbleRaids.config.getPrefix())
+        );
+        showMessage(startText);
       }
     }
 

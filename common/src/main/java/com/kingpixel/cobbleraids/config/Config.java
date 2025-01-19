@@ -33,7 +33,7 @@ public class Config {
     lang = "en";
     cooldown = 30;
     startShowBar = 5;
-    commands = List.of("cobbleraids");
+    commands = List.of("cobbleraids", "raid");
     banned = new BlackListRaid();
   }
 

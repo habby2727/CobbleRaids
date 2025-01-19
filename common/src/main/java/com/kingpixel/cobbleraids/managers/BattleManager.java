@@ -27,6 +27,7 @@ import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.network.packet.s2c.play.BossBarS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -82,11 +83,10 @@ public class BattleManager {
     CobbleRaids.server.getPlayerManager().sendToAll(packet);
   }
 
-  public static void startRaid(Raid raid) {
+  public static void startRaid(@Nullable Raid raid) {
     try {
       if (CobbleRaids.battleManager != null) CobbleRaids.battleManager.finishRaid();
-      CobbleRaids.startDate =
-        new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(CobbleRaids.config.getCooldown()) + TimeUnit.MINUTES.toMillis(raid.getTime()));
+      CobbleRaids.startDate = null;
       PlayerUtils.sendMessage(
         null,
         CobbleRaids.language.getMessageStartRaid(),
@@ -116,7 +116,9 @@ public class BattleManager {
         reward.giveRewards(damageMap);
       }
     }
-    PlayerUtils.sendMessage(null, "Raid finished!", CobbleRaids.config.getPrefix(), TypeMessage.BROADCAST);
+    CobbleRaids.startDate = new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(CobbleRaids.config.getCooldown()));
+    PlayerUtils.sendMessage(null, CobbleRaids.language.getMessageFinishRaid(), CobbleRaids.config.getPrefix(),
+      TypeMessage.BROADCAST);
     raidEntity.remove(Entity.RemovalReason.DISCARDED);
     for (PokemonEntity fakePokemon : fakePokemons) {
       if (fakePokemon == null) continue;

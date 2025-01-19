@@ -5,7 +5,6 @@ import com.kingpixel.cobbleraids.model.Raid;
 import com.kingpixel.cobbleraids.rewards.DamageRewards;
 import com.kingpixel.cobbleraids.rewards.GlobalRewards;
 import com.kingpixel.cobbleraids.rewards.KillRewards;
-import com.kingpixel.cobbleraids.rewards.RaidRewards;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Getter;
@@ -45,12 +44,6 @@ public class RaidsConfig {
             addGlobalReward(raid);
             addKillReward(raid);
             raids.add(raid);
-            for (RaidRewards reward : raid.getRewards()) {
-              if (CobbleUtils.config.isDebug()) {
-                CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID,
-                  "Loaded rewards for raid " + raid.getId() + ": " + reward.toString());
-              }
-            }
           } catch (IOException e) {
             throw new RuntimeException(e);
           }

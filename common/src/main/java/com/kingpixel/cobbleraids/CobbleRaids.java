@@ -28,8 +28,8 @@ public class CobbleRaids {
   public static final String PATH_RAIDS = PATH + "/raids/";
   private static final String PATH_REWARDS = PATH + "/rewards";
   public static final String PATH_RAID_DAMAGE_REWARDS = PATH_REWARDS + "/damageRewards/";
-  public static final String PATH_RAID_GLOBAL_REWARDS = PATH_REWARDS + "/globalRewards";
-  public static final String PATH_RAID_KILL_REWARDS = PATH_REWARDS + "/killRewards";
+  public static final String PATH_RAID_GLOBAL_REWARDS = PATH_REWARDS + "/globalRewards/";
+  public static final String PATH_RAID_KILL_REWARDS = PATH_REWARDS + "/killRewards/";
   public static final String TAG_RAID = "raid";
   public static final String TAG_FAKERAID = "fakeRaid";
   public static MinecraftServer server;
@@ -73,6 +73,7 @@ public class CobbleRaids {
       .interval(20 * 60)
       .infinite()
       .build();
+
 
   }
 
