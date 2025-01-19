@@ -152,12 +152,17 @@ public class BattleManager {
       PokemonEntity fakePokemon = pokemon
         .sendOut((ServerWorld) raidEntity.getEntityWorld(), raidEntity.getPos(), null,
           pokemonEntity1 -> Unit.INSTANCE);
+      if (fakePokemon == null) {
+        CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Pokemon not found: " + fakePokemon);
+        return;
+      }
       fakePokemon.setPersistent();
       fakePokemon.addStatusEffect(new StatusEffectInstance(StatusEffects.INVISIBILITY, -1, 9999, false, false));
       fakePokemon.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, -1, 9999, false, false));
       fakePokemon.setNoGravity(true);
       fakePokemon.setAiDisabled(true);
       fakePokemon.setMovementSpeed(0);
+      fakePokemon.setCustomName(AdventureTranslator.toNative(raid.getName()));
       BattleBuilder.INSTANCE.pve(player,
         fakePokemon,
         pokemonUUID,
@@ -195,6 +200,11 @@ public class BattleManager {
   private void sendInfo() {
     String lastHit = this.lastHit == null ? "No one" : this.lastHit.getGameProfile().getName();
     String formatTable = CobbleRaids.language.getFormatTableDamage();
+    // Ordenar el mapa por daño
+    damageMap = damageMap.entrySet().stream()
+      .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+      .collect(LinkedHashMap::new, (m, e) -> m.put(e.getKey(), e.getValue()), Map::putAll);
+
     String tableDamage = damageMap.entrySet().stream()
       .map(entry -> {
         var player = CobbleRaids.server.getPlayerManager().getPlayer(entry.getKey());

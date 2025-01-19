@@ -21,12 +21,12 @@ import java.util.function.BooleanSupplier;
  */
 @Mixin(MinecraftServer.class)
 public class showMessageMixin {
-  @Unique private int tickCounter = 0;
+  @Unique private int cobbleRaids$tickCounter = 0;
 
   @Inject(method = "tick", at = @At("HEAD"))
   private void tick(BooleanSupplier shouldKeepTicking, CallbackInfo ci) {
-    tickCounter++;
-    if (tickCounter % 20 != 0) return;
+    cobbleRaids$tickCounter++;
+    if (cobbleRaids$tickCounter % 20 != 0) return;
 
     if (CobbleRaids.battleManager != null) {
       // Raid termina en
@@ -36,14 +36,14 @@ public class showMessageMixin {
           .replace("%cooldown%", PlayerUtils.getCooldown(battleManager.getFinishTime()))
           .replace("%prefix%", CobbleRaids.config.getPrefix())
       );
-      showMessage(text);
+      cobbleRaids$showMessage(text);
       if (battleManager.getFinishTime().before(new Date())) {
         CobbleRaids.battleManager.finishRaid();
         var finishText = AdventureTranslator.toNative(
           CobbleRaids.language.getMessageFinishRaid()
             .replace("%prefix%", CobbleRaids.config.getPrefix())
         );
-        showMessage(finishText);
+        cobbleRaids$showMessage(finishText);
       }
     } else if (CobbleRaids.startDate != null) {
       // Raid empieza en
@@ -55,7 +55,7 @@ public class showMessageMixin {
             .replace("%cooldown%", PlayerUtils.getCooldown(CobbleRaids.startDate))
             .replace("%prefix%", CobbleRaids.config.getPrefix())
         );
-        showMessage(text);
+        cobbleRaids$showMessage(text);
       }
       if (timeLeft <= 0) {
         BattleManager.startRaid(null);
@@ -63,15 +63,15 @@ public class showMessageMixin {
           CobbleRaids.language.getMessageStartRaid()
             .replace("%prefix%", CobbleRaids.config.getPrefix())
         );
-        showMessage(startText);
+        cobbleRaids$showMessage(startText);
       }
     }
 
-    tickCounter = 0;
+    cobbleRaids$tickCounter = 0;
   }
 
   @Unique
-  private void showMessage(Text text) {
+  private void cobbleRaids$showMessage(Text text) {
     for (ServerPlayerEntity player : CobbleRaids.server.getPlayerManager().getPlayerList()) {
       player.sendMessage(text, true);
     }

@@ -8,6 +8,8 @@ import com.kingpixel.cobbleraids.config.Lang;
 import com.kingpixel.cobbleraids.config.RaidsConfig;
 import com.kingpixel.cobbleraids.events.BattleEvents;
 import com.kingpixel.cobbleraids.managers.BattleManager;
+import com.kingpixel.cobbleraids.model.PokemonRaid;
+import com.kingpixel.cobbleraids.model.Raid;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
@@ -57,7 +59,7 @@ public class CobbleRaids {
     removeOldRaidsTask = Task.builder()
       .execute(() -> {
         if (battleManager != null) return;
-        for (ServerWorld world : server.getWorlds()) {
+        /*for (ServerWorld world : server.getWorlds()) {
           var pokemons = world.getEntitiesByType(TypeFilter.instanceOf(PokemonEntity.class), e -> {
             NbtCompound nbt = e.getPokemon().getPersistentData();
             return nbt.getBoolean(TAG_RAID) || nbt.getBoolean(TAG_FAKERAID);
@@ -67,6 +69,18 @@ public class CobbleRaids {
             if (nbt.getBoolean(TAG_RAID) || nbt.getBoolean(TAG_FAKERAID)) {
               pokemon.remove(Entity.RemovalReason.DISCARDED);
             }
+          }
+        }*/
+        // ----------------------------
+        for (Raid raid : raidsConfig.getRaids()) {
+          var serverWorld = PokemonRaid.getWorld(raid);
+          if (serverWorld == null) continue;
+          var pokemons = serverWorld.getEntitiesByType(TypeFilter.instanceOf(PokemonEntity.class), e -> {
+            NbtCompound nbt = e.getPokemon().getPersistentData();
+            return nbt.getBoolean(TAG_RAID) || nbt.getBoolean(TAG_FAKERAID);
+          });
+          for (PokemonEntity pokemon : pokemons) {
+            pokemon.remove(Entity.RemovalReason.DISCARDED);
           }
         }
       })

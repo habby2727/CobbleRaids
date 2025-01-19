@@ -1,6 +1,10 @@
 package com.kingpixel.cobbleraids.model;
 
 import com.cobblemon.mod.common.Cobblemon;
+import com.cobblemon.mod.common.api.moves.Move;
+import com.cobblemon.mod.common.api.moves.MoveSet;
+import com.cobblemon.mod.common.api.moves.MoveTemplate;
+import com.cobblemon.mod.common.api.moves.Moves;
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
@@ -31,6 +35,7 @@ public class PokemonRaid {
   private Double chance;
   private Integer life;
   private float size;
+  private List<String> moves;
   private BlackListRaid banned;
 
   PokemonRaid() {
@@ -38,7 +43,25 @@ public class PokemonRaid {
     this.chance = 0.1;
     this.life = 2000;
     this.size = 5.0f;
+    this.moves = List.of("thunderbolt", "quick-attack", "thunder-wave", "iron-tail");
     this.banned = new BlackListRaid();
+  }
+
+  public void apply(Pokemon pokemon) {
+    MoveSet moveSet = pokemon.getMoveSet();
+    int i = 0;
+    for (String move : moves) {
+      if (i < 4) {
+        MoveTemplate moveTemplate = Moves.INSTANCE.getByName(move);
+        if (moveTemplate == null) {
+          CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Move not found: " + move);
+          continue;
+        }
+        Move move1 = moveTemplate.create(3);
+        moveSet.setMove(i, move1);
+        i++;
+      }
+    }
   }
 
   public static ServerWorld getWorld(Raid raid) {
@@ -79,6 +102,7 @@ public class PokemonRaid {
     Pokemon raidPokemon = PokemonProperties.Companion.parse(pokemon + " uncatchable=yes").create();
     raidPokemon.getPersistentData().putBoolean(CobbleRaids.TAG_RAID, true);
     raidPokemon.setScaleModifier(size);
+    apply(raidPokemon);
     PokemonEntity pokemonEntity = raidPokemon
       .sendOut(serverWorld, pos, null,
         pokemonEntity1 -> Unit.INSTANCE);
@@ -86,6 +110,7 @@ public class PokemonRaid {
       CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Pokemon not found: " + pokemonEntity);
       return null;
     }
+    pokemonEntity.setPersistent();
     pokemonEntity.setCustomName(AdventureTranslator.toNative(raid.getName()));
     pokemonEntity.setMovementSpeed(0);
     pokemonEntity.setNoGravity(true);

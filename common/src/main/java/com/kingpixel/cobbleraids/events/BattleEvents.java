@@ -43,7 +43,7 @@ public class BattleEvents {
           evt.cancel();
           return Unit.INSTANCE;
         }
-        evt.setReason(Text.empty());
+        evt.setReason(null);
         if (!CobbleRaids.battleManager.getPokemonRaid().isPermitted(player)) {
           evt.cancel();
           return Unit.INSTANCE;
