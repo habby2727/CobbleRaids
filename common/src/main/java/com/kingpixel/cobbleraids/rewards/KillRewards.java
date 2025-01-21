@@ -10,12 +10,11 @@ import net.minecraft.server.network.ServerPlayerEntity;
  */
 @Getter
 public class KillRewards extends RaidRewards {
-  private boolean active;
-  private AdvancedItemChance reward;
+  private final AdvancedItemChance reward;
 
 
   public KillRewards() {
-    this.active = true;
+    super();
     this.reward = new AdvancedItemChance();
     reward.setTitle("Global Reward");
   }

@@ -28,11 +28,10 @@ import java.util.regex.Pattern;
  */
 @Getter
 public class DamageRewards extends RaidRewards {
-  private boolean active;
   private Map<String, AdvancedItemChance> rewards;
 
   public DamageRewards() {
-    this.active = true;
+    super();
     this.rewards = new HashMap<>();
     // Example rewards setup
     rewards.put("1=", new AdvancedItemChance());

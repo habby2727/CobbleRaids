@@ -18,12 +18,15 @@ import java.util.List;
 public class Raid {
   private boolean active;
   private boolean heal;
+  private boolean needDefeat;
   private String id;
   private String name;
   private double chance;
   private int time;
   private String world;
   private Vector3d posRaid;
+  private float directionX;
+  private float directionY;
   private Vector3d posPlayer;
   private BossBarModel bossBar;
   private List<PokemonRaid> pokemons;
@@ -33,12 +36,16 @@ public class Raid {
   public Raid() {
     this.active = true;
     this.heal = true;
+    this.needDefeat = true;
     this.id = "default";
     this.name = "&cdefault";
     this.chance = 20.0;
     this.time = 5;
+
     this.world = "overworld";
     this.posRaid = new Vector3d(1, 1, 1);
+    this.directionX = 0;
+    this.directionY = 0;
     this.posPlayer = new Vector3d(1, 1, 1);
     this.bossBar = new BossBarModel();
     this.pokemons = new ArrayList<>();

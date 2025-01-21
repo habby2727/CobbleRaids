@@ -2,7 +2,6 @@ package com.kingpixel.cobbleraids.model;
 
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.moves.Move;
-import com.cobblemon.mod.common.api.moves.MoveSet;
 import com.cobblemon.mod.common.api.moves.MoveTemplate;
 import com.cobblemon.mod.common.api.moves.Moves;
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
@@ -16,7 +15,10 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.network.packet.s2c.play.PositionFlag;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.Box;
@@ -48,7 +50,6 @@ public class PokemonRaid {
   }
 
   public void apply(Pokemon pokemon) {
-    MoveSet moveSet = pokemon.getMoveSet();
     int i = 0;
     for (String move : moves) {
       if (i < 4) {
@@ -58,7 +59,7 @@ public class PokemonRaid {
           continue;
         }
         Move move1 = moveTemplate.create(3);
-        moveSet.setMove(i, move1);
+        pokemon.getMoveSet().setMove(i, move1);
         i++;
       }
     }
@@ -103,20 +104,32 @@ public class PokemonRaid {
     raidPokemon.getPersistentData().putBoolean(CobbleRaids.TAG_RAID, true);
     raidPokemon.setScaleModifier(size);
     apply(raidPokemon);
+    if (CobbleRaids.config.isDebug()) {
+      for (Move move : raidPokemon.getMoveSet()) {
+        CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Move: " + move.getName());
+      }
+    }
     PokemonEntity pokemonEntity = raidPokemon
       .sendOut(serverWorld, pos, null,
-        pokemonEntity1 -> Unit.INSTANCE);
+        pokemonEntity1 -> {
+          pokemonEntity1.setPersistent();
+          pokemonEntity1.teleport(serverWorld, raid.getPosRaid().x, raid.getPosRaid().y,
+            raid.getPosRaid().z, PositionFlag.ROT,
+            raid.getDirectionX(), raid.getDirectionY());
+          pokemonEntity1.addStatusEffect(new StatusEffectInstance(StatusEffects.GLOWING, -1, 9999, true, true));
+          pokemonEntity1.setCustomName(AdventureTranslator.toNative(raid.getName()));
+          pokemonEntity1.setMovementSpeed(0);
+          pokemonEntity1.setNoGravity(true);
+          pokemonEntity1.setAiDisabled(true);
+          pokemonEntity1.setGlowing(true);
+          pokemonEntity1.teleport(raid.getPosRaid().x, raid.getPosRaid().y, raid.getPosRaid().z, false);
+          return Unit.INSTANCE;
+
+        });
     if (pokemonEntity == null) {
       CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Pokemon not found: " + pokemonEntity);
       return null;
     }
-    pokemonEntity.setPersistent();
-    pokemonEntity.setCustomName(AdventureTranslator.toNative(raid.getName()));
-    pokemonEntity.setMovementSpeed(0);
-    pokemonEntity.setNoGravity(true);
-    pokemonEntity.setAiDisabled(true);
-    pokemonEntity.setGlowing(true);
-    pokemonEntity.teleport(raid.getPosRaid().x, raid.getPosRaid().y, raid.getPosRaid().z, false);
     return pokemonEntity;
   }
 

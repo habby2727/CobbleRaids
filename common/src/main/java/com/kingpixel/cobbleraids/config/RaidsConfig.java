@@ -105,9 +105,13 @@ public class RaidsConfig {
   }
 
   public Raid getRandomRaid() {
-    double totalWeight = raids.stream().mapToDouble(Raid::getChance).sum();
+    double totalWeight = raids.stream().mapToDouble(raid -> {
+      if (!raid.isActive()) return 0;
+      return raid.getChance();
+    }).sum();
     double random = Math.random() * totalWeight;
     for (Raid raid : raids) {
+      if (!raid.isActive()) continue;
       random -= raid.getChance();
       if (random <= 0) {
         return raid;

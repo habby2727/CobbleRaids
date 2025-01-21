@@ -11,7 +11,7 @@ import java.util.UUID;
  * @author Carlos Varas Alonso - 17/01/2025 23:22
  */
 public abstract class RaidRewards {
-
+  boolean active = true;
 
   public void giveRewards(Map<UUID, Integer> players) {
 
@@ -22,6 +22,7 @@ public abstract class RaidRewards {
   }
 
   void giveRewardToPlayer(UUID playerUUID, AdvancedItemChance reward) {
+    if (!active) return;
     ServerPlayerEntity player = CobbleRaids.server.getPlayerManager().getPlayer(playerUUID);
     if (player == null) return;
     reward.giveRewards(player);

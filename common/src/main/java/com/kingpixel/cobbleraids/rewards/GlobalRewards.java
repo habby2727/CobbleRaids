@@ -14,9 +14,8 @@ import java.util.UUID;
  */
 @Getter
 public class GlobalRewards extends RaidRewards {
-  private boolean active;
-  private RewardGiven rewardGiven;
-  private AdvancedItemChance reward;
+  private final RewardGiven rewardGiven;
+  private final AdvancedItemChance reward;
 
   enum RewardGiven {
     PARTICIPANTS,
@@ -25,8 +24,8 @@ public class GlobalRewards extends RaidRewards {
 
 
   public GlobalRewards() {
-    this.active = true;
-    this.rewardGiven = RewardGiven.ALL;
+    super();
+    this.rewardGiven = RewardGiven.PARTICIPANTS;
     this.reward = new AdvancedItemChance();
     reward.setTitle("Global Reward");
   }

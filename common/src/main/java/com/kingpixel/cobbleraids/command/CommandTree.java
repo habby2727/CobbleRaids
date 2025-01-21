@@ -88,7 +88,7 @@ public class CommandTree {
                 PermissionApi.hasPermission(source, List.of(CobbleRaids.MOD_ID + ".admin"), 2))
               .executes(context -> {
                 if (CobbleRaids.battleManager != null) {
-                  CobbleRaids.battleManager.finishRaid();
+                  CobbleRaids.battleManager.finishRaid(false);
                 }
                 return 1;
               })

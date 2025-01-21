@@ -38,7 +38,7 @@ public class showMessageMixin {
       );
       cobbleRaids$showMessage(text);
       if (battleManager.getFinishTime().before(new Date())) {
-        CobbleRaids.battleManager.finishRaid();
+        CobbleRaids.battleManager.finishRaid(false);
         var finishText = AdventureTranslator.toNative(
           CobbleRaids.language.getMessageFinishRaid()
             .replace("%prefix%", CobbleRaids.config.getPrefix())

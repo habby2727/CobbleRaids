@@ -15,6 +15,10 @@ import java.util.concurrent.CompletableFuture;
 @Setter
 public class Lang {
   private String messageReload;
+  private String messageNoRewards;
+  private String messageRewardLastHit;
+  private String messageRewardDamage;
+  private String messageRewardGlobal;
   private String messageLastHit;
   private String messageTableDamage;
   private String formatTableDamage;
@@ -37,6 +41,10 @@ public class Lang {
    */
   public Lang() {
     this.messageReload = "%prefix% &aReloaded!";
+    this.messageNoRewards = "%prefix% &cNo rewards the raid not be defeated!";
+    this.messageRewardLastHit = "%prefix% &aYou obtained the last hit reward!";
+    this.messageRewardDamage = "%prefix% &aYou obtained the damage reward %post%!";
+    this.messageRewardGlobal = "%prefix% &aYou obtained the global reward!";
     this.messageLastHit = "%prefix% &aLast hit: %player%!";
     this.messageTableDamage = "%prefix% &aDamage table:\n %table%";
     this.formatTableDamage = " &f- &a%player%&7: &c%damage%";

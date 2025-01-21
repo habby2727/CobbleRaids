@@ -24,9 +24,12 @@ import net.minecraft.entity.boss.BossBar;
 import net.minecraft.entity.boss.ServerBossBar;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.packet.s2c.play.BossBarS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.TypeFilter;
+import net.minecraft.util.math.Box;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -85,7 +88,7 @@ public class BattleManager {
 
   public static void startRaid(@Nullable Raid raid) {
     try {
-      if (CobbleRaids.battleManager != null) CobbleRaids.battleManager.finishRaid();
+      if (CobbleRaids.battleManager != null) CobbleRaids.battleManager.finishRaid(false);
       CobbleRaids.startDate = null;
       PlayerUtils.sendMessage(
         null,
@@ -93,9 +96,7 @@ public class BattleManager {
         CobbleRaids.config.getPrefix(),
         TypeMessage.BROADCAST
       );
-      if (raid == null) {
-        raid = raid == null ? CobbleRaids.raidsConfig.getRandomRaid() : raid;
-      }
+      if (raid == null) raid = CobbleRaids.raidsConfig.getRandomRaid();
       if (raid.isActive()) {
         CobbleRaids.battleManager = new BattleManager(raid);
         CobbleRaids.battleManager.sendBossBar();
@@ -105,10 +106,7 @@ public class BattleManager {
     }
   }
 
-
-  public void finishRaid() {
-    BossBarS2CPacket packet = BossBarS2CPacket.remove(bossBar.getUuid());
-    CobbleRaids.server.getPlayerManager().sendToAll(packet);
+  private void giveRewards() {
     for (RaidRewards reward : raid.getRewards()) {
       if (reward instanceof KillRewards killRewards) {
         killRewards.giveRewards(lastHit);
@@ -116,10 +114,22 @@ public class BattleManager {
         reward.giveRewards(damageMap);
       }
     }
+  }
+
+  public void finishRaid(boolean defeat) {
+    BossBarS2CPacket packet = BossBarS2CPacket.remove(bossBar.getUuid());
+    CobbleRaids.server.getPlayerManager().sendToAll(packet);
+
+    if (raid.isNeedDefeat() && defeat) {
+      giveRewards();
+    } else if (!raid.isNeedDefeat()) {
+      giveRewards();
+    }
+
     CobbleRaids.startDate = new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(CobbleRaids.config.getCooldown()));
     PlayerUtils.sendMessage(null, CobbleRaids.language.getMessageFinishRaid(), CobbleRaids.config.getPrefix(),
       TypeMessage.BROADCAST);
-    raidEntity.remove(Entity.RemovalReason.DISCARDED);
+
     for (PokemonEntity fakePokemon : fakePokemons) {
       if (fakePokemon == null) continue;
       UUID battleUUID = fakePokemon.getBattleId();
@@ -129,6 +139,15 @@ public class BattleManager {
           battle.end();
         }
       }
+      fakePokemon.remove(Entity.RemovalReason.DISCARDED);
+    }
+    List<PokemonEntity> fakePokemons = raidEntity.getEntityWorld().getEntitiesByType(TypeFilter.instanceOf(PokemonEntity.class),
+      Box.of(raidEntity.getPos(), 16, 16, 16), entity -> {
+        if (entity == null) return false;
+        NbtCompound persistentData = entity.getPokemon().getPersistentData();
+        return persistentData.getBoolean(CobbleRaids.TAG_FAKERAID) || persistentData.getBoolean(CobbleRaids.TAG_RAID);
+      });
+    for (PokemonEntity fakePokemon : fakePokemons) {
       fakePokemon.remove(Entity.RemovalReason.DISCARDED);
     }
     sendInfo();
@@ -191,7 +210,7 @@ public class BattleManager {
     damageMap.compute(player.getUuid(), (k, v) -> v == null ? remove : v + remove);
     currentLife -= remove;
     if (currentLife <= 0) {
-      finishRaid();
+      finishRaid(true);
     } else {
       sendBossBar();
     }
