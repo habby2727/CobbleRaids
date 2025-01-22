@@ -111,6 +111,19 @@ public class CommandTree {
                     return 1;
                   })
               )
+          ).then(
+            CommandManager.literal("time")
+              .requires(source ->
+                PermissionApi.hasPermission(source, List.of(CobbleRaids.MOD_ID + ".admin", CobbleRaids.MOD_ID +
+                  ".user"), 2))
+              .executes(context -> {
+                if (context.getSource().isExecutedByPlayer()) {
+                  ServerPlayerEntity player = context.getSource().getPlayer();
+                  PlayerUtils.sendMessage(player, "Raid start in " + PlayerUtils.getCooldown(CobbleRaids.startDate),
+                    CobbleRaids.config.getPrefix(), TypeMessage.CHAT);
+                }
+                return 1;
+              })
           )
       );
 

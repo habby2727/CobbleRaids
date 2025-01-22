@@ -9,7 +9,7 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.model.PokemonRaid;
 import com.kingpixel.cobbleraids.model.Raid;
-import com.kingpixel.cobbleraids.rewards.KillRewards;
+import com.kingpixel.cobbleraids.rewards.LastHitRewards;
 import com.kingpixel.cobbleraids.rewards.RaidRewards;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.AdventureTranslator;
@@ -108,7 +108,7 @@ public class BattleManager {
 
   private void giveRewards() {
     for (RaidRewards reward : raid.getRewards()) {
-      if (reward instanceof KillRewards killRewards) {
+      if (reward instanceof LastHitRewards killRewards) {
         killRewards.giveRewards(lastHit);
       } else {
         reward.giveRewards(damageMap);
@@ -168,6 +168,7 @@ public class BattleManager {
       Pokemon pokemon = PokemonProperties.Companion.parse(pokemonRaid.getPokemon() + " uncatchable=yes").create();
       pokemon.getPersistentData().putBoolean(CobbleRaids.TAG_FAKERAID, true);
       pokemon.setScaleModifier(0.1f);
+      pokemonRaid.apply(pokemon);
       PokemonEntity fakePokemon = pokemon
         .sendOut((ServerWorld) raidEntity.getEntityWorld(), raidEntity.getPos(), null,
           pokemonEntity1 -> Unit.INSTANCE);

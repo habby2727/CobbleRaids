@@ -43,7 +43,7 @@ public class Lang {
     this.messageReload = "%prefix% &aReloaded!";
     this.messageNoRewards = "%prefix% &cNo rewards the raid not be defeated!";
     this.messageRewardLastHit = "%prefix% &aYou obtained the last hit reward!";
-    this.messageRewardDamage = "%prefix% &aYou obtained the damage reward %post%!";
+    this.messageRewardDamage = "%prefix% &aYou obtained the damage reward %pos%!";
     this.messageRewardGlobal = "%prefix% &aYou obtained the global reward!";
     this.messageLastHit = "%prefix% &aLast hit: %player%!";
     this.messageTableDamage = "%prefix% &aDamage table:\n %table%";

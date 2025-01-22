@@ -15,6 +15,8 @@ import com.kingpixel.cobbleutils.Model.ItemModel;
 import com.kingpixel.cobbleutils.Model.PanelsConfig;
 import com.kingpixel.cobbleutils.features.shops.Shop;
 import com.kingpixel.cobbleutils.util.AdventureTranslator;
+import com.kingpixel.cobbleutils.util.PlayerUtils;
+import com.kingpixel.cobbleutils.util.TypeMessage;
 import com.kingpixel.cobbleutils.util.UIUtils;
 import lombok.Getter;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -68,24 +70,39 @@ public class DamageRewards extends RaidRewards {
           case "<=":
             for (int i = 0; i < Math.min(topN, sortedPlayers.size()); i++) {
               UUID playerUUID = sortedPlayers.get(i).getKey();
+              sendInfo(playerUUID, i);
               giveRewardToPlayer(playerUUID, reward);
             }
             break;
           case ">=":
             for (int i = topN - 1; i < sortedPlayers.size(); i++) {
               UUID playerUUID = sortedPlayers.get(i).getKey();
+              sendInfo(playerUUID, i);
               giveRewardToPlayer(playerUUID, reward);
             }
             break;
           case "=":
             if (topN - 1 < sortedPlayers.size()) {
               UUID playerUUID = sortedPlayers.get(topN - 1).getKey();
+              sendInfo(playerUUID, topN - 1);
               giveRewardToPlayer(playerUUID, reward);
             }
             break;
         }
       }
     }
+  }
+
+  private void sendInfo(UUID playerUUID, int pos) {
+    ServerPlayerEntity player = CobbleRaids.server.getPlayerManager().getPlayer(playerUUID);
+    if (player == null) return;
+    PlayerUtils.sendMessage(
+      player,
+      CobbleRaids.language.getMessageRewardDamage()
+        .replace("%pos%", String.valueOf(pos + 1)),
+      CobbleRaids.config.getPrefix(),
+      TypeMessage.CHAT
+    );
   }
 
   @Override public void open(ServerPlayerEntity player) {

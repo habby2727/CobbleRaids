@@ -4,7 +4,7 @@ import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.model.Raid;
 import com.kingpixel.cobbleraids.rewards.DamageRewards;
 import com.kingpixel.cobbleraids.rewards.GlobalRewards;
-import com.kingpixel.cobbleraids.rewards.KillRewards;
+import com.kingpixel.cobbleraids.rewards.LastHitRewards;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Getter;
@@ -83,10 +83,10 @@ public class RaidsConfig {
   private void addKillReward(Raid raid) throws IOException {
     File file = Utils.getAbsolutePath(CobbleRaids.PATH_RAID_KILL_REWARDS + raid.getId() + ".json");
     if (file.exists()) {
-      KillRewards killRewards = Utils.newGson().fromJson(Utils.readFileSync(file), KillRewards.class);
+      LastHitRewards killRewards = Utils.newGson().fromJson(Utils.readFileSync(file), LastHitRewards.class);
       raid.getRewards().add(killRewards);
     } else {
-      KillRewards killRewards = new KillRewards();
+      LastHitRewards killRewards = new LastHitRewards();
       raid.getRewards().add(killRewards);
       CobbleUtils.LOGGER.warn(CobbleRaids.MOD_ID, "No kill rewards found for raid " + raid.getId() + ". Creating default.");
       Utils.writeFileAsync(CobbleRaids.PATH_RAID_KILL_REWARDS, raid.getId() + ".json", Utils.newGson().toJson(killRewards));

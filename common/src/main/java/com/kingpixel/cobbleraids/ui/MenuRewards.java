@@ -6,7 +6,7 @@ import ca.landonjw.gooeylibs2.api.template.types.ChestTemplate;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.rewards.DamageRewards;
 import com.kingpixel.cobbleraids.rewards.GlobalRewards;
-import com.kingpixel.cobbleraids.rewards.KillRewards;
+import com.kingpixel.cobbleraids.rewards.LastHitRewards;
 import com.kingpixel.cobbleutils.Model.ItemModel;
 import com.kingpixel.cobbleutils.Model.PanelsConfig;
 import com.kingpixel.cobbleutils.util.AdventureTranslator;
@@ -69,7 +69,7 @@ public class MenuRewards {
     if (UIUtils.isInside(killRewards, rows)) {
       template.set(killRewards.getSlot(), killRewards.getButton(action -> {
         CobbleRaids.battleManager.getRaid().getRewards().forEach(reward -> {
-          if (reward instanceof KillRewards KillRewards) {
+          if (reward instanceof LastHitRewards KillRewards) {
             KillRewards.open(player);
           }
         });
