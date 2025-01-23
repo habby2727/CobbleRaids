@@ -96,10 +96,14 @@ public class BattleManager {
         CobbleRaids.config.getPrefix(),
         TypeMessage.BROADCAST
       );
-      if (raid == null) raid = CobbleRaids.raidsConfig.getRandomRaid();
-      if (raid.isActive()) {
-        CobbleRaids.battleManager = new BattleManager(raid);
-        CobbleRaids.battleManager.sendBossBar();
+      boolean isActive = false;
+      while (!isActive) {
+        if (raid == null) raid = CobbleRaids.raidsConfig.getRandomRaid();
+        isActive = raid.isActive();
+        if (isActive) {
+          CobbleRaids.battleManager = new BattleManager(raid);
+          CobbleRaids.battleManager.sendBossBar();
+        }
       }
     } catch (Exception e) {
       e.printStackTrace();

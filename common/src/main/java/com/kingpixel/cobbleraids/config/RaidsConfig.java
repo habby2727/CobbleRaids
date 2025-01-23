@@ -54,15 +54,17 @@ public class RaidsConfig {
 
   private void addDamageReward(Raid raid) throws IOException {
     File file = Utils.getAbsolutePath(CobbleRaids.PATH_RAID_DAMAGE_REWARDS + raid.getId() + ".json");
+    DamageRewards damageRewards;
     if (file.exists()) {
-      DamageRewards damageRewards = Utils.newGson().fromJson(Utils.readFileSync(file), DamageRewards.class);
+      damageRewards = Utils.newGson().fromJson(Utils.readFileSync(file), DamageRewards.class);
       raid.getRewards().add(damageRewards);
     } else {
-      DamageRewards damageRewards = new DamageRewards();
+      damageRewards = new DamageRewards();
       raid.getRewards().add(damageRewards);
       CobbleUtils.LOGGER.warn(CobbleRaids.MOD_ID, "No damage rewards found for raid " + raid.getId() + ". Creating default.");
-      Utils.writeFileAsync(CobbleRaids.PATH_RAID_DAMAGE_REWARDS, raid.getId() + ".json", Utils.newGson().toJson(damageRewards));
     }
+    damageRewards.check();
+    Utils.writeFileAsync(CobbleRaids.PATH_RAID_DAMAGE_REWARDS, raid.getId() + ".json", Utils.newGson().toJson(damageRewards));
   }
 
   private void addGlobalReward(Raid raid) throws IOException {
@@ -105,11 +107,13 @@ public class RaidsConfig {
   }
 
   public Raid getRandomRaid() {
-    double totalWeight = raids.stream().mapToDouble(raid -> {
-      if (!raid.isActive()) return 0;
-      return raid.getChance();
-    }).sum();
+    double totalWeight = raids.stream()
+      .filter(Raid::isActive)
+      .mapToDouble(Raid::getChance)
+      .sum();
+
     double random = Math.random() * totalWeight;
+
     for (Raid raid : raids) {
       if (!raid.isActive()) continue;
       random -= raid.getChance();

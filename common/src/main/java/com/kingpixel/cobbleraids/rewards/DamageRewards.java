@@ -22,8 +22,6 @@ import lombok.Getter;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Improved by GitHub Copilot
@@ -36,10 +34,11 @@ public class DamageRewards extends RaidRewards {
     super();
     this.rewards = new HashMap<>();
     // Example rewards setup
-    rewards.put("1=", new AdvancedItemChance());
-    rewards.put("2=", new AdvancedItemChance());
-    rewards.put("3=", new AdvancedItemChance());
-    rewards.put("4>=", new AdvancedItemChance());
+    rewards.put("1", new AdvancedItemChance());
+    rewards.put("2", new AdvancedItemChance());
+    rewards.put("3", new AdvancedItemChance());
+    rewards.put("4-7", new AdvancedItemChance());
+    rewards.put("8-100", new AdvancedItemChance());
     rewards.forEach((key, value) -> {
       value.setTitle("Damage Reward Position -> " + key);
     });
@@ -54,40 +53,20 @@ public class DamageRewards extends RaidRewards {
       .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
       .toList();
 
-    for (Map.Entry<String, AdvancedItemChance> rewardEntry : rewards.entrySet()) {
-      String condition = rewardEntry.getKey();
-      AdvancedItemChance reward = rewardEntry.getValue();
-
-      // Parse the condition
-      Pattern pattern = Pattern.compile("(\\d+)([<=>]+)");
-      Matcher matcher = pattern.matcher(condition);
-      if (matcher.matches()) {
-        int topN = Integer.parseInt(matcher.group(1));
-        String operator = matcher.group(2);
-
-        // Apply the condition
-        switch (operator) {
-          case "<=":
-            for (int i = 0; i < Math.min(topN, sortedPlayers.size()); i++) {
-              UUID playerUUID = sortedPlayers.get(i).getKey();
-              sendInfo(playerUUID, i);
-              giveRewardToPlayer(playerUUID, reward);
-            }
-            break;
-          case ">=":
-            for (int i = topN - 1; i < sortedPlayers.size(); i++) {
-              UUID playerUUID = sortedPlayers.get(i).getKey();
-              sendInfo(playerUUID, i);
-              giveRewardToPlayer(playerUUID, reward);
-            }
-            break;
-          case "=":
-            if (topN - 1 < sortedPlayers.size()) {
-              UUID playerUUID = sortedPlayers.get(topN - 1).getKey();
-              sendInfo(playerUUID, topN - 1);
-              giveRewardToPlayer(playerUUID, reward);
-            }
-            break;
+    for (Map.Entry<UUID, Integer> sortedPlayer : sortedPlayers) {
+      UUID playerUUID = sortedPlayer.getKey();
+      ServerPlayerEntity player = CobbleRaids.server.getPlayerManager().getPlayer(playerUUID);
+      if (player == null) continue;
+      int pos = sortedPlayers.indexOf(sortedPlayer) + 1; // Position is 1-based
+      for (Map.Entry<String, AdvancedItemChance> reward : rewards.entrySet()) {
+        String[] split = reward.getKey().split("-");
+        int min = Integer.parseInt(split[0]);
+        int max = split.length > 1 ? Integer.parseInt(split[1]) : min;
+        if (pos >= min && pos <= max) {
+          AdvancedItemChance itemChance = reward.getValue();
+          itemChance.giveRewards(player);
+          sendInfo(playerUUID, pos);
+          break;
         }
       }
     }
@@ -161,4 +140,18 @@ public class DamageRewards extends RaidRewards {
     UIManager.openUIForcefully(player, page);
   }
 
+  public void check() {
+    Map<String, AdvancedItemChance> updatedRewards = new HashMap<>();
+    for (Map.Entry<String, AdvancedItemChance> entry : rewards.entrySet()) {
+      String key = entry.getKey();
+      if (key.contains("=") || key.contains(">=")) {
+        updatedRewards.put(key
+          .replace(">=", "-100")
+          .replace("=", ""), entry.getValue());
+      } else {
+        updatedRewards.put(key, entry.getValue());
+      }
+    }
+    rewards = updatedRewards;
+  }
 }

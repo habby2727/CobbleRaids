@@ -56,7 +56,7 @@ public class Lang {
     this.messageBannedPokemon = "%prefix% &cYour Pokémon %pokemon% is banned!";
     this.messageBannedAbility = "%prefix% &cYour Pokémon %pokemon% has a banned ability: %ability%!";
     this.messageBannedItem = "%prefix% &cYour Pokémon %pokemon% is holding a banned item: %item%!";
-    this.messageBannedMove = "%prefix% &cYour Pokémon %pokemon% has this move: %move% in the moveSet!";
+    this.messageBannedMove = "%prefix% &cYour Pokémon %pokemon% has this banned move: %move% in the moveSet!";
     this.messageBannedNature = "%prefix% &cYour Pokémon %pokemon% has a banned nature: %nature%!";
     this.messageBannedType = "%prefix% &cYour Pokémon %pokemon% is of a banned type: %type%!";
     this.menuRewards = new MenuRewards();

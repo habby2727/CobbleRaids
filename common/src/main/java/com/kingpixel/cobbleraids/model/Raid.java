@@ -50,6 +50,7 @@ public class Raid {
     this.bossBar = new BossBarModel();
     this.pokemons = new ArrayList<>();
     pokemons.add(new PokemonRaid());
+    pokemons.add(new PokemonRaid());
 
   }
 
