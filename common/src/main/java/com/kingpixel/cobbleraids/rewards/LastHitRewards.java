@@ -26,7 +26,8 @@ public class LastHitRewards extends RaidRewards {
       if (player == null) return;
       PlayerUtils.sendMessage(
         player,
-        CobbleRaids.language.getMessageLastHit(),
+        CobbleRaids.language.getMessageLastHit()
+          .replace("%player%", player.getGameProfile().getName()),
         CobbleRaids.config.getPrefix(),
         TypeMessage.CHAT
       );

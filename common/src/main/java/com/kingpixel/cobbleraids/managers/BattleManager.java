@@ -61,7 +61,11 @@ public class BattleManager {
     if (raidEntity == null) return;
     raidUUID = raidEntity.getUuid();
     damageMap = new HashMap<>();
-    maxLife = pokemonRaid.getLife();
+    if (CobbleRaids.config.isMoreHealthByEachPlayer()) {
+      maxLife = pokemonRaid.getLife() * CobbleRaids.server.getPlayerManager().getPlayerList().size();
+    } else {
+      maxLife = pokemonRaid.getLife();
+    }
     currentLife = maxLife;
     finishTime = new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(raid.getTime()));
     fakePokemons = new ArrayList<>();
@@ -69,16 +73,17 @@ public class BattleManager {
 
   private void sendBossBar() {
     var title = AdventureTranslator.toNative(
-      raid.getBossBar().getTitle()
+      pokemonRaid.getBossBar().getTitle()
         .replace("%boss%", raid.getName())
+        .replace("%pokemon%", raidEntity == null ? "" : raidEntity.getPokemon().showdownId())
         .replace("%hp%", String.valueOf(currentLife))
         .replace("%hp_max%", String.valueOf(maxLife))
     );
     if (bossBar == null) {
       bossBar =
         new ServerBossBar(title,
-          raid.getBossBar().getColor(),
-          raid.getBossBar().getStyle());
+          pokemonRaid.getBossBar().getColor(),
+          pokemonRaid.getBossBar().getStyle());
     }
     bossBar.setName(title);
     bossBar.setPercent((float) CobbleRaids.battleManager.getCurrentLife() / CobbleRaids.battleManager.getMaxLife());

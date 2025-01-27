@@ -35,13 +35,15 @@ public class showMessageMixin {
         CobbleRaids.language.getMessageRaidFinishing()
           .replace("%cooldown%", PlayerUtils.getCooldown(battleManager.getFinishTime()))
           .replace("%prefix%", CobbleRaids.config.getPrefix())
+          .replace("%raid%", battleManager.getRaid().getName())
       );
       cobbleRaids$showMessage(text);
       if (battleManager.getFinishTime().before(new Date())) {
         CobbleRaids.battleManager.finishRaid(false);
         var finishText = AdventureTranslator.toNative(
           CobbleRaids.language.getMessageFinishRaid()
-            .replace("%prefix%", CobbleRaids.config.getPrefix())
+            .replace("%prefix%", CobbleRaids.config.getPrefix()
+              .replace("%raid%", battleManager.getRaid().getName()))
         );
         cobbleRaids$showMessage(finishText);
       }

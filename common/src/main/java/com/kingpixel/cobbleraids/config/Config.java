@@ -22,6 +22,7 @@ public class Config {
   private boolean debug;
   private String prefix;
   private String lang;
+  private boolean moreHealthByEachPlayer;
   private int cooldown;
   private int startShowBar;
   private List<String> commands;
@@ -33,6 +34,7 @@ public class Config {
     lang = "en";
     cooldown = 30;
     startShowBar = 5;
+    moreHealthByEachPlayer = true;
     commands = List.of("cobbleraids", "raid");
     banned = new BlackListRaid();
   }

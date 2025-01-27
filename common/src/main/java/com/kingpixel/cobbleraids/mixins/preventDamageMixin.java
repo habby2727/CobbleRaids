@@ -2,6 +2,7 @@ package com.kingpixel.cobbleraids.mixins;
 
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.kingpixel.cobbleraids.CobbleRaids;
+import com.kingpixel.cobbleutils.api.PermissionApi;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
@@ -12,13 +13,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.List;
+
 /**
  * @author Carlos Varas Alonso - 18/01/2025 18:39
  */
 
 @Mixin(LivingEntity.class)
 public class preventDamageMixin {
-
 
   @Inject(method = "damage", at = @At("HEAD"), cancellable = true)
   private void damage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
@@ -31,7 +33,10 @@ public class preventDamageMixin {
           cir.setReturnValue(false);
           Entity attacker = source.getAttacker();
           if (attacker instanceof ServerPlayerEntity player) {
-            CobbleRaids.language.getMenuRewards().open(player);
+            if (PermissionApi.hasPermission(player, List.of(CobbleRaids.MOD_ID + ".admin", CobbleRaids.MOD_ID +
+              ".rewards"), 2)) {
+              CobbleRaids.language.getMenuRewards().open(player);
+            }
           }
         }
       }

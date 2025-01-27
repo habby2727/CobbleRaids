@@ -9,7 +9,6 @@ import com.cobblemon.mod.common.battles.actor.PokemonBattleActor;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import kotlin.Unit;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NbtCompound;
@@ -57,14 +56,13 @@ public class BattleEvents {
 
 
     CobblemonEvents.LOOT_DROPPED.subscribe(Priority.HIGHEST, evt -> {
-      CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Loot dropped");
       var livingEntity = evt.getEntity();
       if (livingEntity == null) return Unit.INSTANCE;
       if (livingEntity instanceof PokemonEntity pokemonEntity) {
         Pokemon pokemon = pokemonEntity.getPokemon();
-        pokemon.clone(true);
         NbtCompound nbt = pokemon.getPersistentData();
         if (nbt.getBoolean(CobbleRaids.TAG_RAID) || nbt.getBoolean(CobbleRaids.TAG_FAKERAID)) {
+          pokemon.removeHeldItem();
           evt.cancel();
         }
       }
@@ -73,8 +71,10 @@ public class BattleEvents {
 
     CobblemonEvents.BATTLE_FLED.subscribe(Priority.LOWEST, evt -> {
       for (BattleActor actor : evt.getBattle().getActors()) {
+        if (actor == null) continue;
         if (actor instanceof PokemonBattleActor pokemonBattleActor) {
           PokemonEntity pokemonEntity = pokemonBattleActor.getEntity();
+          if (pokemonEntity == null) continue;
           if (pokemonEntity.getPokemon().getPersistentData().getBoolean(CobbleRaids.TAG_FAKERAID)) {
             pokemonEntity.remove(Entity.RemovalReason.DISCARDED);
           }

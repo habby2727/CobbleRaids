@@ -10,6 +10,7 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.AdventureTranslator;
+import com.kingpixel.cobbleutils.util.Utils;
 import kotlin.Unit;
 import lombok.Getter;
 import lombok.Setter;
@@ -36,7 +37,9 @@ public class PokemonRaid {
   private String pokemon;
   private Double chance;
   private Integer life;
+  private String heldItem;
   private float size;
+  private BossBarModel bossBar;
   private List<String> moves;
   private BlackListRaid banned;
 
@@ -45,7 +48,9 @@ public class PokemonRaid {
     this.chance = 0.1;
     this.life = 2000;
     this.size = 5.0f;
-    this.moves = List.of("thunderbolt", "quick-attack", "thunder-wave", "iron-tail");
+    this.heldItem = "cobblemon:leftovers";
+    this.bossBar = new BossBarModel();
+    this.moves = List.of("thunderbolt", "quickattack", "thunderwave", "irontail");
     this.banned = new BlackListRaid();
   }
 
@@ -63,6 +68,7 @@ public class PokemonRaid {
         i++;
       }
     }
+    pokemon.setHeldItem$common(Utils.parseItemId(heldItem));
   }
 
   public static ServerWorld getWorld(Raid raid) {
@@ -104,11 +110,6 @@ public class PokemonRaid {
     raidPokemon.getPersistentData().putBoolean(CobbleRaids.TAG_RAID, true);
     raidPokemon.setScaleModifier(size);
     apply(raidPokemon);
-    if (CobbleRaids.config.isDebug()) {
-      for (Move move : raidPokemon.getMoveSet()) {
-        CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Move: " + move.getName());
-      }
-    }
     PokemonEntity pokemonEntity = raidPokemon
       .sendOut(serverWorld, pos, null,
         pokemonEntity1 -> {

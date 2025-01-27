@@ -10,7 +10,6 @@ import ca.landonjw.gooeylibs2.api.page.GooeyPage;
 import ca.landonjw.gooeylibs2.api.template.types.ChestTemplate;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.ui.MenuDamageRewards;
-import com.kingpixel.cobbleutils.Model.AdvancedItemChance;
 import com.kingpixel.cobbleutils.Model.ItemModel;
 import com.kingpixel.cobbleutils.Model.PanelsConfig;
 import com.kingpixel.cobbleutils.features.shops.Shop;
@@ -28,20 +27,17 @@ import java.util.*;
  */
 @Getter
 public class DamageRewards extends RaidRewards {
-  private Map<String, AdvancedItemChance> rewards;
+  private Map<String, RewardDamage> rewards;
 
   public DamageRewards() {
     super();
     this.rewards = new HashMap<>();
     // Example rewards setup
-    rewards.put("1", new AdvancedItemChance());
-    rewards.put("2", new AdvancedItemChance());
-    rewards.put("3", new AdvancedItemChance());
-    rewards.put("4-7", new AdvancedItemChance());
-    rewards.put("8-100", new AdvancedItemChance());
-    rewards.forEach((key, value) -> {
-      value.setTitle("Damage Reward Position -> " + key);
-    });
+    rewards.put("1", new RewardDamage("First Position"));
+    rewards.put("2", new RewardDamage("Second Position"));
+    rewards.put("3", new RewardDamage("Third Position"));
+    rewards.put("4-7", new RewardDamage("4th to 7th Position"));
+    rewards.put("8-100", new RewardDamage("8th to 100th Position"));
   }
 
   @Override
@@ -57,13 +53,13 @@ public class DamageRewards extends RaidRewards {
       UUID playerUUID = sortedPlayer.getKey();
       ServerPlayerEntity player = CobbleRaids.server.getPlayerManager().getPlayer(playerUUID);
       if (player == null) continue;
-      int pos = sortedPlayers.indexOf(sortedPlayer) + 1; // Position is 1-based
-      for (Map.Entry<String, AdvancedItemChance> reward : rewards.entrySet()) {
+      int pos = sortedPlayers.indexOf(sortedPlayer) + 1; // Position is 1-base
+      for (Map.Entry<String, RewardDamage> reward : rewards.entrySet()) {
         String[] split = reward.getKey().split("-");
         int min = Integer.parseInt(split[0]);
         int max = split.length > 1 ? Integer.parseInt(split[1]) : min;
         if (pos >= min && pos <= max) {
-          AdvancedItemChance itemChance = reward.getValue();
+          RewardDamage itemChance = reward.getValue();
           itemChance.giveRewards(player);
           sendInfo(playerUUID, pos);
           break;
@@ -78,7 +74,7 @@ public class DamageRewards extends RaidRewards {
     PlayerUtils.sendMessage(
       player,
       CobbleRaids.language.getMessageRewardDamage()
-        .replace("%pos%", String.valueOf(pos + 1)),
+        .replace("%pos%", String.valueOf(pos)),
       CobbleRaids.config.getPrefix(),
       TypeMessage.CHAT
     );
@@ -141,8 +137,8 @@ public class DamageRewards extends RaidRewards {
   }
 
   public void check() {
-    Map<String, AdvancedItemChance> updatedRewards = new HashMap<>();
-    for (Map.Entry<String, AdvancedItemChance> entry : rewards.entrySet()) {
+    Map<String, RewardDamage> updatedRewards = new HashMap<>();
+    for (Map.Entry<String, RewardDamage> entry : rewards.entrySet()) {
       String key = entry.getKey();
       if (key.contains("=") || key.contains(">=")) {
         updatedRewards.put(key

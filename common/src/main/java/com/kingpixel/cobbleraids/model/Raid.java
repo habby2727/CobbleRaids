@@ -24,11 +24,10 @@ public class Raid {
   private double chance;
   private int time;
   private String world;
+  private Vector3d posPlayer;
   private Vector3d posRaid;
   private float directionX;
   private float directionY;
-  private Vector3d posPlayer;
-  private BossBarModel bossBar;
   private List<PokemonRaid> pokemons;
   private List<RaidRewards> rewards;
 
@@ -47,7 +46,6 @@ public class Raid {
     this.directionX = 0;
     this.directionY = 0;
     this.posPlayer = new Vector3d(1, 1, 1);
-    this.bossBar = new BossBarModel();
     this.pokemons = new ArrayList<>();
     pokemons.add(new PokemonRaid());
     pokemons.add(new PokemonRaid());
@@ -55,7 +53,9 @@ public class Raid {
   }
 
   public void check() {
-
+    for (PokemonRaid pokemon : pokemons) {
+      if (pokemon.getBossBar() == null) pokemon.setBossBar(new BossBarModel());
+    }
   }
 
   public PokemonRaid getPokemonRaid() {
