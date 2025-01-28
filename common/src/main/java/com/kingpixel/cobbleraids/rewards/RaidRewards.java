@@ -25,7 +25,6 @@ public abstract class RaidRewards {
     if (!active) return;
     ServerPlayerEntity player = CobbleRaids.server.getPlayerManager().getPlayer(playerUUID);
     if (player == null) return;
-
     reward.giveRewards(player);
   }
 }

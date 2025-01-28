@@ -75,7 +75,9 @@ public class BattleEvents {
         if (actor instanceof PokemonBattleActor pokemonBattleActor) {
           PokemonEntity pokemonEntity = pokemonBattleActor.getEntity();
           if (pokemonEntity == null) continue;
-          if (pokemonEntity.getPokemon().getPersistentData().getBoolean(CobbleRaids.TAG_FAKERAID)) {
+          Pokemon pokemon = pokemonEntity.getPokemon();
+          if (pokemon == null) continue;
+          if (pokemon.getPersistentData().getBoolean(CobbleRaids.TAG_FAKERAID)) {
             pokemonEntity.remove(Entity.RemovalReason.DISCARDED);
           }
         }

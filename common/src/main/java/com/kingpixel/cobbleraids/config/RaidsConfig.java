@@ -33,7 +33,7 @@ public class RaidsConfig {
       File[] files = folder.listFiles();
       if (files != null) {
         for (File file : files) {
-          Raid raid = null;
+          Raid raid;
           try {
             raid = Utils.newGson().fromJson(Utils.readFileSync(file), Raid.class);
             raid.setId(file.getName().replace(".json", ""));

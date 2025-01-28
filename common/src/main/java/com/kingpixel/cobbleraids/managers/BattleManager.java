@@ -180,18 +180,21 @@ public class BattleManager {
       pokemonRaid.apply(pokemon);
       PokemonEntity fakePokemon = pokemon
         .sendOut((ServerWorld) raidEntity.getEntityWorld(), raidEntity.getPos(), null,
-          pokemonEntity1 -> Unit.INSTANCE);
+          pokemonEntity -> {
+            pokemonEntity.setPersistent();
+            pokemonEntity.addStatusEffect(new StatusEffectInstance(StatusEffects.INVISIBILITY, -1, 9999, false, false));
+            pokemonEntity.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, -1, 9999, false, false));
+            pokemonEntity.setNoGravity(true);
+            pokemonEntity.setAiDisabled(true);
+            pokemonEntity.setMovementSpeed(0);
+            pokemonEntity.setCustomName(AdventureTranslator.toNative(raid.getName()));
+            return Unit.INSTANCE;
+          });
       if (fakePokemon == null) {
         CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Pokemon not found: " + fakePokemon);
         return;
       }
-      fakePokemon.setPersistent();
-      fakePokemon.addStatusEffect(new StatusEffectInstance(StatusEffects.INVISIBILITY, -1, 9999, false, false));
-      fakePokemon.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, -1, 9999, false, false));
-      fakePokemon.setNoGravity(true);
-      fakePokemon.setAiDisabled(true);
-      fakePokemon.setMovementSpeed(0);
-      fakePokemon.setCustomName(AdventureTranslator.toNative(raid.getName()));
+
       BattleBuilder.INSTANCE.pve(player,
         fakePokemon,
         pokemonUUID,
