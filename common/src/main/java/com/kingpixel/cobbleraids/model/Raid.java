@@ -56,6 +56,9 @@ public class Raid {
     for (PokemonRaid pokemon : pokemons) {
       if (pokemon.getBossBar() == null) pokemon.setBossBar(new BossBarModel());
     }
+    if (!world.contains(":")) {
+      world = "minecraft:" + world;
+    }
   }
 
   public PokemonRaid getPokemonRaid() {

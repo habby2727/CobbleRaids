@@ -73,11 +73,14 @@ public class PokemonRaid {
 
   public static ServerWorld getWorld(Raid raid) {
     ServerWorld serverWorld = null;
-    for (ServerWorld world : CobbleRaids.server.getWorlds()) {
-      String nameSpace = world.getRegistryKey().getValue().getPath();
-      if (CobbleRaids.config.isDebug()) {
+    if (CobbleRaids.config.isDebug()) {
+      for (ServerWorld world : CobbleRaids.server.getWorlds()) {
+        String nameSpace = world.getRegistryKey().getValue().toString();
         CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "World: " + nameSpace);
       }
+    }
+    for (ServerWorld world : CobbleRaids.server.getWorlds()) {
+      String nameSpace = world.getRegistryKey().getValue().toString();
       if (nameSpace.equals(raid.getWorld())) {
         serverWorld = world;
         break;

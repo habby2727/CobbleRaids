@@ -138,7 +138,7 @@ public class BattleManager {
     CobbleRaids.startDate = new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(CobbleRaids.config.getCooldown()));
     PlayerUtils.sendMessage(null, CobbleRaids.language.getMessageFinishRaid(), CobbleRaids.config.getPrefix(),
       TypeMessage.BROADCAST);
-
+    if (fakePokemons == null) fakePokemons = new ArrayList<>();
     for (PokemonEntity fakePokemon : fakePokemons) {
       if (fakePokemon == null) continue;
       UUID battleUUID = fakePokemon.getBattleId();

@@ -50,7 +50,9 @@ public class MenuRewards {
       template.set(damageRewards.getSlot(), damageRewards.getButton(action -> {
         CobbleRaids.battleManager.getRaid().getRewards().forEach(reward -> {
           if (reward instanceof DamageRewards DamageRewards) {
-            DamageRewards.open(player);
+            if (reward.isActive()) {
+              DamageRewards.open(player);
+            }
           }
         });
       }));
@@ -60,7 +62,9 @@ public class MenuRewards {
       template.set(globalRewards.getSlot(), globalRewards.getButton(action -> {
         CobbleRaids.battleManager.getRaid().getRewards().forEach(reward -> {
           if (reward instanceof GlobalRewards GlobalRewards) {
-            GlobalRewards.open(player);
+            if (reward.isActive()) {
+              GlobalRewards.open(player);
+            }
           }
         });
       }));
@@ -70,7 +74,9 @@ public class MenuRewards {
       template.set(killRewards.getSlot(), killRewards.getButton(action -> {
         CobbleRaids.battleManager.getRaid().getRewards().forEach(reward -> {
           if (reward instanceof LastHitRewards KillRewards) {
-            KillRewards.open(player);
+            if (reward.isActive()) {
+              KillRewards.open(player);
+            }
           }
         });
       }));

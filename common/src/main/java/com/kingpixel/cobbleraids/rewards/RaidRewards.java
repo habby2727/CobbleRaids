@@ -2,6 +2,8 @@ package com.kingpixel.cobbleraids.rewards;
 
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleutils.Model.AdvancedItemChance;
+import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.Map;
@@ -10,6 +12,8 @@ import java.util.UUID;
 /**
  * @author Carlos Varas Alonso - 17/01/2025 23:22
  */
+@Getter
+@Setter
 public abstract class RaidRewards {
   boolean active = true;
 
