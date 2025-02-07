@@ -1,9 +1,12 @@
 package com.kingpixel.cobbleraids.command;
 
 import com.kingpixel.cobbleraids.CobbleRaids;
+import com.kingpixel.cobbleraids.config.RaidsConfig;
 import com.kingpixel.cobbleraids.managers.BattleManager;
 import com.kingpixel.cobbleraids.model.PokemonRaid;
 import com.kingpixel.cobbleraids.model.Raid;
+import com.kingpixel.cobbleraids.model.RaidStarted;
+import com.kingpixel.cobbleraids.model.TypeRaid;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.api.PermissionApi;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
@@ -12,12 +15,15 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.command.CommandRegistryAccess;
+import net.minecraft.command.argument.UuidArgumentType;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
 import org.joml.Vector3d;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * @author Carlos Varas Alonso - 10/06/2024 14:08
@@ -32,13 +38,15 @@ public class CommandTree {
       dispatcher.register(
         base
           .executes(context -> {
-            if (context.getSource().isExecutedByPlayer()) {
-              ServerPlayerEntity player = context.getSource().getPlayer();
-              if (CobbleRaids.battleManager != null) {
-                Raid raid = CobbleRaids.battleManager.getRaid();
-                Vector3d pos = raid.getPosPlayer();
-                player.teleport(PokemonRaid.getWorld(raid), pos.x(), pos.y(), pos.z(), player.getYaw(),
+            for (RaidStarted activeRaid : BattleManager.activeRaids) {
+              if (activeRaid == null) continue;
+              if (activeRaid.getRaid().getType().equals(TypeRaid.GLOBAL)) {
+                ServerPlayerEntity player = context.getSource().getPlayer();
+                if (player == null) return 0;
+                player.teleport(PokemonRaid.getWorld(activeRaid.getRaid()), activeRaid.getRaid().getPosPlayer().x(),
+                  activeRaid.getRaid().getPosPlayer().y(), activeRaid.getRaid().getPosPlayer().z(), player.getYaw(),
                   player.getPitch());
+                return 0;
               }
             }
             return 1;
@@ -70,15 +78,21 @@ public class CommandTree {
               .then(
                 CommandManager.argument("raid", StringArgumentType.string())
                   .suggests((context, builder) -> {
-                    CobbleRaids.raidsConfig.getRaids().forEach(raid -> {
-                      builder.suggest(raid.getId());
-                    });
+                    for (List<Raid> value : RaidsConfig.raids.values()) {
+                      for (Raid raid : value) {
+                        builder.suggest(raid.getId());
+                      }
+                    }
                     return builder.buildFuture();
                   })
                   .executes(context -> {
                     Raid raid = CobbleRaids.raidsConfig.getRaid(StringArgumentType.getString(context,
                       "raid"));
-                    BattleManager.startRaid(raid);
+                    if (raid == null) {
+                      context.getSource().sendMessage(Text.literal("Raid not found"));
+                      return 0;
+                    }
+                    BattleManager.startRaid(raid, null);
                     return 1;
                   })
               )
@@ -86,30 +100,20 @@ public class CommandTree {
             CommandManager.literal("finish")
               .requires(source ->
                 PermissionApi.hasPermission(source, List.of(CobbleRaids.MOD_ID + ".admin"), 2))
-              .executes(context -> {
-                if (CobbleRaids.battleManager != null) {
-                  CobbleRaids.battleManager.finishRaid(false);
-                }
-                return 1;
-              })
-          ).then(
-            CommandManager.literal("tp")
-              .requires(source ->
-                PermissionApi.hasPermission(source, List.of(CobbleRaids.MOD_ID + ".admin"), 2))
               .then(
-                CommandManager.argument("raid", StringArgumentType.string())
-                  .executes(context -> {
-                    if (!context.getSource().isExecutedByPlayer()) return 0;
-                    Raid raid = CobbleRaids.raidsConfig.getRaid(StringArgumentType.getString(context,
-                      "raid"));
-                    Vector3d pos = raid.getPosPlayer();
-                    if (context.getSource().isExecutedByPlayer()) {
-                      ServerPlayerEntity player = context.getSource().getPlayer();
-                      player.teleport(PokemonRaid.getWorld(raid), pos.x(), pos.y(), pos.z(), player.getYaw(),
-                        player.getPitch());
-                    }
-                    return 1;
+                CommandManager.argument("raid", UuidArgumentType.uuid())
+                  .suggests((context, builder) -> {
+                    BattleManager.activeRaids.forEach(raid -> {
+                      builder.suggest(raid.getRaidUUID().toString());
+                    });
+                    return builder.buildFuture();
                   })
+                  .executes(context -> {
+                      RaidStarted raidStarted = BattleManager.getActiveRaid(UuidArgumentType.getUuid(context, "raid"));
+                      raidStarted.finish();
+                      return 1;
+                    }
+                  )
               )
           ).then(
             CommandManager.literal("time")
@@ -125,8 +129,35 @@ public class CommandTree {
                 return 1;
               })
           )
+          .then(
+            CommandManager.literal("tp")
+              .requires(source ->
+                PermissionApi.hasPermission(source, List.of(CobbleRaids.MOD_ID + ".admin"), 2))
+              .then(
+                CommandManager.argument("raid", StringArgumentType.string())
+                  .suggests((context, builder) -> {
+                    BattleManager.activeRaids.forEach(raidStarted -> {
+                      builder.suggest(raidStarted.getRaidUUID().toString());
+                    });
+                    return builder.buildFuture();
+                  })
+                  .executes(context -> {
+                    if (!context.getSource().isExecutedByPlayer()) return 0;
+                    String s = StringArgumentType.getString(context,
+                      "raid");
+                    RaidStarted raid = BattleManager.getActiveRaid(UUID.fromString(s));
+                    Vector3d pos = raid.getRaid().getPosPlayer();
+                    if (context.getSource().isExecutedByPlayer()) {
+                      ServerPlayerEntity player = context.getSource().getPlayer();
+                      if (player == null) return 0;
+                      player.teleport(PokemonRaid.getWorld(raid.getRaid()), pos.x(), pos.y(), pos.z(), player.getYaw(),
+                        player.getPitch());
+                    }
+                    return 1;
+                  })
+              )
+          )
       );
-
     });
   }
 

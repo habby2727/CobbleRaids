@@ -8,16 +8,19 @@ import ca.landonjw.gooeylibs2.api.button.linked.LinkedPageButton;
 import ca.landonjw.gooeylibs2.api.helpers.PaginationHelper;
 import ca.landonjw.gooeylibs2.api.page.GooeyPage;
 import ca.landonjw.gooeylibs2.api.template.types.ChestTemplate;
+import com.cobblemon.mod.common.Cobblemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
+import com.kingpixel.cobbleraids.model.CaptureSession;
+import com.kingpixel.cobbleraids.model.PokemonRaid;
 import com.kingpixel.cobbleraids.ui.MenuDamageRewards;
 import com.kingpixel.cobbleutils.Model.ItemModel;
 import com.kingpixel.cobbleutils.Model.PanelsConfig;
 import com.kingpixel.cobbleutils.features.shops.Shop;
-import com.kingpixel.cobbleutils.util.AdventureTranslator;
-import com.kingpixel.cobbleutils.util.PlayerUtils;
-import com.kingpixel.cobbleutils.util.TypeMessage;
-import com.kingpixel.cobbleutils.util.UIUtils;
+import com.kingpixel.cobbleutils.util.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.*;
@@ -26,6 +29,9 @@ import java.util.*;
  * Improved by GitHub Copilot
  */
 @Getter
+@Setter
+@EqualsAndHashCode(callSuper = false)
+@Data
 public class DamageRewards extends RaidRewards {
   private Map<String, RewardDamage> rewards;
 
@@ -40,33 +46,61 @@ public class DamageRewards extends RaidRewards {
     rewards.put("8-100", new RewardDamage("8th to 100th Position"));
   }
 
-  @Override
-  public void giveRewards(Map<UUID, Integer> players) {
-    if (!active) return;
-    if (players.isEmpty()) return;
-    // Sort players by damage in descending order
-    List<Map.Entry<UUID, Integer>> sortedPlayers = players.entrySet().stream()
-      .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
-      .toList();
+  public void giveRewards(Map<UUID, Integer> players, PokemonRaid pokemonRaid) {
+    try {
+      if (!active) return;
+      if (players.isEmpty()) return;
+      // Sort players by damage in descending order
+      List<Map.Entry<UUID, Integer>> sortedPlayers = players.entrySet().stream()
+        .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
+        .toList();
 
-    for (Map.Entry<UUID, Integer> sortedPlayer : sortedPlayers) {
-      UUID playerUUID = sortedPlayer.getKey();
-      ServerPlayerEntity player = CobbleRaids.server.getPlayerManager().getPlayer(playerUUID);
-      if (player == null) continue;
-      int pos = sortedPlayers.indexOf(sortedPlayer) + 1; // Position is 1-base
-      for (Map.Entry<String, RewardDamage> reward : rewards.entrySet()) {
-        String[] split = reward.getKey().split("-");
-        int min = Integer.parseInt(split[0]);
-        int max = split.length > 1 ? Integer.parseInt(split[1]) : min;
-        if (pos >= min && pos <= max) {
-          RewardDamage itemChance = reward.getValue();
-          itemChance.giveRewards(player);
-          sendInfo(playerUUID, pos);
-          break;
+      for (Map.Entry<UUID, Integer> sortedPlayer : sortedPlayers) {
+        UUID playerUUID = sortedPlayer.getKey();
+        ServerPlayerEntity player = CobbleRaids.server.getPlayerManager().getPlayer(playerUUID);
+        if (player == null) continue;
+
+        int pos = sortedPlayers.indexOf(sortedPlayer) + 1; // Position is 1-base
+        for (Map.Entry<String, RewardDamage> reward : rewards.entrySet()) {
+          String[] split = reward.getKey().split("-");
+          int min = Integer.parseInt(split[0]);
+          int max = split.length > 1 ? Integer.parseInt(split[1]) : min;
+          if (pos >= min && pos <= max) {
+            RewardDamage rewardDamage = reward.getValue();
+            rewardDamage.giveRewards(player);
+            if (rewardDamage.isCaptureFight()) {
+              var battle = Cobblemon.INSTANCE.getBattleRegistry().getBattleByParticipatingPlayer(player);
+              if (battle != null) {
+                battle.setEnded(true);
+                battle.end();
+              }
+              if (rewardDamage.getRateSuccess() <= 0 || Utils.RANDOM.nextInt(rewardDamage.getRateSuccess()) == 0) {
+                PlayerUtils.sendMessage(
+                  player,
+                  CobbleRaids.language.getMessageCaptureSessionLuck(),
+                  CobbleRaids.config.getPrefix(),
+                  TypeMessage.CHAT
+                );
+                CaptureSession.activeCaptures.add(new CaptureSession(pokemonRaid, player));
+              } else {
+                PlayerUtils.sendMessage(
+                  player,
+                  CobbleRaids.language.getMessageCaptureSessionNotLuck(),
+                  CobbleRaids.config.getPrefix(),
+                  TypeMessage.CHAT
+                );
+              }
+            }
+            sendInfo(playerUUID, pos);
+            break;
+          }
         }
       }
+    } catch (Exception e) {
+      e.printStackTrace();
     }
   }
+
 
   private void sendInfo(UUID playerUUID, int pos) {
     ServerPlayerEntity player = CobbleRaids.server.getPlayerManager().getPlayer(playerUUID);
@@ -80,7 +114,7 @@ public class DamageRewards extends RaidRewards {
     );
   }
 
-  @Override public void open(ServerPlayerEntity player) {
+  @Override public void open(ServerPlayerEntity player, String raid) {
     MenuDamageRewards menu = CobbleRaids.language.getMenuDamageRewards();
     int rows = menu.getRows();
     String title = menu.getTitle();
@@ -106,7 +140,7 @@ public class DamageRewards extends RaidRewards {
 
     if (UIUtils.isInside(close, rows)) {
       template.set(close.getSlot(), close.getButton(action -> {
-        CobbleRaids.language.getMenuRewards().open(action.getPlayer());
+        CobbleRaids.language.getMenuRewards().open(action.getPlayer(), raid);
       }));
     }
 
@@ -124,7 +158,7 @@ public class DamageRewards extends RaidRewards {
       GooeyButton button = menu.getDisplay().getButton(1, name, action -> {
         value.openMenu(player, template1 -> {
         }, close1 -> {
-          open(player);
+          open(player, raid);
         });
       });
       buttons.add(button);

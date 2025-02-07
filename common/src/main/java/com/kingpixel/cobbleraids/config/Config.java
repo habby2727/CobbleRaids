@@ -9,6 +9,8 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.ToString;
 
+import java.time.DayOfWeek;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -25,6 +27,9 @@ public class Config {
   private boolean moreHealthByEachPlayer;
   private int cooldown;
   private int startShowBar;
+  private int secondsToStartCapture;
+  private int secondsToFinishCapture;
+  private List<DayOfWeek> days;
   private List<String> commands;
   private BlackListRaid banned;
 
@@ -34,6 +39,9 @@ public class Config {
     lang = "en";
     cooldown = 30;
     startShowBar = 5;
+    secondsToStartCapture = 60;
+    secondsToFinishCapture = 120;
+    days = Arrays.stream(DayOfWeek.values()).toList();
     moreHealthByEachPlayer = true;
     commands = List.of("cobbleraids", "raid");
     banned = new BlackListRaid();

@@ -2,6 +2,7 @@ package com.kingpixel.cobbleraids.config;
 
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.model.Raid;
+import com.kingpixel.cobbleraids.model.TypeRaid;
 import com.kingpixel.cobbleraids.rewards.DamageRewards;
 import com.kingpixel.cobbleraids.rewards.GlobalRewards;
 import com.kingpixel.cobbleraids.rewards.LastHitRewards;
@@ -12,14 +13,29 @@ import lombok.Getter;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Carlos Varas Alonso - 17/01/2025 0:26
  */
 @Getter
 public class RaidsConfig {
-  public List<Raid> raids = new ArrayList<>();
+  public static Map<TypeRaid, List<Raid>> raids = new HashMap<>();
+
+  public static Raid getRandomRaid(TypeRaid typeRaid) {
+    var list = raids.get(typeRaid);
+    double totalWeight = list.stream().mapToDouble(Raid::getChance).sum();
+    double random = Math.random() * totalWeight;
+    for (Raid raid : list) {
+      random -= raid.getChance();
+      if (random <= 0) {
+        return raid;
+      }
+    }
+    return list.getLast();
+  }
 
 
   public void init() {
@@ -36,6 +52,10 @@ public class RaidsConfig {
           Raid raid;
           try {
             raid = Utils.newGson().fromJson(Utils.readFileSync(file), Raid.class);
+            if (raid == null) {
+              CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error reading raid " + file.getAbsolutePath());
+              continue;
+            }
             raid.setId(file.getName().replace(".json", ""));
             raid.check();
             Utils.writeFileAsync(CobbleRaids.PATH_RAIDS, raid.getId() + ".json", Utils.newGson().toJson(raid));
@@ -43,7 +63,7 @@ public class RaidsConfig {
             addDamageReward(raid);
             addGlobalReward(raid);
             addKillReward(raid);
-            raids.add(raid);
+            raids.computeIfAbsent(raid.getType(), k -> new ArrayList<>()).add(raid);
           } catch (IOException e) {
             throw new RuntimeException(e);
           }
@@ -96,32 +116,25 @@ public class RaidsConfig {
   }
 
   private void createDefaultRaids() {
-    raids.add(new Raid());
-    raids.forEach(tag -> {
-      Utils.writeFileAsync(CobbleRaids.PATH_RAIDS, tag.getId() + ".json", Utils.newGson().toJson(tag));
+    raids.put(TypeRaid.GLOBAL, new ArrayList<>());
+    Raid raid = new Raid();
+    raid.setId("default");
+    raid.setName("&cdefault");
+    raids.forEach((type, list) -> {
+      list.add(raid);
+      try {
+        Utils.writeFileAsync(CobbleRaids.PATH_RAIDS, raid.getId() + ".json", Utils.newGson().toJson(raid));
+        addDamageReward(raid);
+        addGlobalReward(raid);
+        addKillReward(raid);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     });
   }
 
   public Raid getRaid(String id) {
-    return raids.stream().filter(tag -> tag.getId().equals(id)).findFirst().orElse(null);
-  }
-
-  public Raid getRandomRaid() {
-    double totalWeight = raids.stream()
-      .filter(Raid::isActive)
-      .mapToDouble(Raid::getChance)
-      .sum();
-
-    double random = Math.random() * totalWeight;
-
-    for (Raid raid : raids) {
-      if (!raid.isActive()) continue;
-      random -= raid.getChance();
-      if (random <= 0) {
-        return raid;
-      }
-    }
-    return null;
+    return raids.values().stream().flatMap(List::stream).filter(tag -> tag.getId().equals(id)).findFirst().orElse(null);
   }
 
 

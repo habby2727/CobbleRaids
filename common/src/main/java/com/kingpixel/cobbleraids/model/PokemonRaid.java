@@ -8,10 +8,12 @@ import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
+import com.kingpixel.cobbleraids.managers.BattleManager;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.AdventureTranslator;
 import com.kingpixel.cobbleutils.util.Utils;
 import kotlin.Unit;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -33,6 +35,7 @@ import java.util.List;
 @Getter
 @Setter
 @ToString
+@Data
 public class PokemonRaid {
   private String pokemon;
   private Double chance;
@@ -54,6 +57,11 @@ public class PokemonRaid {
     this.banned = new BlackListRaid();
   }
 
+  /**
+   * Apply the pokemon to the raid
+   *
+   * @param pokemon the pokemon to apply
+   */
   public void apply(Pokemon pokemon) {
     int i = 0;
     for (String move : moves) {
@@ -73,12 +81,6 @@ public class PokemonRaid {
 
   public static ServerWorld getWorld(Raid raid) {
     ServerWorld serverWorld = null;
-    if (CobbleRaids.config.isDebug()) {
-      for (ServerWorld world : CobbleRaids.server.getWorlds()) {
-        String nameSpace = world.getRegistryKey().getValue().toString();
-        CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "World: " + nameSpace);
-      }
-    }
     for (ServerWorld world : CobbleRaids.server.getWorlds()) {
       String nameSpace = world.getRegistryKey().getValue().toString();
       if (nameSpace.equals(raid.getWorld())) {
@@ -92,25 +94,33 @@ public class PokemonRaid {
   public PokemonEntity genPokemonEntity(Raid raid) {
     ServerWorld serverWorld = getWorld(raid);
 
+
     if (serverWorld == null) {
       CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "World not found: " + raid.getWorld());
       return null;
     }
     Vec3d pos = new Vec3d(raid.getPosRaid().x, raid.getPosRaid().y, raid.getPosRaid().z);
-    if (CobbleRaids.config.isDebug()) {
-      CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Pos: " + pos);
-    }
-    List<Entity> entities = serverWorld.getOtherEntities(null, Box.of(pos, 32, 32, 32));
-    for (Entity entity : entities) {
-      if (entity instanceof PokemonEntity pokemonEntity) {
-        NbtCompound nbt = pokemonEntity.getPokemon().getPersistentData();
-        if (nbt.getBoolean(CobbleRaids.TAG_RAID) || nbt.getBoolean(CobbleRaids.TAG_FAKERAID)) {
-          entity.remove(Entity.RemovalReason.DISCARDED);
-        }
+
+    List<PokemonEntity> entities = serverWorld.getEntitiesByClass(PokemonEntity.class, Box.of(pos, 16, 16, 16)
+      , entity -> {
+        NbtCompound nbt = entity.getPokemon().getPersistentData();
+        return nbt.getBoolean(CobbleRaids.TAG_RAID) || nbt.getBoolean(CobbleRaids.TAG_FAKERAID);
+      });
+    for (PokemonEntity pokemonEntity : entities) {
+      NbtCompound nbt = pokemonEntity.getPokemon().getPersistentData();
+      if (nbt.getBoolean(CobbleRaids.TAG_RAID) || nbt.getBoolean(CobbleRaids.TAG_FAKERAID)) {
+        BattleManager.activeRaids.stream()
+          .filter(raidStarted -> raidStarted.getRaidEntity().getUuid().equals(pokemonEntity.getUuid()))
+          .findFirst()
+          .ifPresent(RaidStarted::finish);
+        pokemonEntity.remove(Entity.RemovalReason.DISCARDED);
+
       }
     }
     Pokemon raidPokemon = PokemonProperties.Companion.parse(pokemon + " uncatchable=yes").create();
     raidPokemon.getPersistentData().putBoolean(CobbleRaids.TAG_RAID, true);
+    raidPokemon.getPersistentData().putString(CobbleRaids.TAG_RAID_ID, raid.getId());
+
     raidPokemon.setScaleModifier(size);
     apply(raidPokemon);
     PokemonEntity pokemonEntity = raidPokemon
@@ -127,6 +137,7 @@ public class PokemonRaid {
           pokemonEntity1.setAiDisabled(true);
           pokemonEntity1.setGlowing(true);
           pokemonEntity1.teleport(raid.getPosRaid().x, raid.getPosRaid().y, raid.getPosRaid().z, false);
+          raidPokemon.getPersistentData().putUuid(CobbleRaids.TAG_RAID_ACTIVE, pokemonEntity1.getUuid());
           return Unit.INSTANCE;
 
         });
@@ -136,6 +147,7 @@ public class PokemonRaid {
     }
     return pokemonEntity;
   }
+
 
   /**
    * Check if the player is permited to join the raid
@@ -147,8 +159,16 @@ public class PokemonRaid {
   public boolean isPermitted(ServerPlayerEntity player) {
     for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getParty(player)) {
       if (CobbleRaids.config.getBanned().isBanned(player, pokemon)) return false;
-      if (CobbleRaids.battleManager.getPokemonRaid().getBanned().isBanned(player, pokemon)) return false;
+      if (getBanned().isBanned(player, pokemon)) return false;
     }
     return true;
+  }
+
+  @Override protected Object clone() throws CloneNotSupportedException {
+    return super.clone();
+  }
+
+  public Pokemon obtainPokemon() {
+    return PokemonProperties.Companion.parse(pokemon.trim()).create();
   }
 }

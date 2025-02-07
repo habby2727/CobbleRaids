@@ -4,9 +4,12 @@ import ca.landonjw.gooeylibs2.api.UIManager;
 import ca.landonjw.gooeylibs2.api.page.GooeyPage;
 import ca.landonjw.gooeylibs2.api.template.types.ChestTemplate;
 import com.kingpixel.cobbleraids.CobbleRaids;
+import com.kingpixel.cobbleraids.model.Raid;
 import com.kingpixel.cobbleraids.rewards.DamageRewards;
 import com.kingpixel.cobbleraids.rewards.GlobalRewards;
 import com.kingpixel.cobbleraids.rewards.LastHitRewards;
+import com.kingpixel.cobbleraids.rewards.RaidRewards;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.ItemModel;
 import com.kingpixel.cobbleutils.Model.PanelsConfig;
 import com.kingpixel.cobbleutils.util.AdventureTranslator;
@@ -39,48 +42,47 @@ public class MenuRewards {
     panels.add(new PanelsConfig(new ItemModel("minecraft:gray_stained_glass_pane"), 3));
   }
 
-  public void open(ServerPlayerEntity player) {
+  public void open(ServerPlayerEntity player, String s) {
     ChestTemplate template = ChestTemplate
       .builder(rows)
       .build();
 
     PanelsConfig.applyConfig(template, panels);
+    Raid raid = Raid.getRaid(s);
+    if (raid == null) {
+      CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID + " Raid not found: " + s);
+      return;
+    }
+    for (RaidRewards reward : raid.getRewards()) {
+      if (!reward.isActive()) continue;
+      switch (reward) {
+        case DamageRewards DamageRewards -> {
+          if (UIUtils.isInside(damageRewards, rows)) {
+            template.set(damageRewards.getSlot(), damageRewards.getButton(action -> {
+              DamageRewards.open(player, s);
+            }));
 
-    if (UIUtils.isInside(damageRewards, rows)) {
-      template.set(damageRewards.getSlot(), damageRewards.getButton(action -> {
-        CobbleRaids.battleManager.getRaid().getRewards().forEach(reward -> {
-          if (reward instanceof DamageRewards DamageRewards) {
-            if (reward.isActive()) {
-              DamageRewards.open(player);
-            }
           }
-        });
-      }));
+        }
+        case LastHitRewards KillRewards -> {
+          if (UIUtils.isInside(killRewards, rows)) {
+            template.set(killRewards.getSlot(), killRewards.getButton(action -> {
+              KillRewards.open(player, s);
+            }));
+          }
+        }
+        case GlobalRewards GlobalRewards -> {
+          if (UIUtils.isInside(globalRewards, rows)) {
+            template.set(globalRewards.getSlot(), globalRewards.getButton(action -> {
+              GlobalRewards.open(player, s);
+            }));
+          }
+        }
+        default -> {
+        }
+      }
     }
 
-    if (UIUtils.isInside(globalRewards, rows)) {
-      template.set(globalRewards.getSlot(), globalRewards.getButton(action -> {
-        CobbleRaids.battleManager.getRaid().getRewards().forEach(reward -> {
-          if (reward instanceof GlobalRewards GlobalRewards) {
-            if (reward.isActive()) {
-              GlobalRewards.open(player);
-            }
-          }
-        });
-      }));
-    }
-
-    if (UIUtils.isInside(killRewards, rows)) {
-      template.set(killRewards.getSlot(), killRewards.getButton(action -> {
-        CobbleRaids.battleManager.getRaid().getRewards().forEach(reward -> {
-          if (reward instanceof LastHitRewards KillRewards) {
-            if (reward.isActive()) {
-              KillRewards.open(player);
-            }
-          }
-        });
-      }));
-    }
 
     if (UIUtils.isInside(close, rows)) {
       template.set(close.getSlot(), close.getButton(action -> UIManager.closeUI(player)));
@@ -89,7 +91,7 @@ public class MenuRewards {
     GooeyPage page = GooeyPage.builder()
       .template(template)
       .title(AdventureTranslator.toNative(title
-        .replace("%raid%", CobbleRaids.battleManager.getRaid().getId())))
+        .replace("%raid%", raid.getId())))
       .build();
 
     UIManager.openUIForcefully(player, page);

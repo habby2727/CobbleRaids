@@ -27,6 +27,10 @@ public class Lang {
   private String messageStartRaid;
   private String messageRaidFinishing;
   private String messageFinishRaid;
+  private String messageCaptureSessionLuck;
+  private String messageCaptureSessionNotLuck;
+  private String messageStartingCapture;
+  private String messageFinishingCapture;
   private String messageBannedPokemon;
   private String messageBannedAbility;
   private String messageBannedItem;
@@ -59,6 +63,10 @@ public class Lang {
     this.messageBannedMove = "%prefix% &cYour Pokémon %pokemon% has this banned move: %move% in the moveSet!";
     this.messageBannedNature = "%prefix% &cYour Pokémon %pokemon% has a banned nature: %nature%!";
     this.messageBannedType = "%prefix% &cYour Pokémon %pokemon% is of a banned type: %type%!";
+    this.messageCaptureSessionLuck = "%prefix% &aYou have luck, you enter to capture session raid!";
+    this.messageCaptureSessionNotLuck = "%prefix% &cYou don't have luck, you can't enter to capture session raid!";
+    this.messageStartingCapture = "%prefix% &aStarting capture session in: %cooldown%!";
+    this.messageFinishingCapture = "%prefix% &aCapture session finishing in: %cooldown%!";
     this.menuRewards = new MenuRewards();
     this.menuDamageRewards = new MenuDamageRewards();
   }

@@ -4,13 +4,19 @@ import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleutils.Model.AdvancedItemChance;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.Setter;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 /**
  * @author Carlos Varas Alonso - 17/01/2025 22:58
  */
 @Getter
+@Setter
+@EqualsAndHashCode(callSuper = false)
+@Data
 public class LastHitRewards extends RaidRewards {
   private final AdvancedItemChance reward;
 
@@ -35,10 +41,10 @@ public class LastHitRewards extends RaidRewards {
     }
   }
 
-  @Override public void open(ServerPlayerEntity player) {
+  @Override public void open(ServerPlayerEntity player, String raid) {
     reward.openMenu(player, template -> {
     }, close -> {
-      CobbleRaids.language.getMenuRewards().open(player);
+      CobbleRaids.language.getMenuRewards().open(player, raid);
     });
   }
 }
