@@ -49,6 +49,11 @@ public class RaidStarted {
   private Date finishTime;
   private List<PokemonEntity> fakePokemons;
   private ServerPlayerEntity lastHit;
+  private ServerWorld world;
+  private int chunkX;
+  private int chunkZ;
+
+
 
   public RaidStarted(Raid raid, @Nullable PokemonRaid r) {
     this.raid = raid;
@@ -60,6 +65,12 @@ public class RaidStarted {
     this.raidEntity = pokemonRaid.genPokemonEntity(raid);
     this.raidUUID = raidEntity.getUuid();
     this.damageMap = new HashMap<>();
+    this.world = (ServerWorld) raidEntity.getEntityWorld();
+
+    this.chunkX = raidEntity.getBlockPos().getX() >> 4;
+    this.chunkZ = raidEntity.getBlockPos().getZ() >> 4;
+    world.setChunkForced(chunkX, chunkZ, true);
+
     if (CobbleRaids.config.isMoreHealthByEachPlayer()) {
       int count = 0;
       for (ServerPlayerEntity player : CobbleRaids.server.getPlayerManager().getPlayerList()) {
@@ -67,7 +78,7 @@ public class RaidStarted {
           count++;
         }
       }
-      this.maxLife = pokemonRaid.getLife() * count == 0 ? 1 : count;
+      this.maxLife = pokemonRaid.getLife() * (count == 0 ? 1 : count);
     } else {
       this.maxLife = pokemonRaid.getLife();
     }
@@ -75,6 +86,7 @@ public class RaidStarted {
     this.finishTime = new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(raid.getTime()));
     this.fakePokemons = new ArrayList<>();
   }
+
 
 
   public void startBattle(ServerPlayerEntity player) {
@@ -207,12 +219,19 @@ public class RaidStarted {
     }
     if (raid.getType().equals(TypeRaid.GLOBAL)) {
       CobbleRaids.startDate =
-        new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(CobbleRaids.config.getCooldown()));
+              new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(CobbleRaids.config.getCooldown()));
     }
     sendInfo();
     giveRewards();
+    fakePokemons.clear();
+
+    world.setChunkForced(chunkX, chunkZ, false);
+
     BattleManager.activeRaids.remove(this);
   }
+
+
+
 
   private void giveRewards() {
     if (raid.isNeedDefeat()) {
