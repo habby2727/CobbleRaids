@@ -10,6 +10,7 @@ import com.kingpixel.cobbleraids.managers.BattleManager;
 import com.kingpixel.cobbleraids.rewards.DamageRewards;
 import com.kingpixel.cobbleraids.rewards.LastHitRewards;
 import com.kingpixel.cobbleraids.rewards.RaidRewards;
+import com.kingpixel.cobblesize.Model.SizeChance;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.Particle;
 import com.kingpixel.cobbleutils.api.PermissionApi;
@@ -54,7 +55,6 @@ public class RaidStarted {
   private int chunkZ;
 
 
-
   public RaidStarted(Raid raid, @Nullable PokemonRaid r) {
     this.raid = raid;
     if (r == null) {
@@ -88,11 +88,10 @@ public class RaidStarted {
   }
 
 
-
   public void startBattle(ServerPlayerEntity player) {
     Pokemon pokemon = raidEntity.getPokemon().clone(true, DynamicRegistryManager.EMPTY);
     pokemon.setShiny(false);
-    pokemon.setScaleModifier(0.1f);
+    pokemon.setScaleModifier(0.01f);
     pokemonRaid.apply(pokemon);
     pokemon.getPersistentData().remove(CobbleRaids.TAG_RAID);
     pokemon.getPersistentData().putBoolean(CobbleRaids.TAG_FAKERAID, true);
@@ -103,6 +102,7 @@ public class RaidStarted {
     int totalLevel = 0;
     UUID pokemonUUID = null;
     for (Pokemon pokemonParty : party) {
+      changeSize(pokemonParty);
       count++;
       totalLevel += pokemonParty.getLevel();
       if (!pokemonParty.isFainted()) {
@@ -141,13 +141,13 @@ public class RaidStarted {
       false,
       raid.isHeal(),
       Cobblemon.config.getDefaultFleeDistance(),
-      Cobblemon.INSTANCE.getStorage().getParty(player)
+      party
     );
 
     fakePokemons.add(fakePokemon);
   }
 
-  public void finishBattle(ServerPlayerEntity serverPlayerEntity, Pokemon pokemon) {
+  public void finishBattle(ServerPlayerEntity player, Pokemon pokemon) {
     var pokemonEntity = fakePokemons.stream()
       .filter(pokemonEntity1 -> pokemonEntity1.getPokemon().getUuid().equals(pokemon.getUuid()))
       .findFirst()
@@ -155,9 +155,17 @@ public class RaidStarted {
     if (pokemonEntity == null) return;
     pokemonEntity.teleport(pokemonEntity.getX(), -1000, pokemonEntity.getZ(), false);
     fakePokemons.remove(pokemonEntity);
-    removeLife(serverPlayerEntity, pokemonEntity);
+    resolverSize(player);
+    removeLife(player, pokemonEntity);
   }
 
+
+  private void resolverSize(ServerPlayerEntity player) {
+    try {
+      Cobblemon.INSTANCE.getStorage().getParty(player).forEach(SizeChance::solveSize);
+    } catch (NoClassDefFoundError | NoSuchMethodError | Exception ignored) {
+    }
+  }
 
   public void removeLife(ServerPlayerEntity player, PokemonEntity pokemonEntity) {
     Pokemon pokemon = pokemonEntity.getPokemon();
@@ -179,6 +187,7 @@ public class RaidStarted {
   }
 
   public void sendBossBar() {
+    // BossBar
     var title = AdventureTranslator.toNative(
       pokemonRaid.getBossBar().getTitle()
         .replace("%boss%", raid.getName())
@@ -195,8 +204,13 @@ public class RaidStarted {
     bossBar.setName(title);
     bossBar.setPercent((float) getCurrentLife() / getMaxLife());
     BossBarS2CPacket packet = BossBarS2CPacket.add(bossBar);
+
+    // TODO: ScoreBoard
+
+
     var players = raidEntity.getEntityWorld().getEntitiesByClass(ServerPlayerEntity.class,
       raidEntity.getBoundingBox().expand(64), player -> true);
+
     for (ServerPlayerEntity player : CobbleRaids.server.getPlayerManager().getPlayerList()) {
       if (players.contains(player)) {
         player.networkHandler.sendPacket(packet);
@@ -215,11 +229,12 @@ public class RaidStarted {
       fakePokemon.remove(Entity.RemovalReason.DISCARDED);
     }
     for (ServerPlayerEntity player : CobbleRaids.server.getPlayerManager().getPlayerList()) {
+      resolverSize(player);
       player.networkHandler.sendPacket(BossBarS2CPacket.remove(bossBar.getUuid()));
     }
     if (raid.getType().equals(TypeRaid.GLOBAL)) {
       CobbleRaids.startDate =
-              new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(CobbleRaids.config.getCooldown()));
+        new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(CobbleRaids.config.getCooldown()));
     }
     sendInfo();
     giveRewards();
@@ -229,8 +244,6 @@ public class RaidStarted {
 
     BattleManager.activeRaids.remove(this);
   }
-
-
 
 
   private void giveRewards() {
@@ -283,5 +296,24 @@ public class RaidStarted {
     PlayerUtils.sendMessage(null, CobbleRaids.language.getMessageTableDamage()
         .replace("%table%", tableDamage), CobbleRaids.config.getPrefix(),
       TypeMessage.BROADCAST);
+  }
+
+  private boolean hasCobbleSize = false;
+
+  private void changeSize(Pokemon pokemon) {
+    String size = pokemon.getPersistentData().getString("size");
+    if (size.isEmpty() || size.equals("custom")) return;
+    try {
+      SizeChance.getSizes(pokemon);
+      pokemon.setScaleModifier(0.1f);
+      if (CobbleRaids.config.isDebug()) {
+        CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Change size");
+      }
+    } catch (NoClassDefFoundError | NoSuchMethodError e) {
+      if (CobbleRaids.config.isDebug()) {
+        CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "CobbleSize not found");
+      }
+      return;
+    }
   }
 }
