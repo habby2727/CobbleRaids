@@ -5,6 +5,7 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "CaptureMixin",
+    "ExpGainMixin",
     "PreventDamageMixin",
     "PreventDrops",
     "ShowMessageMixin"

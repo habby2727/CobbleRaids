@@ -41,11 +41,13 @@ public class BattleManager {
       case PLAYER -> players = raidStarted.getRaidEntity().getEntityWorld().getEntitiesByClass(ServerPlayerEntity.class,
         new Box(raidStarted.getRaidEntity().getBlockPos()).expand(64), player -> true);
     }
-    StatusEffectInstance status = new StatusEffectInstance(StatusEffects.BLINDNESS, 60, 0, false, false, false);
+    StatusEffectInstance status = new StatusEffectInstance(StatusEffects.BLINDNESS, 40, 0, true, false, false);
     if (!players.isEmpty()) {
       for (ServerPlayerEntity player : players) {
         if (player == null) continue;
-        player.addStatusEffect(status);
+        if (CobbleRaids.config.isBlindnessEffect()) {
+          player.addStatusEffect(status);
+        }
         raid.getSound().start(player);
         PlayerUtils.sendMessage(
           player,

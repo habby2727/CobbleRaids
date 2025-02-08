@@ -72,9 +72,12 @@ public class ShowMessageMixin {
       if (show && pokemonRaid == null) {
         raid = RaidsConfig.getRandomRaid(TypeRaid.GLOBAL);
         pokemonRaid = raid.getPokemonRaid();
+        var effect = new StatusEffectInstance(StatusEffects.BLINDNESS, 40, 0, true, false, false);
         for (ServerPlayerEntity player : CobbleRaids.server.getPlayerManager().getPlayerList()) {
           raid.getSound().playSoundPlayer(player);
-          player.addStatusEffect(new StatusEffectInstance(StatusEffects.BLINDNESS, 60, 0, false, false, false));
+          if (CobbleRaids.config.isBlindnessEffect()) {
+            player.addStatusEffect(effect);
+          }
         }
       }
 

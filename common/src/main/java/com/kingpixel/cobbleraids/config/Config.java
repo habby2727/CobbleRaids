@@ -24,7 +24,10 @@ public class Config {
   private boolean debug;
   private String prefix;
   private String lang;
+  private boolean blindnessEffect;
   private boolean moreHealthByEachPlayer;
+  private boolean blockXp;
+  private boolean needPokeBallRaids;
   private int cooldown;
   private int startShowBar;
   private int secondsToStartCapture;
@@ -37,12 +40,15 @@ public class Config {
     debug = false;
     prefix = "§7[§6CobbleRaids§7] ";
     lang = "en";
+    blindnessEffect = true;
+    moreHealthByEachPlayer = true;
+    blockXp = true;
+    needPokeBallRaids = true;
     cooldown = 30;
     startShowBar = 5;
     secondsToStartCapture = 60;
     secondsToFinishCapture = 120;
     days = Arrays.stream(DayOfWeek.values()).toList();
-    moreHealthByEachPlayer = true;
     commands = List.of("cobbleraids", "raid");
     banned = new BlackListRaid();
   }

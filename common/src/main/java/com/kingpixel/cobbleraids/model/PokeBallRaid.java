@@ -9,11 +9,14 @@ import lombok.EqualsAndHashCode;
  */
 @EqualsAndHashCode(callSuper = true) @Data
 public class PokeBallRaid extends ItemModel {
-  private int rateSuccess;
+  private float rateSuccess;
+  private String id;
 
   public PokeBallRaid() {
     super();
     this.rateSuccess = 100;
+    this.id = "pokeball";
   }
+
 
 }

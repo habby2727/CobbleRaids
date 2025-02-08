@@ -1,20 +1,20 @@
 package com.kingpixel.cobbleraids.command;
 
 import com.kingpixel.cobbleraids.CobbleRaids;
+import com.kingpixel.cobbleraids.config.PokeBallRaidConfig;
 import com.kingpixel.cobbleraids.config.RaidsConfig;
 import com.kingpixel.cobbleraids.managers.BattleManager;
-import com.kingpixel.cobbleraids.model.PokemonRaid;
-import com.kingpixel.cobbleraids.model.Raid;
-import com.kingpixel.cobbleraids.model.RaidStarted;
-import com.kingpixel.cobbleraids.model.TypeRaid;
+import com.kingpixel.cobbleraids.model.*;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.api.PermissionApi;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.command.CommandRegistryAccess;
+import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.command.argument.UuidArgumentType;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
@@ -155,6 +155,41 @@ public class CommandTree {
                     }
                     return 1;
                   })
+              )
+          ).then(
+            CommandManager.literal("pokeball")
+              .requires(source ->
+                PermissionApi.hasPermission(source, List.of(CobbleRaids.MOD_ID + ".admin"), 2))
+              .then(
+                CommandManager.argument("pokeballId", StringArgumentType.string())
+                  .suggests((context, builder) -> {
+                    for (PokeBallRaid pokeBallRaid : PokeBallRaidConfig.pokeBallRaids) {
+                      builder.suggest(pokeBallRaid.getId());
+                    }
+                    return builder.buildFuture();
+                  })
+                  .then(
+                    CommandManager.argument("player", EntityArgumentType.player())
+                      .executes(context -> {
+                        ServerPlayerEntity player = EntityArgumentType.getPlayer(context, "player");
+                        String id = StringArgumentType.getString(context, "pokeballId");
+                        if (player == null) return 0;
+                        PokeBallRaidConfig.give(player, id, 1);
+                        return 1;
+                      })
+                      .then(
+                        CommandManager.argument("amount", IntegerArgumentType.integer())
+                          .executes(context -> {
+                            ServerPlayerEntity player = EntityArgumentType.getPlayer(context, "player");
+                            String id = StringArgumentType.getString(context, "pokeballId");
+                            int amount = IntegerArgumentType.getInteger(context, "amount");
+                            if (player == null) return 0;
+                            PokeBallRaidConfig.give(player, id, amount);
+                            return 1;
+                          })
+                      )
+                  )
+
               )
           )
       );

@@ -96,6 +96,7 @@ public class RaidStarted {
     pokemon.getPersistentData().remove(CobbleRaids.TAG_RAID);
     pokemon.getPersistentData().putBoolean(CobbleRaids.TAG_FAKERAID, true);
     pokemon.getPersistentData().putUuid(CobbleRaids.TAG_RAID_ACTIVE, raidEntity.getUuid());
+    
     var party = Cobblemon.INSTANCE.getStorage().getParty(player);
 
     int count = 0;
@@ -206,7 +207,6 @@ public class RaidStarted {
     BossBarS2CPacket packet = BossBarS2CPacket.add(bossBar);
 
     // TODO: ScoreBoard
-
 
     var players = raidEntity.getEntityWorld().getEntitiesByClass(ServerPlayerEntity.class,
       raidEntity.getBoundingBox().expand(64), player -> true);

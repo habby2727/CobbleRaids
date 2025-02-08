@@ -5,9 +5,11 @@ import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.kingpixel.cobbleraids.command.CommandTree;
 import com.kingpixel.cobbleraids.config.Config;
 import com.kingpixel.cobbleraids.config.Lang;
+import com.kingpixel.cobbleraids.config.PokeBallRaidConfig;
 import com.kingpixel.cobbleraids.config.RaidsConfig;
 import com.kingpixel.cobbleraids.events.BattleEvents;
 import com.kingpixel.cobbleraids.events.CaptureEvents;
+import com.kingpixel.cobbleraids.events.ExpEvents;
 import com.kingpixel.cobbleraids.managers.BattleManager;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
@@ -28,6 +30,7 @@ public class CobbleRaids {
   public static final String PATH = "/config/" + MOD_ID;
   public static final String PATH_LANG = PATH + "/lang/";
   public static final String PATH_RAIDS = PATH + "/raids/";
+  public static final String PATH_POKEBALL_RAID = PATH + "/pokeball/";
   private static final String PATH_REWARDS = PATH + "/rewards";
   public static final String PATH_RAID_DAMAGE_REWARDS = PATH_REWARDS + "/damageRewards/";
   public static final String PATH_RAID_GLOBAL_REWARDS = PATH_REWARDS + "/globalRewards/";
@@ -92,6 +95,7 @@ public class CobbleRaids {
     config.init();
     language.init();
     raidsConfig.init();
+    PokeBallRaidConfig.init();
   }
 
 
@@ -125,5 +129,6 @@ public class CobbleRaids {
 
     BattleEvents.register();
     CaptureEvents.register();
+    ExpEvents.register();
   }
 }

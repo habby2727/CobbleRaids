@@ -1,5 +1,7 @@
 package com.kingpixel.cobbleraids.model;
 
+import com.cobblemon.mod.common.pokemon.Pokemon;
+import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.config.RaidsConfig;
 import com.kingpixel.cobbleraids.rewards.RaidRewards;
 import com.kingpixel.cobbleutils.Model.Sound;
@@ -7,6 +9,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import net.minecraft.nbt.NbtCompound;
 import org.joml.Vector3d;
 
 import java.util.ArrayList;
@@ -97,5 +100,15 @@ public class Raid {
 
   @Override protected Object clone() throws CloneNotSupportedException {
     return super.clone();
+  }
+
+  public static boolean isRaid(Pokemon pokemon) {
+    if (pokemon == null) return false;
+    NbtCompound nbt = pokemon.getPersistentData();
+    return nbt.contains(CobbleRaids.TAG_RAID) ||
+      nbt.contains(CobbleRaids.TAG_RAID_ID) ||
+      nbt.contains(CobbleRaids.TAG_FAKERAID) ||
+      nbt.contains(CobbleRaids.TAG_RAID_ACTIVE) ||
+      nbt.contains(CobbleRaids.TAG_RAID_CAPTURE);
   }
 }
