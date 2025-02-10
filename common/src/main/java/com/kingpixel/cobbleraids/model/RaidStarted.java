@@ -104,13 +104,15 @@ public class RaidStarted {
 
     int count = 0;
     int totalLevel = 0;
+    boolean found = false;
     UUID pokemonUUID = null;
     for (Pokemon pokemonParty : party) {
       changeSize(pokemonParty);
       count++;
       totalLevel += pokemonParty.getLevel();
-      if (!pokemonParty.isFainted()) {
+      if (!pokemonParty.isFainted() && !found) {
         pokemonUUID = pokemonParty.getUuid();
+        found = true;
       }
     }
 
