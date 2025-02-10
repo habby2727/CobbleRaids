@@ -1,7 +1,9 @@
 package com.kingpixel.cobbleraids;
 
 import ca.landonjw.gooeylibs2.api.tasks.Task;
+import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
+import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.command.CommandTree;
 import com.kingpixel.cobbleraids.config.Config;
 import com.kingpixel.cobbleraids.config.Lang;
@@ -14,6 +16,7 @@ import com.kingpixel.cobbleraids.managers.BattleManager;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
+import dev.architectury.event.events.common.PlayerEvent;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.MinecraftServer;
@@ -46,6 +49,7 @@ public class CobbleRaids {
   public static RaidsConfig raidsConfig = new RaidsConfig();
   public static Date startDate;
   public static Task removeOldRaidsTask;
+  public static int oldLevelCap = Cobblemon.INSTANCE.getConfig().getMaxPokemonLevel();
 
   public static void init() {
     events();
@@ -105,6 +109,15 @@ public class CobbleRaids {
 
     CommandRegistrationEvent.EVENT.register((dispatcher, registry, selection) -> {
       CommandTree.register(dispatcher, registry);
+    });
+
+    PlayerEvent.PLAYER_JOIN.register((player) -> {
+      for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getPC(player)) {
+        pokemon.getPersistentData().remove(TAG_RAID_CAPTURE);
+      }
+      for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getParty(player)) {
+        pokemon.getPersistentData().remove(TAG_RAID_CAPTURE);
+      }
     });
 
     LifecycleEvent.SERVER_STARTED.register(server -> {

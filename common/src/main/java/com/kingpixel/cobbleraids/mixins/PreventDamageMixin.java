@@ -3,6 +3,7 @@ package com.kingpixel.cobbleraids.mixins;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.managers.BattleManager;
+import com.kingpixel.cobbleraids.model.Raid;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.api.PermissionApi;
 import net.minecraft.entity.Entity;
@@ -30,8 +31,7 @@ public class PreventDamageMixin {
       LivingEntity livingEntity = (LivingEntity) (Object) this;
       if (livingEntity == null) return;
       if (livingEntity instanceof PokemonEntity pokemonEntity) {
-        NbtCompound nbt = pokemonEntity.getPokemon().getPersistentData();
-        if (nbt.getBoolean(CobbleRaids.TAG_RAID) || nbt.getBoolean(CobbleRaids.TAG_FAKERAID)) {
+        if (Raid.isRaid(pokemonEntity.getPokemon())) {
           var activeRaid = BattleManager.getActiveRaid(pokemonEntity.getUuid());
           if (activeRaid == null) {
             pokemonEntity.remove(Entity.RemovalReason.DISCARDED);
@@ -43,15 +43,15 @@ public class PreventDamageMixin {
           if (attacker instanceof ServerPlayerEntity player) {
             if (!PermissionApi.hasPermission(player, List.of(CobbleRaids.MOD_ID + ".admin", CobbleRaids.MOD_ID +
               ".rewards"), 2)) return;
+            NbtCompound nbt = pokemonEntity.getPokemon().getPersistentData();
             String id = nbt.getString(CobbleRaids.TAG_RAID_ID);
             if (id != null && !id.isEmpty()) {
               CobbleRaids.language.getMenuRewards().open(player, id);
             } else {
               CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID + " - Error: Raid ID is null or empty");
             }
-
           }
-          cir.setReturnValue(false);
+          cir.cancel();
         }
       }
     } catch (Exception ignored) {

@@ -77,6 +77,11 @@ public class Raid {
 
   public void check() {
     for (PokemonRaid pokemon : pokemons) {
+      String stringPokemon = pokemon.getPokemon().split(" ")[0];
+
+      if (pokemon.getPokemonCapture() == null) {
+        pokemon.setPokemonCapture(stringPokemon);
+      }
       if (pokemon.getBossBar() == null) pokemon.setBossBar(new BossBarModel());
     }
     if (!world.contains(":")) {

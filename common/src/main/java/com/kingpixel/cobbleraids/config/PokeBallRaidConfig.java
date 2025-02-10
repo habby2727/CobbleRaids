@@ -71,7 +71,7 @@ public class PokeBallRaidConfig {
     }
     ItemStack itemStack = pokeBallRaid.getItemStack();
     NbtCompound nbtCompound = new NbtCompound();
-    nbtCompound.putString("raidPokeball", pokeBallRaid.getId());
+    nbtCompound.putString("id", pokeBallRaid.getId());
     nbtCompound.putFloat("catchRate", pokeBallRaid.getRateSuccess());
     itemStack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbtCompound));
     itemStack.setCount(amount);

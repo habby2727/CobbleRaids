@@ -1,7 +1,6 @@
 package com.kingpixel.cobbleraids.model;
 
 import com.cobblemon.mod.common.Cobblemon;
-import com.cobblemon.mod.common.api.pokemon.PokemonPropertyExtractor;
 import com.cobblemon.mod.common.battles.BattleBuilder;
 import com.cobblemon.mod.common.battles.BattleFormat;
 import com.cobblemon.mod.common.battles.BattleStartError;
@@ -73,13 +72,8 @@ public class CaptureSession {
     }
 
 
-    Pokemon pokemon = pokemonRaid.obtainPokemon();
+    Pokemon pokemon = pokemonRaid.obtainPokemonCapture();
     pokemon.getPersistentData().putBoolean(CobbleRaids.TAG_RAID_CAPTURE, true);
-    pokemon.createPokemonProperties(
-      PokemonPropertyExtractor.SHINY
-    ).apply(pokemon);
-    pokemon.setShiny(false);
-
     ServerWorld world = (ServerWorld) player.getEntityWorld();
 
     if (world == null) {
@@ -92,7 +86,6 @@ public class CaptureSession {
 
     pokemonEntity = pokemon.sendOut(world, pos, null, entity -> {
       entity.setAiDisabled(true);
-      entity.setNoGravity(false);
       return Unit.INSTANCE;
     });
 
@@ -125,7 +118,8 @@ public class CaptureSession {
       true,
       Cobblemon.config.getDefaultFleeDistance(),
       party
-    ).ifErrored(e -> {
+    );
+    battleStartResult.ifErrored(e -> {
       CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error: " + e);
       for (BattleStartError error : e.getErrors()) {
         player.sendMessage(error.getMessageFor(player));
@@ -137,9 +131,9 @@ public class CaptureSession {
       }
       pokemonEntity.remove(Entity.RemovalReason.DISCARDED);
       return Unit.INSTANCE;
-    }).ifSuccessful(battle1 -> {
+    });
+    battleStartResult.ifSuccessful(battle1 -> {
       started = true;
-
       PlayerUtils.sendMessage(
         player,
         "You are battling in capture fight!",

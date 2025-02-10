@@ -37,6 +37,7 @@ public class Lang {
   private String messageBannedMove;
   private String messageBannedNature;
   private String messageBannedType;
+  private String messageEnabledPokeBalls;
   private MenuRewards menuRewards;
   private MenuDamageRewards menuDamageRewards;
 
@@ -67,6 +68,7 @@ public class Lang {
     this.messageCaptureSessionNotLuck = "%prefix% &cYou don't have luck, you can't enter to capture session raid!";
     this.messageStartingCapture = "%prefix% &aStarting capture session in: %cooldown%!";
     this.messageFinishingCapture = "%prefix% &aCapture session finishing in: %cooldown%!";
+    this.messageEnabledPokeBalls = "%prefix% &aEnabled pokeballs: %pokeballs%!";
     this.menuRewards = new MenuRewards();
     this.menuDamageRewards = new MenuDamageRewards();
   }

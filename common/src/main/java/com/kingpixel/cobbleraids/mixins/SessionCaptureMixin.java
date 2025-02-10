@@ -17,7 +17,7 @@ import java.util.function.BooleanSupplier;
  */
 
 @Mixin(MinecraftServer.class)
-public class CaptureMixin {
+public class SessionCaptureMixin {
   @Unique private int cobbleRaids$tickCounter = 0;
 
 
@@ -38,7 +38,6 @@ public class CaptureMixin {
           if (session.getFinishInSeconds() <= 0) {
             session.finishCaptureFight();
             toRemove.add(session);
-            continue;
           } else {
             session.sendFinishMessage();
           }

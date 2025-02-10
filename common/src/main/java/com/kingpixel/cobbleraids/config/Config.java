@@ -28,6 +28,8 @@ public class Config {
   private boolean moreHealthByEachPlayer;
   private boolean blockXp;
   private boolean needPokeBallRaids;
+  private List<String> pokeballs;
+  private int overLevel;
   private int cooldown;
   private int startShowBar;
   private int secondsToStartCapture;
@@ -40,10 +42,12 @@ public class Config {
     debug = false;
     prefix = "§7[§6CobbleRaids§7] ";
     lang = "en";
+    overLevel = 0;
     blindnessEffect = true;
     moreHealthByEachPlayer = true;
     blockXp = true;
-    needPokeBallRaids = true;
+    needPokeBallRaids = false;
+    pokeballs = List.of("cobblemon:ancient_origin_ball");
     cooldown = 30;
     startShowBar = 5;
     secondsToStartCapture = 60;

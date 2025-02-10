@@ -25,9 +25,11 @@ import net.minecraft.entity.boss.ServerBossBar;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.network.packet.s2c.play.BossBarS2CPacket;
+import net.minecraft.network.packet.s2c.play.ScoreboardScoreUpdateS2CPacket;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -90,13 +92,14 @@ public class RaidStarted {
 
   public void startBattle(ServerPlayerEntity player) {
     Pokemon pokemon = raidEntity.getPokemon().clone(true, DynamicRegistryManager.EMPTY);
+
     pokemon.setShiny(false);
     pokemon.setScaleModifier(0.01f);
     pokemonRaid.apply(pokemon);
     pokemon.getPersistentData().remove(CobbleRaids.TAG_RAID);
     pokemon.getPersistentData().putBoolean(CobbleRaids.TAG_FAKERAID, true);
     pokemon.getPersistentData().putUuid(CobbleRaids.TAG_RAID_ACTIVE, raidEntity.getUuid());
-    
+
     var party = Cobblemon.INSTANCE.getStorage().getParty(player);
 
     int count = 0;
@@ -132,8 +135,12 @@ public class RaidStarted {
       return Unit.INSTANCE;
     });
 
+
     if (fakePokemon == null) return;
 
+    Cobblemon.INSTANCE.getConfig().setMaxPokemonLevel(999);
+    fakePokemon.getPokemon().setLevel(pokemon.getLevel() + CobbleRaids.config.getOverLevel());
+    Cobblemon.INSTANCE.getConfig().setMaxPokemonLevel(CobbleRaids.oldLevelCap);
 
     BattleBuilder.INSTANCE.pve(player,
       fakePokemon,
@@ -144,6 +151,10 @@ public class RaidStarted {
       Cobblemon.config.getDefaultFleeDistance(),
       party
     );
+
+    if (CobbleRaids.config.isDebug()) {
+      CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Level Raid -> " + fakePokemon.getPokemon().getLevel());
+    }
 
     fakePokemons.add(fakePokemon);
   }
@@ -207,12 +218,17 @@ public class RaidStarted {
     BossBarS2CPacket packet = BossBarS2CPacket.add(bossBar);
 
     // TODO: ScoreBoard
+    ScoreboardScoreUpdateS2CPacket score = new ScoreboardScoreUpdateS2CPacket("AAA", "BBB", 1,
+      Optional.of(Text.of("Damage Table"))
+      ,
+      Optional.empty());
 
     var players = raidEntity.getEntityWorld().getEntitiesByClass(ServerPlayerEntity.class,
       raidEntity.getBoundingBox().expand(64), player -> true);
 
     for (ServerPlayerEntity player : CobbleRaids.server.getPlayerManager().getPlayerList()) {
       if (players.contains(player)) {
+        player.networkHandler.sendPacket(score);
         player.networkHandler.sendPacket(packet);
       } else {
         player.networkHandler.sendPacket(BossBarS2CPacket.remove(bossBar.getUuid()));

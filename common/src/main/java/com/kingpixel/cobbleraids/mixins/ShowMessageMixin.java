@@ -11,8 +11,6 @@ import com.kingpixel.cobbleraids.model.RaidStarted;
 import com.kingpixel.cobbleraids.model.TypeRaid;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.Box;
@@ -72,12 +70,13 @@ public class ShowMessageMixin {
       if (show && pokemonRaid == null) {
         raid = RaidsConfig.getRandomRaid(TypeRaid.GLOBAL);
         pokemonRaid = raid.getPokemonRaid();
-        var effect = new StatusEffectInstance(StatusEffects.BLINDNESS, 40, 0, true, false, false);
+        //var effect = new StatusEffectInstance(StatusEffects.BLINDNESS, 60, 1, false, false, false);
+
         for (ServerPlayerEntity player : CobbleRaids.server.getPlayerManager().getPlayerList()) {
           raid.getSound().playSoundPlayer(player);
-          if (CobbleRaids.config.isBlindnessEffect()) {
+          /*if (CobbleRaids.config.isBlindnessEffect()) {
             player.addStatusEffect(effect);
-          }
+          }*/
         }
       }
 

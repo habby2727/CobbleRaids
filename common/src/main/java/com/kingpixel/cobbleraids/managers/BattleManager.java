@@ -5,6 +5,7 @@ import com.kingpixel.cobbleraids.model.PokemonRaid;
 import com.kingpixel.cobbleraids.model.Raid;
 import com.kingpixel.cobbleraids.model.RaidStarted;
 import com.kingpixel.cobbleutils.CobbleUtils;
+import com.kingpixel.cobbleutils.util.AdventureTranslator;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
 import lombok.Getter;
@@ -12,6 +13,7 @@ import lombok.Setter;
 import lombok.ToString;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.network.packet.s2c.play.TitleS2CPacket;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.math.Box;
 
@@ -41,13 +43,20 @@ public class BattleManager {
       case PLAYER -> players = raidStarted.getRaidEntity().getEntityWorld().getEntitiesByClass(ServerPlayerEntity.class,
         new Box(raidStarted.getRaidEntity().getBlockPos()).expand(64), player -> true);
     }
-    StatusEffectInstance status = new StatusEffectInstance(StatusEffects.BLINDNESS, 40, 0, true, false, false);
+
     if (!players.isEmpty()) {
+      StatusEffectInstance status = new StatusEffectInstance(StatusEffects.BLINDNESS, 60, 1, false, false, false);
+      TitleS2CPacket title = new TitleS2CPacket(AdventureTranslator.toNative(
+        CobbleRaids.language.getMessageStartRaid()
+          .replace("%raid%", raid.getName())
+          .replace("%prefix%", "")
+      ));
       for (ServerPlayerEntity player : players) {
         if (player == null) continue;
         if (CobbleRaids.config.isBlindnessEffect()) {
           player.addStatusEffect(status);
         }
+        player.networkHandler.sendPacket(title);
         raid.getSound().start(player);
         PlayerUtils.sendMessage(
           player,

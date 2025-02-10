@@ -38,6 +38,8 @@ import java.util.List;
 @Data
 public class PokemonRaid {
   private String pokemon;
+  private String pokemonCapture;
+  private int shinyRate;
   private Double chance;
   private Integer life;
   private String heldItem;
@@ -48,6 +50,8 @@ public class PokemonRaid {
 
   PokemonRaid() {
     this.pokemon = "pikachu level=70 shiny=true";
+    this.pokemonCapture = "pikachu";
+    this.shinyRate = 2048;
     this.chance = 0.1;
     this.life = 2000;
     this.size = 5.0f;
@@ -170,5 +174,11 @@ public class PokemonRaid {
 
   public Pokemon obtainPokemon() {
     return PokemonProperties.Companion.parse(pokemon.trim()).create();
+  }
+
+  public Pokemon obtainPokemonCapture() {
+    Pokemon p = PokemonProperties.Companion.parse(pokemonCapture.trim()).create();
+    if (shinyRate <= 0 || Utils.RANDOM.nextInt(shinyRate) == 0) p.setShiny(true);
+    return p;
   }
 }

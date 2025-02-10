@@ -34,6 +34,6 @@ pluginManagement {
 
 include("common")
 include("fabric")
-include("neoforge")
+//("neoforge")
 
 rootProject.name = "CobbleRaids"

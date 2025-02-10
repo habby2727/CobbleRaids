@@ -3,6 +3,7 @@ package com.kingpixel.cobbleraids.mixins;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import net.minecraft.nbt.NbtCompound;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -30,7 +31,12 @@ public class PreventDrops {
 
   @Unique
   private boolean cobbleRaids$isRaid(PokemonEntity pokemonEntity) {
-    if (pokemonEntity == null) return false;
+    if (pokemonEntity == null) {
+      if (CobbleRaids.config.isDebug()) {
+        CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, CobbleRaids.MOD_ID + " - Error: PokemonEntity is null");
+      }
+      return false;
+    }
     Pokemon pokemon = pokemonEntity.getPokemon();
     NbtCompound nbt = pokemon.getPersistentData();
     if (nbt.getBoolean(CobbleRaids.TAG_RAID) || nbt.getBoolean(CobbleRaids.TAG_FAKERAID)) {
