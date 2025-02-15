@@ -5,6 +5,7 @@ import com.cobblemon.mod.common.api.moves.Move;
 import com.cobblemon.mod.common.api.moves.MoveTemplate;
 import com.cobblemon.mod.common.api.moves.Moves;
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
+import com.cobblemon.mod.common.api.pokemon.stats.Stats;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
@@ -27,6 +28,7 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -37,9 +39,12 @@ import java.util.List;
 @ToString
 @Data
 public class PokemonRaid {
+  private static final List<Stats> STATS = List.of(Stats.HP, Stats.ATTACK, Stats.DEFENCE, Stats.SPECIAL_ATTACK,
+    Stats.SPECIAL_DEFENCE, Stats.SPEED);
   private String pokemon;
   private String pokemonCapture;
   private int shinyRate;
+  private int minIvs;
   private Double chance;
   private Integer life;
   private String heldItem;
@@ -53,6 +58,7 @@ public class PokemonRaid {
     this.pokemonCapture = "pikachu";
     this.shinyRate = 2048;
     this.chance = 0.1;
+    this.minIvs = 0;
     this.life = 2000;
     this.size = 5.0f;
     this.heldItem = "cobblemon:leftovers";
@@ -179,6 +185,13 @@ public class PokemonRaid {
   public Pokemon obtainPokemonCapture() {
     Pokemon p = PokemonProperties.Companion.parse(pokemonCapture.trim()).create();
     if (shinyRate <= 0 || Utils.RANDOM.nextInt(shinyRate) == 0) p.setShiny(true);
+    List<Stats> stats = new ArrayList<>(STATS);
+    int size = stats.size();
+    for (int i = 0; i < size; i++) {
+      Stats stat = stats.remove(Utils.RANDOM.nextInt(stats.size()));
+      int iv = Utils.RANDOM.nextInt(minIvs, 32);
+      p.getIvs().set(stat, iv);
+    }
     return p;
   }
 }

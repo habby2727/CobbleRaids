@@ -47,7 +47,8 @@ public class SessionCaptureMixin {
       }
       CaptureSession.activeCaptures.removeAll(toRemove);
       cobbleRaids$tickCounter = 0;
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      e.printStackTrace();
     }
 
   }

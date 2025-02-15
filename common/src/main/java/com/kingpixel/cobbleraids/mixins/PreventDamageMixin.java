@@ -42,7 +42,10 @@ public class PreventDamageMixin {
           if (attacker == null) return;
           if (attacker instanceof ServerPlayerEntity player) {
             if (!PermissionApi.hasPermission(player, List.of(CobbleRaids.MOD_ID + ".admin", CobbleRaids.MOD_ID +
-              ".rewards"), 2)) return;
+              ".rewards"), 2)) {
+              cir.cancel();
+              return;
+            }
             String id = nbt.getString(CobbleRaids.TAG_RAID_ID);
             if (id != null && !id.isEmpty()) {
               CobbleRaids.language.getMenuRewards().open(player, id);

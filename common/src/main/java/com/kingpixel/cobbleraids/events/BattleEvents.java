@@ -25,34 +25,37 @@ import java.util.UUID;
 public class BattleEvents {
   public static void register() {
     // Antes de empezar un combate
-    CobblemonEvents.BATTLE_STARTED_PRE.subscribe(Priority.HIGHEST, (evt) -> {
-      PokemonBattle battle = evt.getBattle();
-      ServerPlayerEntity player = null;
-      PokemonEntity pokemonEntity = null;
-      for (BattleActor actor : battle.getActors()) {
-        if (actor instanceof PlayerBattleActor playerBattleActor) {
-          player = playerBattleActor.getEntity();
-        } else if (actor instanceof PokemonBattleActor pokemonBattleActor) {
-          pokemonEntity = pokemonBattleActor.getEntity();
+    CobblemonEvents.BATTLE_STARTED_PRE.subscribe(Priority.HIGH, (evt) -> {
+      try {
+        PokemonBattle battle = evt.getBattle();
+        ServerPlayerEntity player = null;
+        PokemonEntity pokemonEntity = null;
+        for (BattleActor actor : battle.getActors()) {
+          if (actor instanceof PlayerBattleActor playerBattleActor) {
+            player = playerBattleActor.getEntity();
+          } else if (actor instanceof PokemonBattleActor pokemonBattleActor) {
+            pokemonEntity = pokemonBattleActor.getEntity();
+          }
         }
-      }
-      if (player == null || pokemonEntity == null) return Unit.INSTANCE;
-      Pokemon pokemon = pokemonEntity.getPokemon();
-      if (pokemon.getPersistentData().getBoolean(CobbleRaids.TAG_RAID)) {
-        RaidStarted raidStarted = BattleManager.getActiveRaid(pokemonEntity.getUuid());
-        if (raidStarted == null) {
-          pokemonEntity.remove(Entity.RemovalReason.DISCARDED);
+        if (player == null || pokemonEntity == null) return Unit.INSTANCE;
+        Pokemon pokemon = pokemonEntity.getPokemon();
+        if (pokemon.getPersistentData().getBoolean(CobbleRaids.TAG_RAID)) {
+          evt.setReason(Text.empty());
+          RaidStarted raidStarted = BattleManager.getActiveRaid(pokemonEntity.getUuid());
+          if (raidStarted == null) {
+            pokemonEntity.remove(Entity.RemovalReason.DISCARDED);
+            evt.cancel();
+            return Unit.INSTANCE;
+          }
+          if (!raidStarted.getPokemonRaid().isPermitted(player)) {
+            evt.cancel();
+            return Unit.INSTANCE;
+          }
+          raidStarted.startBattle(player);
           evt.cancel();
-          return Unit.INSTANCE;
         }
-        if (!raidStarted.getPokemonRaid().isPermitted(player)) {
-          evt.cancel();
-          return Unit.INSTANCE;
-        }
-        player.sendMessage(Text.literal("You are battling a raid pokemon!"), true);
-        raidStarted.startBattle(player);
-        evt.setReason(null);
-        evt.cancel();
+      } catch (Exception e) {
+        e.printStackTrace();
       }
       return Unit.INSTANCE;
     });

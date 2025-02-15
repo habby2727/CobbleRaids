@@ -12,7 +12,6 @@ import com.kingpixel.cobbleraids.rewards.LastHitRewards;
 import com.kingpixel.cobbleraids.rewards.RaidRewards;
 import com.kingpixel.cobblesize.Model.SizeChance;
 import com.kingpixel.cobbleutils.CobbleUtils;
-import com.kingpixel.cobbleutils.Model.Particle;
 import com.kingpixel.cobbleutils.api.PermissionApi;
 import com.kingpixel.cobbleutils.util.AdventureTranslator;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
@@ -25,11 +24,9 @@ import net.minecraft.entity.boss.ServerBossBar;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.network.packet.s2c.play.BossBarS2CPacket;
-import net.minecraft.network.packet.s2c.play.ScoreboardScoreUpdateS2CPacket;
 import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -118,9 +115,6 @@ public class RaidStarted {
 
     if (count > 0) {
       int avgLevel = totalLevel / count;
-      if (CobbleRaids.config.isDebug()) {
-        CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Average level: " + avgLevel);
-      }
       if (pokemon.getLevel() < avgLevel) {
         pokemon.setLevel(avgLevel);
       }
@@ -154,10 +148,6 @@ public class RaidStarted {
       party
     );
 
-    if (CobbleRaids.config.isDebug()) {
-      CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Level Raid -> " + fakePokemon.getPokemon().getLevel());
-    }
-
     fakePokemons.add(fakePokemon);
   }
 
@@ -187,9 +177,6 @@ public class RaidStarted {
     int live = pokemon.getCurrentHealth();
     int maxLife = pokemon.getMaxHealth();
     int remove = maxLife - live;
-    if (CobbleRaids.config.isDebug()) {
-      CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Remove life: " + remove);
-    }
     damageMap.compute(player.getUuid(), (k, v) -> v == null ? remove : v + remove);
     currentLife -= remove;
     if (currentLife <= 0) {
@@ -220,17 +207,12 @@ public class RaidStarted {
     BossBarS2CPacket packet = BossBarS2CPacket.add(bossBar);
 
     // TODO: ScoreBoard
-    ScoreboardScoreUpdateS2CPacket score = new ScoreboardScoreUpdateS2CPacket("AAA", "BBB", 1,
-      Optional.of(Text.of("Damage Table"))
-      ,
-      Optional.empty());
 
     var players = raidEntity.getEntityWorld().getEntitiesByClass(ServerPlayerEntity.class,
       raidEntity.getBoundingBox().expand(64), player -> true);
 
     for (ServerPlayerEntity player : CobbleRaids.server.getPlayerManager().getPlayerList()) {
       if (players.contains(player)) {
-        player.networkHandler.sendPacket(score);
         player.networkHandler.sendPacket(packet);
       } else {
         player.networkHandler.sendPacket(BossBarS2CPacket.remove(bossBar.getUuid()));
@@ -276,12 +258,13 @@ public class RaidStarted {
           StatusEffects.GLOWING, 20 * 15, 1, true, false, false
         ));
 
+        /*
         Particle particle = new Particle("minecraft:firework", 100);
         particle.setRadius(999D);
         particle.setOffsetX(2);
         particle.setOffsetY(2);
         particle.setOffsetZ(2);
-        particle.sendParticlesNearPlayers(lastHit);
+        particle.sendParticlesNearPlayers(lastHit);*/
       } else if (reward instanceof DamageRewards damageRewards) {
         damageRewards.giveRewards(damageMap, pokemonRaid);
       } else {
