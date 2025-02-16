@@ -39,7 +39,10 @@ public class PreventDamageMixin {
             return;
           }
           Entity attacker = source.getAttacker();
-          if (attacker == null) return;
+          if (attacker == null) {
+            cir.cancel();
+            return;
+          }
           if (attacker instanceof ServerPlayerEntity player) {
             if (!PermissionApi.hasPermission(player, List.of(CobbleRaids.MOD_ID + ".admin", CobbleRaids.MOD_ID +
               ".rewards"), 2)) {
