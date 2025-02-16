@@ -57,8 +57,8 @@ public class CaptureSession {
 
   public static void capturing(UUID uuid) {
     activeCaptures.stream().filter(capture -> capture.getPokemonUUID().equals(uuid)).findFirst().ifPresent(capture -> {
-      if (capture.getFinishInSeconds() <= 15) {
-        capture.setFinishInSeconds(15);
+      if (capture.getFinishInSeconds() < 10) {
+        capture.setFinishInSeconds(10);
       }
     });
   }
