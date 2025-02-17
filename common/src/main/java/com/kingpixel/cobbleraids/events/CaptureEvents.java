@@ -8,6 +8,7 @@ import com.cobblemon.mod.common.battles.actor.PokemonBattleActor;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.model.CaptureSession;
 import com.kingpixel.cobbleraids.model.Raid;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
 import kotlin.Unit;
@@ -27,12 +28,6 @@ public class CaptureEvents {
     });
 
     CobblemonEvents.BATTLE_VICTORY.subscribe(Priority.LOWEST, (evt) -> {
-      var battle = evt.getBattle();
-      handle(battle);
-      return Unit.INSTANCE;
-    });
-
-    CobblemonEvents.BATTLE_FAINTED.subscribe(Priority.LOWEST, (evt) -> {
       var battle = evt.getBattle();
       handle(battle);
       return Unit.INSTANCE;
@@ -92,6 +87,9 @@ public class CaptureEvents {
         if (pokemonEntity == null) continue;
         var pokemon = pokemonEntity.getPokemon();
         if (pokemon.getPersistentData().getBoolean(CobbleRaids.TAG_RAID_CAPTURE)) {
+          if (CobbleRaids.config.isDebug()) {
+            CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Pokemon entity is null finish battle");
+          }
           CaptureSession.removeUuid(pokemonEntity.getPokemon().getUuid());
           pokemonEntity.remove(Entity.RemovalReason.DISCARDED);
           return;

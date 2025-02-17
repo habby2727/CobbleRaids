@@ -109,6 +109,9 @@ public class CaptureSession {
     }
 
 
+    pokemonEntity.heal(pokemonEntity.getMaxHealth());
+    pokemonEntity.getPokemon().heal();
+
     var battleStartResult = BattleBuilder.INSTANCE.pve(
       player,
       pokemonEntity,
@@ -149,6 +152,9 @@ public class CaptureSession {
     if (pokemonEntity == null) return;
     var battle = Cobblemon.INSTANCE.getBattleRegistry().getBattleByParticipatingPlayer(player);
     if (battle != null) {
+      if (CobbleRaids.config.isDebug()) {
+        CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Battle is not null finishing capture fight");
+      }
       battle.setEnded(true);
       battle.end();
     }
