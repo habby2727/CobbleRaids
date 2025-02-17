@@ -95,6 +95,7 @@ public class Raid {
     }
     if (sound == null) sound = new Sound();
     if (rewardId == null) rewardId = id;
+    if (warp == null) warp = "raid";
   }
 
   public PokemonRaid getPokemonRaid() {

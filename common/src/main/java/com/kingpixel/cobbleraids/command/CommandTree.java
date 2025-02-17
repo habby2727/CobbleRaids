@@ -114,6 +114,8 @@ public class CommandTree {
                           BattleManager.startRaid(raid, null);
                         } else {
                           PreStartRaid.raid = raid;
+                          PreStartRaid.pokemonRaid = raid.getPokemonRaid();
+                          
                           CobbleRaids.startDate =
                             new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(CobbleRaids.config.getStartShowBar()) + TimeUnit.SECONDS.toMillis(2));
 

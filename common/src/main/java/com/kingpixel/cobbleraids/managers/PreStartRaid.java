@@ -1,5 +1,6 @@
 package com.kingpixel.cobbleraids.managers;
 
+import com.kingpixel.cobbleraids.model.PokemonRaid;
 import com.kingpixel.cobbleraids.model.Raid;
 
 /**
@@ -7,4 +8,5 @@ import com.kingpixel.cobbleraids.model.Raid;
  */
 public class PreStartRaid {
   public static Raid raid;
+  public static PokemonRaid pokemonRaid;
 }
