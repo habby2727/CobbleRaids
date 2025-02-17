@@ -5,6 +5,7 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.config.RaidsConfig;
 import com.kingpixel.cobbleraids.managers.BattleManager;
+import com.kingpixel.cobbleraids.managers.PreStartRaid;
 import com.kingpixel.cobbleraids.model.PokemonRaid;
 import com.kingpixel.cobbleraids.model.Raid;
 import com.kingpixel.cobbleraids.model.RaidStarted;
@@ -31,9 +32,15 @@ import java.util.function.BooleanSupplier;
 @Mixin(MinecraftServer.class)
 public class ShowMessageMixin {
   @Unique private int cobbleRaids$tickCounter = 0;
-  @Unique private Raid raid;
-  @Unique private PokemonRaid pokemonRaid;
+  @Unique private static Raid raid;
+  @Unique private static PokemonRaid pokemonRaid;
   @Unique private Pokemon pokemon;
+
+
+  @Unique public void cobbleRaids$setRaid(Raid raid) {
+    ShowMessageMixin.raid = raid;
+    ShowMessageMixin.pokemonRaid = raid.getPokemonRaid();
+  }
 
   @Inject(method = "tick", at = @At("HEAD"))
   private void tick(BooleanSupplier shouldKeepTicking, CallbackInfo ci) {
@@ -68,16 +75,15 @@ public class ShowMessageMixin {
       // Si faltan 3 minutos par que empiece obtener el pokemonraid
       boolean show = diff <= (long) CobbleRaids.config.getStartShowBar() * 60 * 1000;
       if (show && pokemonRaid == null) {
-        raid = RaidsConfig.getRandomRaid(TypeRaid.GLOBAL);
-        pokemonRaid = raid.getPokemonRaid();
-        //var effect = new StatusEffectInstance(StatusEffects.BLINDNESS, 60, 1, false, false, false);
-
-        for (ServerPlayerEntity player : CobbleRaids.server.getPlayerManager().getPlayerList()) {
-          raid.getSound().playSoundPlayer(player);
-          /*if (CobbleRaids.config.isBlindnessEffect()) {
-            player.addStatusEffect(effect);
-          }*/
+        Raid asign = null;
+        if (PreStartRaid.raid != null) {
+          asign = PreStartRaid.raid;
+          PreStartRaid.raid = null;
+        } else {
+          RaidsConfig.getRandomRaid(TypeRaid.GLOBAL);
         }
+        raid = asign;
+        pokemonRaid = raid.getPokemonRaid();
       }
 
       if (pokemonRaid != null && show) {
@@ -94,7 +100,8 @@ public class ShowMessageMixin {
             CobbleRaids.language.getMessageStartingRaid()
               .replace("%raid%", raid.getName())
               .replace("%pokemon%", pokemon.showdownId())
-              .replace("%cooldown%", PlayerUtils.getCooldown(start)),
+              .replace("%cooldown%", PlayerUtils.getCooldown(start))
+              .replace("%warp%", raid.getWarp()),
             CobbleRaids.config.getPrefix(),
             TypeMessage.ACTIONBAR
           );
@@ -141,3 +148,4 @@ public class ShowMessageMixin {
     }
   }
 }
+

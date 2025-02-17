@@ -32,6 +32,7 @@ public class Raid {
   private String name;
   private double chance;
   private int time;
+  private String warp;
   private String world;
   private Vector3d posPlayer;
   private Vector3d posRaid;
@@ -53,6 +54,7 @@ public class Raid {
     this.chance = 20.0;
     this.time = 5;
     this.sound = new Sound();
+    this.warp = "raid";
     this.world = "overworld";
     this.posRaid = new Vector3d(1, 1, 1);
     this.directionX = 0;

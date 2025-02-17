@@ -4,6 +4,7 @@ import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.config.PokeBallRaidConfig;
 import com.kingpixel.cobbleraids.config.RaidsConfig;
 import com.kingpixel.cobbleraids.managers.BattleManager;
+import com.kingpixel.cobbleraids.managers.PreStartRaid;
 import com.kingpixel.cobbleraids.model.*;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.api.PermissionApi;
@@ -22,13 +23,21 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import org.joml.Vector3d;
 
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Carlos Varas Alonso - 10/06/2024 14:08
  */
+
 public class CommandTree {
+
+  private enum RAID_START {
+    INSTANT,
+    WITH_TIME
+  }
 
   public static void register(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registry) {
     CobbleRaids.config.getCommands().forEach(command -> {
@@ -76,25 +85,42 @@ public class CommandTree {
               .requires(source ->
                 PermissionApi.hasPermission(source, List.of(CobbleRaids.MOD_ID + ".admin"), 2))
               .then(
-                CommandManager.argument("raid", StringArgumentType.string())
+                CommandManager.argument("typestart", StringArgumentType.string())
                   .suggests((context, builder) -> {
-                    for (List<Raid> value : RaidsConfig.raids.values()) {
-                      for (Raid raid : value) {
-                        builder.suggest(raid.getId());
-                      }
+                    for (RAID_START value : RAID_START.values()) {
+                      builder.suggest(value.name());
                     }
                     return builder.buildFuture();
-                  })
-                  .executes(context -> {
-                    Raid raid = CobbleRaids.raidsConfig.getRaid(StringArgumentType.getString(context,
-                      "raid"));
-                    if (raid == null) {
-                      context.getSource().sendMessage(Text.literal("Raid not found"));
-                      return 0;
-                    }
-                    BattleManager.startRaid(raid, null);
-                    return 1;
-                  })
+                  }).then(
+                    CommandManager.argument("raid", StringArgumentType.string())
+                      .suggests((context, builder) -> {
+                        for (List<Raid> value : RaidsConfig.raids.values()) {
+                          for (Raid raid : value) {
+                            builder.suggest(raid.getId());
+                          }
+                        }
+                        return builder.buildFuture();
+                      })
+                      .executes(context -> {
+
+                        Raid raid = CobbleRaids.raidsConfig.getRaid(StringArgumentType.getString(context,
+                          "raid"));
+                        if (raid == null) {
+                          context.getSource().sendMessage(Text.literal("Raid not found"));
+                          return 0;
+                        }
+                        RAID_START type = RAID_START.valueOf(StringArgumentType.getString(context, "typestart"));
+                        if (type == RAID_START.INSTANT) {
+                          BattleManager.startRaid(raid, null);
+                        } else {
+                          PreStartRaid.raid = raid;
+                          CobbleRaids.startDate =
+                            new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(CobbleRaids.config.getStartShowBar()) + TimeUnit.SECONDS.toMillis(2));
+
+                        }
+                        return 1;
+                      })
+                  )
               )
           ).then(
             CommandManager.literal("finish")

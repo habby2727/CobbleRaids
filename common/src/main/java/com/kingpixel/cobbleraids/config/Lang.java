@@ -54,7 +54,7 @@ public class Lang {
     this.messageTableDamage = "%prefix% &aDamage table:\n %table%";
     this.formatTableDamage = " &f- &a%player%&7: &c%damage%";
     this.messageNotTeleport = "%prefix% &cNot raid active!";
-    this.messageStartingRaid = "%prefix% &aStarting raid in: %cooldown%!";
+    this.messageStartingRaid = "%prefix% &aStarting raid in: %cooldown%. Warp: %warp%!";
     this.messageStartRaid = "%prefix% &aRaid started!";
     this.messageRaidFinishing = "%prefix% &aRaid finishing in: %cooldown%!";
     this.messageFinishRaid = "%prefix% &aRaid finished!";
