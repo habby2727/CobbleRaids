@@ -42,15 +42,15 @@ public class PokemonRaid {
   private static final List<Stats> STATS = List.of(Stats.HP, Stats.ATTACK, Stats.DEFENCE, Stats.SPECIAL_ATTACK,
     Stats.SPECIAL_DEFENCE, Stats.SPEED);
   private String pokemon;
-  private String pokemonCapture;
-  private int shinyRate;
-  private int minIvs;
   private Double chance;
   private Integer life;
   private String heldItem;
   private float size;
-  private BossBarModel bossBar;
+  private String pokemonCapture;
+  private int shinyRate;
+  private int minIvs;
   private List<String> moves;
+  private BossBarModel bossBar;
   private BlackListRaid banned;
 
   PokemonRaid() {
@@ -85,6 +85,10 @@ public class PokemonRaid {
         pokemon.getMoveSet().setMove(i, move1);
         i++;
       }
+    }
+    for (Move move : pokemon.getMoveSet()) {
+      move.setCurrentPp(99);
+      move.setRaisedPpStages(3);
     }
     pokemon.setHeldItem$common(Utils.parseItemId(heldItem));
   }

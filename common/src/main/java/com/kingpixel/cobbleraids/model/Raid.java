@@ -83,10 +83,6 @@ public class Raid {
 
       if (pokemon.getPokemonCapture() == null) {
         pokemon.setPokemonCapture(stringPokemon);
-      } else {
-        if (!pokemon.getPokemonCapture().contains(stringPokemon)) {
-          pokemon.setPokemonCapture(stringPokemon);
-        }
       }
       if (pokemon.getBossBar() == null) pokemon.setBossBar(new BossBarModel());
     }

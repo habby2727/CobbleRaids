@@ -74,15 +74,20 @@ public class ShowMessageMixin {
       long diff = start.getTime() - now.getTime();
       // Si faltan 3 minutos par que empiece obtener el pokemonraid
       boolean show = diff <= (long) CobbleRaids.config.getStartShowBar() * 60 * 1000;
+      if (!show) {
+        raid = null;
+        pokemonRaid = null;
+        pokemon = null;
+      }
       if (show && (raid == null || pokemonRaid == null)) {
-        Raid asign;
+        Raid assign;
         if (PreStartRaid.raid != null) {
-          asign = PreStartRaid.raid;
+          assign = PreStartRaid.raid;
           PreStartRaid.raid = null;
         } else {
-          asign = RaidsConfig.getRandomRaid(TypeRaid.GLOBAL);
+          assign = RaidsConfig.getRandomRaid(TypeRaid.GLOBAL);
         }
-        raid = asign;
+        raid = assign;
         pokemonRaid = raid.getPokemonRaid();
       }
 
