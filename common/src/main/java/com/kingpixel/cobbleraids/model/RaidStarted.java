@@ -196,15 +196,18 @@ public class RaidStarted {
         .replace("%hp%", String.valueOf(currentLife))
         .replace("%hp_max%", String.valueOf(maxLife))
     );
-    if (bossBar == null) {
-      bossBar =
-        new ServerBossBar(title,
-          pokemonRaid.getBossBar().getColor(),
-          pokemonRaid.getBossBar().getStyle());
+    BossBarS2CPacket packetBossBar = null;
+    if (pokemonRaid.getBossBar() != null) {
+      if (bossBar == null) {
+        bossBar =
+          new ServerBossBar(title,
+            pokemonRaid.getBossBar().getColor(),
+            pokemonRaid.getBossBar().getStyle());
+      }
+      bossBar.setName(title);
+      bossBar.setPercent((float) getCurrentLife() / getMaxLife());
+      packetBossBar = BossBarS2CPacket.add(bossBar);
     }
-    bossBar.setName(title);
-    bossBar.setPercent((float) getCurrentLife() / getMaxLife());
-    BossBarS2CPacket packet = BossBarS2CPacket.add(bossBar);
 
     // TODO: ScoreBoard
 
@@ -212,10 +215,12 @@ public class RaidStarted {
       raidEntity.getBoundingBox().expand(64), player -> true);
 
     for (ServerPlayerEntity player : CobbleRaids.server.getPlayerManager().getPlayerList()) {
-      if (players.contains(player)) {
-        player.networkHandler.sendPacket(packet);
-      } else {
-        player.networkHandler.sendPacket(BossBarS2CPacket.remove(bossBar.getUuid()));
+      if (packetBossBar != null) {
+        if (players.contains(player)) {
+          player.networkHandler.sendPacket(packetBossBar);
+        } else {
+          player.networkHandler.sendPacket(BossBarS2CPacket.remove(bossBar.getUuid()));
+        }
       }
     }
   }

@@ -47,14 +47,6 @@ public class ShowMessageMixin {
     cobbleRaids$tickCounter++;
     if (cobbleRaids$tickCounter % 20 != 0) return;
 
-    if (!CobbleRaids.config.getDays().contains(LocalDate.now().getDayOfWeek())) {
-      CobbleRaids.startDate = null;
-      raid = null;
-      pokemonRaid = null;
-      pokemon = null;
-      return;
-    }
-
     if (!BattleManager.activeRaids.isEmpty()) {
       Date now = new Date();
       for (RaidStarted activeRaid : BattleManager.activeRaids) {
@@ -67,6 +59,15 @@ public class ShowMessageMixin {
         }
       }
     }
+
+    if (!CobbleRaids.config.getDays().contains(LocalDate.now().getDayOfWeek())) {
+      CobbleRaids.startDate = null;
+      raid = null;
+      pokemonRaid = null;
+      pokemon = null;
+      return;
+    }
+
 
     if (CobbleRaids.startDate != null) {
       Date start = CobbleRaids.startDate;

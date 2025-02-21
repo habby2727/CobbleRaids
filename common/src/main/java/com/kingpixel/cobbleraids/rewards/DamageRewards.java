@@ -15,7 +15,7 @@ import com.kingpixel.cobbleraids.model.PokemonRaid;
 import com.kingpixel.cobbleraids.ui.MenuDamageRewards;
 import com.kingpixel.cobbleutils.Model.ItemModel;
 import com.kingpixel.cobbleutils.Model.PanelsConfig;
-import com.kingpixel.cobbleutils.features.shops.Shop;
+import com.kingpixel.cobbleutils.Model.Rectangle;
 import com.kingpixel.cobbleutils.util.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -122,7 +122,7 @@ public class DamageRewards extends RaidRewards {
     ItemModel close = menu.getClose();
     ItemModel next = menu.getNext();
     List<PanelsConfig> panels = menu.getPanels();
-    Shop.Rectangle rectangle = menu.getRectangle();
+    Rectangle rectangle = menu.getRectangle();
     ChestTemplate template = ChestTemplate
       .builder(rows)
       .build();

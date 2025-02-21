@@ -43,7 +43,7 @@ public class CaptureEvents {
           String id = evt.getPokeBallEntity().getPokeBall().item().getTranslationKey()
             .replace("item.", "")
             .replace(".", ":");
-          if (CobbleRaids.config.isNeedPokeBallRaids() && CobbleRaids.config.getPokeballs().contains(id)) {
+          if (CobbleRaids.config.isNeedPokeBallRaids() && !CobbleRaids.config.getPokeballs().contains(id)) {
             evt.setCatchRate(0);
             if (livingEntity instanceof ServerPlayerEntity player) {
               PlayerUtils.sendMessage(

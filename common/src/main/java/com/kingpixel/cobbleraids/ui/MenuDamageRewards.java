@@ -2,7 +2,7 @@ package com.kingpixel.cobbleraids.ui;
 
 import com.kingpixel.cobbleutils.Model.ItemModel;
 import com.kingpixel.cobbleutils.Model.PanelsConfig;
-import com.kingpixel.cobbleutils.features.shops.Shop;
+import com.kingpixel.cobbleutils.Model.Rectangle;
 import lombok.Getter;
 
 import java.util.List;
@@ -14,7 +14,7 @@ import java.util.List;
 public class MenuDamageRewards {
   private int rows;
   private String title;
-  private Shop.Rectangle rectangle;
+  private Rectangle rectangle;
   private ItemModel display;
   private ItemModel previous;
   private ItemModel close;
@@ -24,7 +24,7 @@ public class MenuDamageRewards {
   public MenuDamageRewards() {
     this.rows = 6;
     this.title = "&6Damage Rewards";
-    this.rectangle = new Shop.Rectangle(6);
+    this.rectangle = new Rectangle(6);
     this.display = new ItemModel(22, "minecraft:iron_sword", "&cDamage Rewards: %pos%", List.of(), 0);
     this.previous = new ItemModel(45, "minecraft:arrow", "&cPrevious", List.of(), 0);
     this.close = new ItemModel(49, "minecraft:barrier", "&cClose", List.of(), 0);
