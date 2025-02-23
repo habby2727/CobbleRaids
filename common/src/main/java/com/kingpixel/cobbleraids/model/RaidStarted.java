@@ -91,7 +91,12 @@ public class RaidStarted {
     Pokemon pokemon = raidEntity.getPokemon().clone(true, DynamicRegistryManager.EMPTY);
 
     pokemon.setShiny(false);
-    pokemon.setScaleModifier(0.01f);
+    if (CobbleRaids.config.isDebug()) {
+      pokemon.setScaleModifier(0.5f);
+    } else {
+      pokemon.setScaleModifier(0.01f);
+    }
+
     pokemonRaid.apply(pokemon);
     pokemon.getPersistentData().remove(CobbleRaids.TAG_RAID);
     pokemon.getPersistentData().putBoolean(CobbleRaids.TAG_FAKERAID, true);
@@ -112,6 +117,8 @@ public class RaidStarted {
         found = true;
       }
     }
+
+    if (pokemonUUID == null) return;
 
     if (count > 0) {
       int avgLevel = totalLevel / count;
@@ -138,15 +145,17 @@ public class RaidStarted {
     fakePokemon.getPokemon().setLevel(pokemon.getLevel() + CobbleRaids.config.getOverLevel());
     Cobblemon.INSTANCE.getConfig().setMaxPokemonLevel(CobbleRaids.oldLevelCap);
 
-    BattleBuilder.INSTANCE.pve(player,
+
+    var battle = BattleBuilder.INSTANCE.pve(player,
       fakePokemon,
       pokemonUUID,
       BattleFormat.Companion.getGEN_9_SINGLES(),
       false,
       raid.isHeal(),
       Cobblemon.config.getDefaultFleeDistance(),
-      party
+      Cobblemon.INSTANCE.getStorage().getParty(player)
     );
+
 
     fakePokemons.add(fakePokemon);
   }
@@ -263,13 +272,6 @@ public class RaidStarted {
           StatusEffects.GLOWING, 20 * 15, 1, true, false, false
         ));
 
-        /*
-        Particle particle = new Particle("minecraft:firework", 100);
-        particle.setRadius(999D);
-        particle.setOffsetX(2);
-        particle.setOffsetY(2);
-        particle.setOffsetZ(2);
-        particle.sendParticlesNearPlayers(lastHit);*/
       } else if (reward instanceof DamageRewards damageRewards) {
         damageRewards.giveRewards(damageMap, pokemonRaid);
       } else {

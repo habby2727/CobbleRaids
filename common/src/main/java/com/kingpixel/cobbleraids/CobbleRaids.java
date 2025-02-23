@@ -11,7 +11,6 @@ import com.kingpixel.cobbleraids.config.PokeBallRaidConfig;
 import com.kingpixel.cobbleraids.config.RaidsConfig;
 import com.kingpixel.cobbleraids.events.BattleEvents;
 import com.kingpixel.cobbleraids.events.CaptureEvents;
-import com.kingpixel.cobbleraids.events.ExpEvents;
 import com.kingpixel.cobbleraids.managers.BattleManager;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
@@ -142,6 +141,5 @@ public class CobbleRaids {
 
     BattleEvents.register();
     CaptureEvents.register();
-    ExpEvents.register();
   }
 }

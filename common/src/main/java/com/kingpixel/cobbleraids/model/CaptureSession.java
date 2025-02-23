@@ -47,7 +47,9 @@ public class CaptureSession {
 
   public static void removeUuid(UUID uuid) {
     activeCaptures.removeIf(capture -> {
-      boolean equals = capture.getPokemonUUID().equals(uuid);
+      UUID captureUUID = capture.getPokemonUUID();
+      if (captureUUID == null) return true;
+      boolean equals = captureUUID.equals(uuid);
       if (equals) {
         players.remove(capture.getPlayer());
       }
@@ -57,7 +59,7 @@ public class CaptureSession {
 
   public static void capturing(UUID uuid) {
     activeCaptures.stream().filter(capture -> capture.getPokemonUUID().equals(uuid)).findFirst().ifPresent(capture -> {
-      if (capture.getFinishInSeconds() < 10) {
+      if (capture.getFinishInSeconds() <= 10) {
         capture.setFinishInSeconds(10);
       }
     });
@@ -65,7 +67,16 @@ public class CaptureSession {
 
   public void initCaptureFight() {
     var battle = Cobblemon.INSTANCE.getBattleRegistry().getBattleByParticipatingPlayer(player);
-    if (players.contains(player) || battle != null) {
+    var party = Cobblemon.INSTANCE.getStorage().getParty(player);
+    UUID pokemonUUID = null;
+    for (Pokemon pokemonParty : party) {
+      if (!pokemonParty.isFainted()) {
+        pokemonUUID = pokemonParty.getUuid();
+        break;
+      }
+    }
+
+    if (players.contains(player) || battle != null || pokemonUUID == null) {
       initInSeconds = CobbleRaids.config.getSecondsToStartCapture();
       finishInSeconds = CobbleRaids.config.getSecondsToFinishCapture();
       return;
@@ -84,6 +95,7 @@ public class CaptureSession {
 
     Vec3d pos = new Vec3d(player.getPos().x + 1, player.getPos().y, player.getPos().z + 1);
 
+
     pokemonEntity = pokemon.sendOut(world, pos, null, entity -> {
       entity.setAiDisabled(true);
       return Unit.INSTANCE;
@@ -93,22 +105,6 @@ public class CaptureSession {
       CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Pokemon entity is null");
       return;
     }
-
-    var party = Cobblemon.INSTANCE.getStorage().getParty(player);
-    UUID pokemonUUID = null;
-    for (Pokemon pokemonParty : party) {
-      if (!pokemonParty.isFainted()) {
-        pokemonUUID = pokemonParty.getUuid();
-        break;
-      }
-    }
-
-    if (pokemonUUID == null) {
-      CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Pokemon UUID is null");
-      return;
-    }
-
-
     pokemonEntity.heal(pokemonEntity.getMaxHealth());
     pokemonEntity.getPokemon().heal();
 

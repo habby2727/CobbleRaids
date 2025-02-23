@@ -25,7 +25,7 @@ import java.util.UUID;
 public class BattleEvents {
   public static void register() {
     // Antes de empezar un combate
-    CobblemonEvents.BATTLE_STARTED_PRE.subscribe(Priority.HIGH, (evt) -> {
+    CobblemonEvents.BATTLE_STARTED_PRE.subscribe(Priority.LOW, (evt) -> {
       try {
         PokemonBattle battle = evt.getBattle();
         ServerPlayerEntity player = null;
@@ -61,7 +61,7 @@ public class BattleEvents {
     });
 
 
-    CobblemonEvents.LOOT_DROPPED.subscribe(Priority.HIGHEST, evt -> {
+    CobblemonEvents.LOOT_DROPPED.subscribe(Priority.NORMAL, evt -> {
       var livingEntity = evt.getEntity();
       if (livingEntity == null) return Unit.INSTANCE;
       if (livingEntity instanceof PokemonEntity pokemonEntity) {
@@ -75,45 +75,36 @@ public class BattleEvents {
       return Unit.INSTANCE;
     });
 
-    CobblemonEvents.BATTLE_FLED.subscribe(Priority.HIGHEST, evt -> {
-      for (BattleActor actor : evt.getBattle().getActors()) {
-        if (actor == null) continue;
-        if (actor instanceof PokemonBattleActor pokemonBattleActor) {
-          PokemonEntity pokemonEntity = pokemonBattleActor.getEntity();
-          if (pokemonEntity == null) continue;
-          Pokemon pokemon = pokemonEntity.getPokemon();
-          if (pokemon == null) continue;
-          if (pokemon.getPersistentData().getBoolean(CobbleRaids.TAG_FAKERAID)) {
-            pokemonEntity.remove(Entity.RemovalReason.DISCARDED);
-          }
-        }
-      }
-      return Unit.INSTANCE;
-    });
-
     // Victoria en un combate
-    CobblemonEvents.BATTLE_VICTORY.subscribe(Priority.HIGHEST, evt -> {
+    CobblemonEvents.BATTLE_VICTORY.subscribe(Priority.NORMAL, evt -> {
       ServerPlayerEntity player = null;
-      var winners = evt.getWinners().stream().toList();
-      for (BattleActor winner : winners) {
-        for (BattleActor actor : winner.getBattle().getActors()) {
-          if (actor instanceof PlayerBattleActor playerBattleActor) {
-            player = playerBattleActor.getEntity();
+      Pokemon pokemon = null;
+      var winners = evt.getWinners();
+      for (BattleActor winnerActor : winners) {
+        if (winnerActor instanceof PlayerBattleActor playerBattleActor) {
+          player = playerBattleActor.getEntity();
+        } else if (winnerActor instanceof PokemonBattleActor pokemonBattleActor) {
+          pokemon = pokemonBattleActor.getPokemon().getOriginalPokemon();
+          if (pokemon.getPersistentData().getBoolean(CobbleRaids.TAG_FAKERAID)) {
+            UUID uuidBattle = pokemon.getPersistentData().getUuid(CobbleRaids.TAG_RAID_ACTIVE);
+            RaidStarted raidStarted = BattleManager.getActiveRaid(uuidBattle);
+            if (raidStarted != null) {
+              raidStarted.finishBattle(player, pokemon);
+              return Unit.INSTANCE;
+            }
           }
         }
       }
       if (player == null) return Unit.INSTANCE;
-      for (BattleActor loser : evt.getLosers()) {
-        var battle = loser.getBattle();
-        for (BattleActor actor : battle.getActors()) {
-          if (actor instanceof PokemonBattleActor pokemonBattleActor) {
-            Pokemon pokemon = pokemonBattleActor.getPokemon().getOriginalPokemon();
-            if (pokemon.getPersistentData().getBoolean(CobbleRaids.TAG_FAKERAID)) {
-              UUID uuidBattle = pokemon.getPersistentData().getUuid(CobbleRaids.TAG_RAID_ACTIVE);
-              RaidStarted raidStarted = BattleManager.getActiveRaid(uuidBattle);
-              if (raidStarted != null) {
-                raidStarted.finishBattle(player, pokemon);
-              }
+      for (BattleActor loserActor : evt.getLosers()) {
+        if (loserActor instanceof PokemonBattleActor pokemonBattleActor) {
+          pokemon = pokemonBattleActor.getPokemon().getOriginalPokemon();
+          if (pokemon.getPersistentData().getBoolean(CobbleRaids.TAG_FAKERAID)) {
+            UUID uuidBattle = pokemon.getPersistentData().getUuid(CobbleRaids.TAG_RAID_ACTIVE);
+            RaidStarted raidStarted = BattleManager.getActiveRaid(uuidBattle);
+            if (raidStarted != null) {
+              raidStarted.finishBattle(player, pokemon);
+              return Unit.INSTANCE;
             }
           }
         }
@@ -121,7 +112,27 @@ public class BattleEvents {
       return Unit.INSTANCE;
     });
 
-
+    CobblemonEvents.BATTLE_FLED.subscribe(Priority.LOW, evt -> {
+      ServerPlayerEntity player = null;
+      Pokemon pokemon = null;
+      for (BattleActor actor : evt.getBattle().getActors()) {
+        if (actor instanceof PlayerBattleActor playerBattleActor) {
+          player = playerBattleActor.getEntity();
+        } else if (actor instanceof PokemonBattleActor pokemonBattleActor) {
+          pokemon = pokemonBattleActor.getPokemon().getOriginalPokemon();
+        }
+      }
+      if (player == null || pokemon == null) return Unit.INSTANCE;
+      if (pokemon.getPersistentData().getBoolean(CobbleRaids.TAG_FAKERAID)) {
+        UUID uuidBattle = pokemon.getPersistentData().getUuid(CobbleRaids.TAG_RAID_ACTIVE);
+        RaidStarted raidStarted = BattleManager.getActiveRaid(uuidBattle);
+        if (raidStarted != null) {
+          raidStarted.finishBattle(player, pokemon);
+          return Unit.INSTANCE;
+        }
+      }
+      return Unit.INSTANCE;
+    });
   }
 
 }

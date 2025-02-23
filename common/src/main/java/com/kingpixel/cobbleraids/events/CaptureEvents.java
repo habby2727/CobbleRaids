@@ -1,14 +1,15 @@
 package com.kingpixel.cobbleraids.events;
 
+import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.Priority;
-import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 import com.cobblemon.mod.common.api.events.CobblemonEvents;
+import com.cobblemon.mod.common.battles.actor.PlayerBattleActor;
 import com.cobblemon.mod.common.battles.actor.PokemonBattleActor;
+import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.model.CaptureSession;
 import com.kingpixel.cobbleraids.model.Raid;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
 import kotlin.Unit;
@@ -22,14 +23,46 @@ public class CaptureEvents {
   public static void register() {
     // Battle events
     CobblemonEvents.BATTLE_FLED.subscribe(Priority.LOWEST, (evt) -> {
-      var battle = evt.getBattle();
-      handle(battle);
+      ServerPlayerEntity player = null;
+      PokemonEntity pokemonEntity = null;
+      boolean isRaidCapture = false;
+      for (BattleActor actor : evt.getBattle().getActors()) {
+        if (actor instanceof PokemonBattleActor pokemonBattleActor) {
+          var pokemonBattleActorEntity = pokemonBattleActor.getEntity();
+          if (pokemonBattleActorEntity == null) continue;
+          var pokemon = pokemonBattleActorEntity.getPokemon();
+          if (pokemon.getPersistentData().getBoolean(CobbleRaids.TAG_RAID_CAPTURE) && pokemonEntity == null) {
+            pokemonEntity = pokemonBattleActorEntity;
+            isRaidCapture = true;
+          }
+        } else if (actor instanceof PlayerBattleActor playerBattleActor) {
+          player = playerBattleActor.getEntity();
+        }
+      }
+      if (isRaidCapture && player != null) {
+        var battle = Cobblemon.INSTANCE.getBattleRegistry().getBattleByParticipatingPlayer(player);
+        if (battle != null) battle.end();
+        CaptureSession.removeUuid(pokemonEntity.getPokemon().getUuid());
+        pokemonEntity.remove(Entity.RemovalReason.DISCARDED);
+        return Unit.INSTANCE;
+      }
       return Unit.INSTANCE;
     });
 
     CobblemonEvents.BATTLE_VICTORY.subscribe(Priority.LOWEST, (evt) -> {
       var battle = evt.getBattle();
-      handle(battle);
+      for (BattleActor actor : battle.getActors()) {
+        if (actor instanceof PokemonBattleActor pokemonBattleActor) {
+          var pokemonEntity = pokemonBattleActor.getEntity();
+          if (pokemonEntity == null) continue;
+          var pokemon = pokemonEntity.getPokemon();
+          if (pokemon.getPersistentData().getBoolean(CobbleRaids.TAG_RAID_CAPTURE)) {
+            CaptureSession.removeUuid(pokemonEntity.getPokemon().getUuid());
+            pokemonEntity.remove(Entity.RemovalReason.DISCARDED);
+            return Unit.INSTANCE;
+          }
+        }
+      }
       return Unit.INSTANCE;
     });
 
@@ -80,21 +113,4 @@ public class CaptureEvents {
   }
 
 
-  private static void handle(PokemonBattle battle) {
-    for (BattleActor actor : battle.getActors()) {
-      if (actor instanceof PokemonBattleActor pokemonBattleActor) {
-        var pokemonEntity = pokemonBattleActor.getEntity();
-        if (pokemonEntity == null) continue;
-        var pokemon = pokemonEntity.getPokemon();
-        if (pokemon.getPersistentData().getBoolean(CobbleRaids.TAG_RAID_CAPTURE)) {
-          if (CobbleRaids.config.isDebug()) {
-            CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Pokemon entity is null finish battle");
-          }
-          CaptureSession.removeUuid(pokemonEntity.getPokemon().getUuid());
-          pokemonEntity.remove(Entity.RemovalReason.DISCARDED);
-          return;
-        }
-      }
-    }
-  }
 }
