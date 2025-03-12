@@ -30,6 +30,7 @@ import net.minecraft.server.world.ServerWorld;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -63,7 +64,7 @@ public class RaidStarted {
     }
     this.raidEntity = pokemonRaid.genPokemonEntity(raid);
     this.raidUUID = raidEntity.getUuid();
-    this.damageMap = new HashMap<>();
+    this.damageMap = new ConcurrentHashMap<>();
     this.world = (ServerWorld) raidEntity.getEntityWorld();
 
     this.chunkX = raidEntity.getBlockPos().getX() >> 4;
@@ -161,6 +162,7 @@ public class RaidStarted {
   }
 
   public void finishBattle(ServerPlayerEntity player, Pokemon pokemon) {
+    if (player == null) return;
     var pokemonEntity = fakePokemons.stream()
       .filter(pokemonEntity1 -> pokemonEntity1.getPokemon().getUuid().equals(pokemon.getUuid()))
       .findFirst()
@@ -180,7 +182,11 @@ public class RaidStarted {
     }
   }
 
-  public void removeLife(ServerPlayerEntity player, PokemonEntity pokemonEntity) {
+  public synchronized void removeLife(ServerPlayerEntity player, PokemonEntity pokemonEntity) {
+    if (player == null) {
+      CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Player is null");
+      return;
+    }
     Pokemon pokemon = pokemonEntity.getPokemon();
     lastHit = player;
     int live = pokemon.getCurrentHealth();
