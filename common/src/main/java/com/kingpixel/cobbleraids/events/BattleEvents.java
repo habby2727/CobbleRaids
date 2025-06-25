@@ -25,7 +25,7 @@ import java.util.UUID;
 public class BattleEvents {
   public static void register() {
     // Antes de empezar un combate
-    CobblemonEvents.BATTLE_STARTED_PRE.subscribe(Priority.LOW, (evt) -> {
+    CobblemonEvents.BATTLE_STARTED_PRE.subscribe(Priority.NORMAL, (evt) -> {
       try {
         PokemonBattle battle = evt.getBattle();
         ServerPlayerEntity player = null;
@@ -89,6 +89,7 @@ public class BattleEvents {
             UUID uuidBattle = pokemon.getPersistentData().getUuid(CobbleRaids.TAG_RAID_ACTIVE);
             RaidStarted raidStarted = BattleManager.getActiveRaid(uuidBattle);
             if (raidStarted != null) {
+              if (player == null) return Unit.INSTANCE;
               raidStarted.finishBattle(player, pokemon);
               return Unit.INSTANCE;
             }
@@ -112,7 +113,7 @@ public class BattleEvents {
       return Unit.INSTANCE;
     });
 
-    CobblemonEvents.BATTLE_FLED.subscribe(Priority.LOW, evt -> {
+    CobblemonEvents.BATTLE_FLED.subscribe(Priority.HIGHEST, evt -> {
       ServerPlayerEntity player = null;
       Pokemon pokemon = null;
       for (BattleActor actor : evt.getBattle().getActors()) {

@@ -31,22 +31,20 @@ public class PreventDamageMixin {
       if (livingEntity == null) return;
       if (livingEntity instanceof PokemonEntity pokemonEntity) {
         NbtCompound nbt = pokemonEntity.getPokemon().getPersistentData();
-        if (nbt.getBoolean(CobbleRaids.TAG_RAID) || nbt.getBoolean(CobbleRaids.TAG_FAKERAID)) {
+        if (nbt.getBoolean(CobbleRaids.TAG_RAID) || nbt.getBoolean(CobbleRaids.TAG_FAKERAID) || nbt.contains(CobbleRaids.TAG_RAID_CAPTURE)) {
+          cir.cancel();
           var activeRaid = BattleManager.getActiveRaid(pokemonEntity.getUuid());
           if (activeRaid == null) {
             pokemonEntity.remove(Entity.RemovalReason.DISCARDED);
-            cir.cancel();
             return;
           }
           Entity attacker = source.getAttacker();
           if (attacker == null) {
-            cir.cancel();
             return;
           }
           if (attacker instanceof ServerPlayerEntity player) {
             if (!PermissionApi.hasPermission(player, List.of(CobbleRaids.MOD_ID + ".admin", CobbleRaids.MOD_ID +
               ".rewards"), 2)) {
-              cir.cancel();
               return;
             }
             String id = nbt.getString(CobbleRaids.TAG_RAID_ID);
@@ -56,7 +54,6 @@ public class PreventDamageMixin {
               CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID + " - Error: Raid ID is null or empty");
             }
           }
-          cir.cancel();
         }
       }
     } catch (Exception ignored) {

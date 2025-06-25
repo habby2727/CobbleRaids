@@ -16,6 +16,7 @@ import com.kingpixel.cobbleutils.api.PermissionApi;
 import com.kingpixel.cobbleutils.util.AdventureTranslator;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
+import com.kingpixel.cobbleutils.util.Utils;
 import kotlin.Unit;
 import lombok.Data;
 import net.minecraft.entity.Entity;
@@ -74,6 +75,7 @@ public class RaidStarted {
     if (CobbleRaids.config.isMoreHealthByEachPlayer()) {
       int count = 0;
       for (ServerPlayerEntity player : CobbleRaids.server.getPlayerManager().getPlayerList()) {
+        if (player == null) continue;
         if (!PermissionApi.hasPermission(player, "cobbleraids.morehealth.bypass", 2)) {
           count++;
         }
@@ -89,6 +91,7 @@ public class RaidStarted {
 
 
   public void startBattle(ServerPlayerEntity player) {
+    if (player == null) return;
     Pokemon pokemon = raidEntity.getPokemon().clone(true, DynamicRegistryManager.EMPTY);
 
     pokemon.setShiny(false);
@@ -127,11 +130,20 @@ public class RaidStarted {
         pokemon.setLevel(avgLevel);
       }
     }
-    PokemonEntity fakePokemon = pokemon.sendOut((ServerWorld) raidEntity.getEntityWorld(), raidEntity.getPos(), null, entity -> {
+    var pos = raidEntity.getPos();
+    // Randomizame en 2 la pos
+    pos = pos.add(
+      Utils.RANDOM.nextInt(3) - 1,
+      0,
+      Utils.RANDOM.nextInt(3) - 1
+    );
+    PokemonEntity fakePokemon = pokemon.sendOut((ServerWorld) raidEntity.getEntityWorld(), pos, null, entity -> {
       if (!CobbleRaids.config.isDebug()) {
         entity.addStatusEffect(new StatusEffectInstance(StatusEffects.INVISIBILITY, -1, 9999, false, false));
       }
       entity.addStatusEffect(new StatusEffectInstance(StatusEffects.SLOWNESS, -1, 9999, false, false));
+      entity.addStatusEffect(new StatusEffectInstance(StatusEffects.ABSORPTION, -1, 9999, false, false));
+      entity.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, -1, 9999, false, false));
       entity.setNoGravity(true);
       entity.setAiDisabled(true);
       entity.setMovementSpeed(0);
@@ -182,17 +194,17 @@ public class RaidStarted {
     }
   }
 
-  public synchronized void removeLife(ServerPlayerEntity player, PokemonEntity pokemonEntity) {
+  public void removeLife(ServerPlayerEntity player, PokemonEntity pokemonEntity) {
+    Pokemon pokemon = pokemonEntity.getPokemon();
     if (player == null) {
       CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Player is null");
       return;
     }
-    Pokemon pokemon = pokemonEntity.getPokemon();
     lastHit = player;
     int live = pokemon.getCurrentHealth();
     int maxLife = pokemon.getMaxHealth();
     int remove = maxLife - live;
-    damageMap.compute(player.getUuid(), (k, v) -> v == null ? remove : v + remove);
+    damageMap.compute(player.getUuid(), (k, v) -> (v == null ? 0 : v) + remove);
     currentLife -= remove;
     if (currentLife <= 0) {
       finish();
@@ -230,6 +242,7 @@ public class RaidStarted {
       raidEntity.getBoundingBox().expand(64), player -> true);
 
     for (ServerPlayerEntity player : CobbleRaids.server.getPlayerManager().getPlayerList()) {
+      if (player == null) continue;
       if (packetBossBar != null) {
         if (players.contains(player)) {
           player.networkHandler.sendPacket(packetBossBar);
@@ -249,6 +262,7 @@ public class RaidStarted {
       fakePokemon.remove(Entity.RemovalReason.DISCARDED);
     }
     for (ServerPlayerEntity player : CobbleRaids.server.getPlayerManager().getPlayerList()) {
+      if (player == null) continue;
       resolverSize(player);
       player.networkHandler.sendPacket(BossBarS2CPacket.remove(bossBar.getUuid()));
     }

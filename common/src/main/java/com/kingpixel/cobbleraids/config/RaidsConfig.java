@@ -124,11 +124,12 @@ public class RaidsConfig {
       list.add(raid);
       try {
         Utils.writeFileAsync(CobbleRaids.PATH_RAIDS, raid.getId() + ".json", Utils.newGson().toJson(raid));
+        raid.setRewards(new ArrayList<>());
         addDamageReward(raid);
         addGlobalReward(raid);
         addKillReward(raid);
       } catch (IOException e) {
-        throw new RuntimeException(e);
+        e.printStackTrace();
       }
     });
   }

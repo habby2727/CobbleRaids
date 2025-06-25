@@ -90,7 +90,7 @@ public class PokemonRaid {
       move.setCurrentPp(99);
       move.setRaisedPpStages(3);
     }
-    pokemon.setHeldItem$common(Utils.parseItemId(heldItem));
+    if (!this.heldItem.isEmpty()) pokemon.setHeldItem$common(Utils.parseItemId(this.heldItem));
   }
 
   public static ServerWorld getWorld(Raid raid) {

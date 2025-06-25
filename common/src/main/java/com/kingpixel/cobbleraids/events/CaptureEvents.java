@@ -10,10 +10,14 @@ import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.model.CaptureSession;
 import com.kingpixel.cobbleraids.model.Raid;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
+import dev.architectury.event.CompoundEventResult;
+import dev.architectury.event.events.common.InteractionEvent;
 import kotlin.Unit;
 import net.minecraft.entity.Entity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 /**
@@ -21,6 +25,35 @@ import net.minecraft.server.network.ServerPlayerEntity;
  */
 public class CaptureEvents {
   public static void register() {
+    InteractionEvent.RIGHT_CLICK_ITEM.register((playerEntity, hand) -> {
+      var player = (ServerPlayerEntity) playerEntity;
+      ItemStack itemStack = player.getStackInHand(hand);
+      if (itemStack.isEmpty()) return CompoundEventResult.pass();
+      var battle = Cobblemon.INSTANCE.getBattleRegistry().getBattleByParticipatingPlayer(player);
+      if (battle == null) return CompoundEventResult.pass();
+      for (BattleActor actor : battle.getActors()) {
+        if (actor instanceof PokemonBattleActor pokemonBattleActor) {
+          var pokemonEntity = pokemonBattleActor.getEntity();
+          if (pokemonEntity == null) continue;
+          var pokemon = pokemonEntity.getPokemon();
+          if (pokemon.getPersistentData().getBoolean(CobbleRaids.TAG_RAID_CAPTURE)) {
+            String id = itemStack.getItem().toString();
+            if (CobbleRaids.config.isDebug()) CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Item: " + id);
+            if (CobbleRaids.config.isNeedPokeBallRaids() && !CobbleRaids.config.getPokeballs().contains(id)) {
+              PlayerUtils.sendMessage(
+                player,
+                CobbleRaids.language.getMessageEnabledPokeBalls()
+                  .replace("%pokeballs%", String.join(", ", CobbleRaids.config.getPokeballs())),
+                CobbleRaids.config.getPrefix(),
+                TypeMessage.CHAT
+              );
+              return CompoundEventResult.interrupt(true, itemStack);
+            }
+          }
+        }
+      }
+      return CompoundEventResult.pass();
+    });
     // Battle events
     CobblemonEvents.BATTLE_FLED.subscribe(Priority.LOWEST, (evt) -> {
       ServerPlayerEntity player = null;

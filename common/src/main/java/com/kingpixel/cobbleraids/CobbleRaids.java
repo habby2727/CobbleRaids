@@ -128,7 +128,7 @@ public class CobbleRaids {
       for (ServerWorld world : server.getWorlds()) {
         var pokemons = world.getEntitiesByType(TypeFilter.instanceOf(PokemonEntity.class), e -> {
           NbtCompound nbt = e.getPokemon().getPersistentData();
-          return nbt.getBoolean(TAG_RAID) || nbt.getBoolean(TAG_FAKERAID);
+          return nbt.getBoolean(TAG_RAID) || nbt.getBoolean(TAG_FAKERAID) || nbt.contains(TAG_RAID_CAPTURE);
         });
         for (PokemonEntity pokemon : pokemons) {
           if (config.isDebug()) {

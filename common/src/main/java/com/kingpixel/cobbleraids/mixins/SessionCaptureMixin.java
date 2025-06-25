@@ -17,7 +17,8 @@ import java.util.function.BooleanSupplier;
  */
 
 @Mixin(MinecraftServer.class)
-public class SessionCaptureMixin {
+public abstract class SessionCaptureMixin {
+
   @Unique private int cobbleRaids$tickCounter = 0;
 
 
