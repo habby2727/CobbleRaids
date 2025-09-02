@@ -24,6 +24,7 @@ import net.minecraft.util.TypeFilter;
 
 import java.util.Date;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class CobbleRaids {
@@ -111,12 +112,14 @@ public class CobbleRaids {
     });
 
     PlayerEvent.PLAYER_JOIN.register((player) -> {
-      for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getPC(player)) {
-        pokemon.getPersistentData().remove(TAG_RAID_CAPTURE);
-      }
-      for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getParty(player)) {
-        pokemon.getPersistentData().remove(TAG_RAID_CAPTURE);
-      }
+      CompletableFuture.runAsync(() -> {
+        for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getPC(player)) {
+          pokemon.getPersistentData().remove(TAG_RAID_CAPTURE);
+        }
+        for (Pokemon pokemon : Cobblemon.INSTANCE.getStorage().getParty(player)) {
+          pokemon.getPersistentData().remove(TAG_RAID_CAPTURE);
+        }
+      });
     });
 
     LifecycleEvent.SERVER_STARTED.register(server -> {

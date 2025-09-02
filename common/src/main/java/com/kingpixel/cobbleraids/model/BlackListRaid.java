@@ -13,10 +13,10 @@ import java.util.List;
  * @author Carlos Varas Alonso - 18/01/2025 7:26
  */
 public class BlackListRaid {
-  private List<String> pokemons;
-  private List<String> abilities;
-  private List<String> moves;
-  private List<String> items;
+  private final List<String> pokemons;
+  private final List<String> abilities;
+  private final List<String> moves;
+  private final List<String> items;
 
   public BlackListRaid() {
     this.pokemons = List.of("pikachu", "charmander", "bulbasaur");

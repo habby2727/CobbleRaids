@@ -19,7 +19,8 @@ dependencies {
     modImplementation("ca.landonjw.gooeylibs:fabric-api-repack:${property("gooeylibs_version")}")
     modImplementation(files("libs/CobbleUtils-1.21.1-common-1.1.3.jar"))
     modImplementation(files("libs/CobbleSize-1.21.1-fabric-1.0.1-3c584eb.jar"))
-    
+    //modImplementation(files("libs/Cobblemon-fabric-1.7.0+1.21.1-HEAD-3a074bf.jar"))
+
     // Lombok
     annotationProcessor("org.projectlombok:lombok:${property("lombok_version")}")
     implementation("org.projectlombok:lombok:${property("lombok_version")}")

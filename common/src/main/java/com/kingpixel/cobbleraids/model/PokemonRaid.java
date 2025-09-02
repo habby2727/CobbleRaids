@@ -43,6 +43,7 @@ public class PokemonRaid {
     Stats.SPECIAL_DEFENCE, Stats.SPEED);
   private String pokemon;
   private Double chance;
+  private Integer overLevel;
   private Integer life;
   private String heldItem;
   private float size;
@@ -57,6 +58,7 @@ public class PokemonRaid {
     this.pokemon = "pikachu level=70 shiny=true";
     this.pokemonCapture = "pikachu";
     this.shinyRate = 2048;
+    this.overLevel = 0;
     this.chance = 0.1;
     this.minIvs = 0;
     this.life = 2000;

@@ -12,7 +12,6 @@ import com.kingpixel.cobbleraids.rewards.LastHitRewards;
 import com.kingpixel.cobbleraids.rewards.RaidRewards;
 import com.kingpixel.cobblesize.Model.SizeChance;
 import com.kingpixel.cobbleutils.CobbleUtils;
-import com.kingpixel.cobbleutils.api.PermissionApi;
 import com.kingpixel.cobbleutils.util.AdventureTranslator;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
@@ -71,19 +70,7 @@ public class RaidStarted {
     this.chunkX = raidEntity.getBlockPos().getX() >> 4;
     this.chunkZ = raidEntity.getBlockPos().getZ() >> 4;
     world.setChunkForced(chunkX, chunkZ, true);
-
-    if (CobbleRaids.config.isMoreHealthByEachPlayer()) {
-      int count = 0;
-      for (ServerPlayerEntity player : CobbleRaids.server.getPlayerManager().getPlayerList()) {
-        if (player == null) continue;
-        if (!PermissionApi.hasPermission(player, "cobbleraids.morehealth.bypass", 2)) {
-          count++;
-        }
-      }
-      this.maxLife = pokemonRaid.getLife() * (count == 0 ? 1 : count);
-    } else {
-      this.maxLife = pokemonRaid.getLife();
-    }
+    this.maxLife = pokemonRaid.getLife();
     this.currentLife = maxLife;
     this.finishTime = new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(raid.getTime()));
     this.fakePokemons = new ArrayList<>();
@@ -155,7 +142,8 @@ public class RaidStarted {
     if (fakePokemon == null) return;
 
     Cobblemon.INSTANCE.getConfig().setMaxPokemonLevel(999);
-    fakePokemon.getPokemon().setLevel(pokemon.getLevel() + CobbleRaids.config.getOverLevel());
+    int overLevel = raid.getPokemonRaid().getOverLevel() != 0 ? raid.getPokemonRaid().getOverLevel() : CobbleRaids.config.getOverLevel();
+    fakePokemon.getPokemon().setLevel(pokemon.getLevel() + overLevel);
     Cobblemon.INSTANCE.getConfig().setMaxPokemonLevel(CobbleRaids.oldLevelCap);
 
 
@@ -171,6 +159,17 @@ public class RaidStarted {
 
 
     fakePokemons.add(fakePokemon);
+
+    if (!damageMap.containsKey(player.getUuid())) {
+      int size = damageMap.size();
+      if (size >= 1) {
+        var amountLife = pokemonRaid.getLife();
+        currentLife += amountLife;
+        maxLife += amountLife;
+      }
+      damageMap.put(player.getUuid(), 0);
+      sendBossBar();
+    }
   }
 
   public void finishBattle(ServerPlayerEntity player, Pokemon pokemon) {
