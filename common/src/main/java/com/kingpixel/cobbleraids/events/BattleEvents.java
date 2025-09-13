@@ -7,6 +7,8 @@ import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.Raid;
 import com.kingpixel.cobbleutils.CobbleUtils;
+import com.kingpixel.cobbleutils.util.PlayerUtils;
+import com.kingpixel.cobbleutils.util.TypeMessage;
 import kotlin.Unit;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -74,6 +76,29 @@ public class BattleEvents {
 
     CobblemonEvents.BATTLE_STARTED_PRE.subscribe(Priority.HIGHEST, evt -> {
       var battle = evt.getBattle();
+      UUID battleId = battle.getBattleId();
+      var existingFight = CobbleRaids.raidManager.getFightingData(battleId);
+      if (existingFight != null) {
+        var playerActor = battle.getActor(existingFight.getPlayer());
+        if (playerActor != null) {
+          playerActor.getPokemonList().removeIf(battlePokemon -> existingFight.getRaid().getCategoryRaid().isBlackList(battlePokemon.getEffectedPokemon()));
+          if (playerActor.getPokemonList().isEmpty()) {
+            PlayerUtils.sendMessage(
+              existingFight.getPlayer(),
+              "§c[§6CobbleRaids§c] §cYou don't have any valid Pokémon to fight this raid!§r",
+              CobbleRaids.language.getPrefix(),
+              TypeMessage.CHAT
+            );
+            if (CobbleRaids.config.isDebug()) {
+              CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "BATTLE_STARTED_PRE: A battle has started but the player has no valid pokemons.");
+            }
+            evt.setReason(Text.empty());
+            evt.cancel();
+            existingFight.stop();
+            return Unit.INSTANCE;
+          }
+        }
+      }
       var activePokemons = battle.getActivePokemon();
       UUID raidUUID = null;
       PokemonEntity pokemonEntity = null;

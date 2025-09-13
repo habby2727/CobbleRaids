@@ -33,8 +33,6 @@ public class FightData {
     CobbleRaids.server.execute(() -> pokemonEntity.discard());
     CobbleRaids.raidManager.removeFightingData(battleUUID);
     var battle = Cobblemon.INSTANCE.getBattleRegistry().getBattle(battleUUID);
-    if (battle != null) {
-      CobbleRaids.server.execute(battle::stop);
-    }
+    if (battle != null) CobbleRaids.server.execute(battle::stop);
   }
 }

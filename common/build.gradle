@@ -18,11 +18,11 @@ dependencies {
     modImplementation("dev.architectury:architectury:${property("architectury_version")}")
     modImplementation("ca.landonjw.gooeylibs:fabric-api-repack:${property("gooeylibs_version")}")
     modImplementation(fileTree("libs") { include("*.jar") })
+    implementation("org.mongodb:mongodb-driver-sync:${property("mongodb_version")}")
 
     // Lombok
     annotationProcessor("org.projectlombok:lombok:${property("lombok_version")}")
     implementation("org.projectlombok:lombok:${property("lombok_version")}")
-
 
     // Kyori Adventure
     api("net.kyori:adventure-text-serializer-gson:${property("kyori_version")}")

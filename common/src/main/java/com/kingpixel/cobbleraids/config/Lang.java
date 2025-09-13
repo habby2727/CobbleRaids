@@ -15,6 +15,7 @@ import java.util.concurrent.CompletableFuture;
 public class Lang {
   private String prefix;
   private String reload;
+  private String messageReceivedTicket;
   private ConfirmMenu startBattleRaid;
 
   /**
@@ -23,6 +24,8 @@ public class Lang {
   public Lang() {
     prefix = "&6[&eCobbleRaids&6] &r";
     reload = "%prefix% &aConfig reloaded.";
+    messageReceivedTicket = "%prefix% &aYou have received %amount% tickets. You now have %total% tickets. Category: " +
+      "%category%";
     startBattleRaid = new ConfirmMenu();
     startBattleRaid.setTitle("Start Battle Raid?");
   }

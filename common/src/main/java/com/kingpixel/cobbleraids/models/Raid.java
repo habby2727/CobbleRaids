@@ -5,9 +5,11 @@ import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
 import com.cobblemon.mod.common.battles.BattleBuilder;
 import com.cobblemon.mod.common.battles.BattleFormat;
+import com.cobblemon.mod.common.battles.actor.PlayerBattleActor;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
+import com.kingpixel.cobbleraids.database.DataBaseFactory;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
@@ -31,6 +33,7 @@ import java.util.UUID;
 @Data
 public class Raid {
   public static final String RAID_NBT_KEY = "CobbleRaids_RaidUUID";
+  private boolean finish;
   private long startTime;
   private UUID raidUUID;
   private PokemonEntity raidEntity;
@@ -41,6 +44,7 @@ public class Raid {
   private Map<UUID, Integer> damageMap;
 
   public Raid(RaidData raidData) {
+    this.finish = false;
     this.startTime = System.currentTimeMillis();
     this.raidUUID = UUID.randomUUID();
     this.raidData = raidData;
@@ -68,6 +72,19 @@ public class Raid {
   }
 
   private void startBattle(ServerPlayerEntity player) {
+    if (finish || health <= 0) return;
+    UserInfo userInfo = DataBaseFactory.INSTANCE.findUserByPlayer(player);
+    if (categoryRaid.isNeedTicket() && !damageMap.containsKey(player.getUuid())) {
+      if (!userInfo.hasTicket(categoryRaid)) {
+        PlayerUtils.sendMessage(
+          player,
+          "§c[§6CobbleRaids§c] §cYou don't have a ticket to join this raid!§r",
+          CobbleRaids.language.getPrefix(),
+          TypeMessage.CHAT
+        );
+        return;
+      }
+    }
     PokemonEntity raidEntity = generateRaidEntity(true);
     raidEntity.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, Integer.MAX_VALUE, 255));
     if (!CobbleRaids.config.isDebug()) {
@@ -97,14 +114,22 @@ public class Raid {
     );
 
     startBattle.ifSuccessful(pokemonBattle -> {
-      var actor = pokemonBattle.getActor(player);
+      var actor = (PlayerBattleActor) pokemonBattle.getActor(player);
       if (actor == null) {
         CobbleUtils.LOGGER.fatal("Could not find actor for player " + player.getName().getString() + " in battle " + pokemonBattle.getBattleId());
         return Unit.INSTANCE;
       }
-      actor.getPokemonList().removeIf(pokemon -> {
-        return categoryRaid.isBlackList(pokemon.getOriginalPokemon());
-      });
+      actor.getPokemonList().removeIf(pokemon -> categoryRaid.isBlackList(pokemon.getEffectedPokemon()));
+      if (actor.getPokemonList().isEmpty()) {
+        PlayerUtils.sendMessage(
+          player,
+          "§c[§6CobbleRaids§c] §cYou don't have any valid Pokémon to fight this raid!§r",
+          CobbleRaids.language.getPrefix(),
+          TypeMessage.CHAT
+        );
+        CobbleRaids.server.execute(pokemonBattle::stop);
+        return Unit.INSTANCE;
+      }
       CobbleRaids.raidManager.addFightingPlayer(
         pokemonBattle.getBattleId(),
         new FightData(
@@ -114,12 +139,19 @@ public class Raid {
           raidEntity
         )
       );
+
       PlayerUtils.sendMessage(
         player,
         "§a[§6CobbleRaids§a] §aYou have started a battle against a raid boss!§r",
         CobbleRaids.language.getPrefix(),
         TypeMessage.CHAT
       );
+      if (!damageMap.containsKey(player.getUuid())) {
+        userInfo.removeTicket(categoryRaid);
+        maxHealth += categoryRaid.getHealth();
+        health += categoryRaid.getHealth();
+        damageMap.put(player.getUuid(), 0);
+      }
       teleportPlayerOut(player);
       return Unit.INSTANCE;
     });
@@ -188,12 +220,7 @@ public class Raid {
   public void updateHealth(FightData fightData, int damage) {
     fightData.stop();
     ServerPlayerEntity player = fightData.getPlayer();
-    Integer damageFromMap = damageMap.get(player.getUuid());
-    if (damageFromMap == null && !damageMap.isEmpty()) {
-      maxHealth += categoryRaid.getHealth();
-      health += categoryRaid.getHealth();
-    }
-    damageMap.put(player.getUuid(), (damageFromMap == null ? 0 : damageFromMap) + damage);
+    damageMap.compute(player.getUuid(), (k, damageFromMap) -> (damageFromMap == null ? 0 : damageFromMap) + damage);
     removeDamage(damage);
     if (CobbleRaids.config.isDebug()) {
       PlayerUtils.sendMessage(
@@ -203,34 +230,47 @@ public class Raid {
         TypeMessage.CHAT
       );
     }
-    if (health <= 0) {
-      finishRaid();
-    } else {
+    if (health > 0) {
       refreshRaidEntity();
-    }
+      startBattle(player);
+    } else finishRaid();
   }
 
   private synchronized void removeDamage(int damage) {
     health -= damage;
   }
 
-  private void finishRaid() {
+  private synchronized void finishRaid() {
+    if (finish) return;
+    finish = true;
     if (raidEntity == null) return;
     raidEntity.remove(Entity.RemovalReason.DISCARDED);
     CobbleRaids.raidManager.removeRaid(raidUUID);
     var fights = CobbleRaids.raidManager.getFightingPlayers(raidUUID);
     for (FightData fight : fights) {
+      UIManager.closeUI(fight.getPlayer());
       fight.stop();
     }
+    CobbleRaids.rewardsManager.giveRewards(categoryRaid, damageMap);
   }
 
   public void openStartBattleMenu(ServerPlayerEntity player) {
+    if (health <= 0 || finish) {
+      PlayerUtils.sendMessage(
+        player,
+        "§c[§6CobbleRaids§c] §cThis raid has already finished.§r",
+        CobbleRaids.language.getPrefix(),
+        TypeMessage.CHAT
+      );
+      return;
+    }
     if (PlayerUtils.isBattle(player)) return;
     CobbleRaids.language.getStartBattleRaid().open(
       player,
       raidData.getActualPhasePokemonItem(this),
       confirm -> {
         startBattle(player);
+        UIManager.closeUI(player);
       },
       cancel -> {
         PlayerUtils.sendMessage(

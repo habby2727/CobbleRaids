@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.AdvancedBlacklist;
 import com.kingpixel.cobbleutils.CobbleUtils;
+import com.kingpixel.cobbleutils.Model.DataBaseConfig;
+import com.kingpixel.cobbleutils.Model.DataBaseType;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import lombok.Getter;
@@ -22,6 +24,7 @@ public class Config {
   private boolean debug;
   private String lang;
   private Set<String> commands;
+  private DataBaseConfig database;
   private AdvancedBlacklist blacklist;
 
 
@@ -29,6 +32,11 @@ public class Config {
     debug = false;
     lang = "en";
     commands = Set.of("raids", "cobbleraids");
+    if (database == null) {
+      database = new DataBaseConfig();
+      database.setDatabase("cobbleraids");
+      database.setType(DataBaseType.JSON);
+    }
     blacklist = new AdvancedBlacklist();
   }
 
