@@ -4,12 +4,7 @@
   "package": "com.kingpixel.cobbleraids.mixins",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "ExpGainMixin",
-    "PreventDamageMixin",
-    "PreventDrops",
-    "PreventSave",
-    "SessionCaptureMixin",
-    "ShowMessageMixin"
+    "InteractRaidMixin"
   ],
   "injectors": {
     "defaultRequire": 1

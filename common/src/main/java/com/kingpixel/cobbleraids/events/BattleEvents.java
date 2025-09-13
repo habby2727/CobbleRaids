@@ -1,139 +1,131 @@
 package com.kingpixel.cobbleraids.events;
 
 import com.cobblemon.mod.common.api.Priority;
-import com.cobblemon.mod.common.api.battles.model.PokemonBattle;
-import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
 import com.cobblemon.mod.common.api.events.CobblemonEvents;
-import com.cobblemon.mod.common.battles.actor.PlayerBattleActor;
-import com.cobblemon.mod.common.battles.actor.PokemonBattleActor;
+import com.cobblemon.mod.common.battles.ActiveBattlePokemon;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
-import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
-import com.kingpixel.cobbleraids.managers.BattleManager;
-import com.kingpixel.cobbleraids.model.RaidStarted;
+import com.kingpixel.cobbleraids.models.Raid;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import kotlin.Unit;
 import net.minecraft.entity.Entity;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 
 import java.util.UUID;
 
 /**
- * @author Carlos Varas Alonso - 17/01/2025 23:36
+ * @author Carlos Varas Alonso - 13/09/2025 5:09
  */
 public class BattleEvents {
   public static void register() {
-    // Antes de empezar un combate
-    CobblemonEvents.BATTLE_STARTED_PRE.subscribe(Priority.NORMAL, (evt) -> {
-      try {
-        PokemonBattle battle = evt.getBattle();
-        ServerPlayerEntity player = null;
-        PokemonEntity pokemonEntity = null;
-        for (BattleActor actor : battle.getActors()) {
-          if (actor instanceof PlayerBattleActor playerBattleActor) {
-            player = playerBattleActor.getEntity();
-          } else if (actor instanceof PokemonBattleActor pokemonBattleActor) {
-            pokemonEntity = pokemonBattleActor.getEntity();
-          }
+
+    CobblemonEvents.BATTLE_FLED.subscribe(Priority.LOWEST, evt -> {
+      var battle = evt.getBattle();
+      var battleId = battle.getBattleId();
+      var fight = CobbleRaids.raidManager.getFightingData(battleId);
+      if (fight == null) {
+        if (CobbleRaids.config.isDebug()) {
+          CobbleUtils.LOGGER.warn(CobbleRaids.MOD_ID, "BATTLE_FLED: A player has fled but the fight is null.");
         }
-        if (player == null || pokemonEntity == null) return Unit.INSTANCE;
-        Pokemon pokemon = pokemonEntity.getPokemon();
-        if (pokemon.getPersistentData().getBoolean(CobbleRaids.TAG_RAID)) {
-          evt.setReason(Text.empty());
-          RaidStarted raidStarted = BattleManager.getActiveRaid(pokemonEntity.getUuid());
-          if (raidStarted == null) {
-            pokemonEntity.remove(Entity.RemovalReason.DISCARDED);
-            evt.cancel();
-            return Unit.INSTANCE;
-          }
-          if (!raidStarted.getPokemonRaid().isPermitted(player)) {
-            evt.cancel();
-            return Unit.INSTANCE;
-          }
-          raidStarted.startBattle(player);
-          evt.cancel();
-        }
-      } catch (Exception e) {
-        e.printStackTrace();
+        return Unit.INSTANCE;
       }
+      if (CobbleRaids.config.isDebug()) {
+        CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "BATTLE_FLED: A player has fled the raid battle.");
+      }
+      fight.stop();
       return Unit.INSTANCE;
     });
 
-
-    CobblemonEvents.LOOT_DROPPED.subscribe(Priority.NORMAL, evt -> {
-      var livingEntity = evt.getEntity();
-      if (livingEntity == null) return Unit.INSTANCE;
-      if (livingEntity instanceof PokemonEntity pokemonEntity) {
-        Pokemon pokemon = pokemonEntity.getPokemon();
-        NbtCompound nbt = pokemon.getPersistentData();
-        if (nbt.getBoolean(CobbleRaids.TAG_RAID) || nbt.getBoolean(CobbleRaids.TAG_FAKERAID)) {
-          pokemon.removeHeldItem();
-          evt.cancel();
+    CobblemonEvents.BATTLE_FAINTED.subscribe(Priority.HIGHEST, evt -> {
+      var pokemonKilled = evt.getKilled();
+      var battle = evt.getBattle();
+      var pokemonEntity = pokemonKilled.getEntity();
+      if (pokemonEntity == null) {
+        if (CobbleRaids.config.isDebug()) {
+          CobbleUtils.LOGGER.warn(CobbleRaids.MOD_ID, "BATTLE_FAINTED: A pokemon has fainted but the pokemonEntity is null.");
         }
+        return Unit.INSTANCE;
       }
+      var fight = CobbleRaids.raidManager.getFightingData(battle.getBattleId());
+      if (fight == null) {
+        if (CobbleRaids.config.isDebug()) {
+          CobbleUtils.LOGGER.warn(CobbleRaids.MOD_ID, "BATTLE_FAINTED: A pokemon has fainted but the fight is null.");
+        }
+        return Unit.INSTANCE;
+      }
+      if (!fight.getPokemonEntity().equals(pokemonEntity)) {
+        if (CobbleRaids.config.isDebug()) {
+          CobbleUtils.LOGGER.warn(CobbleRaids.MOD_ID, "BATTLE_FAINTED: A pokemon has fainted but it is not the raid " +
+            "pokemon.");
+        }
+        return Unit.INSTANCE;
+      }
+      var raid = fight.getRaid();
+      if (raid == null) {
+        if (CobbleRaids.config.isDebug()) {
+          CobbleUtils.LOGGER.warn(CobbleRaids.MOD_ID, "BATTLE_FAINTED: A pokemon has fainted but the raid is null.");
+        }
+        return Unit.INSTANCE;
+      }
+      raid.updateHealth(fight, pokemonKilled.getMaxHealth());
       return Unit.INSTANCE;
     });
 
-    // Victoria en un combate
-    CobblemonEvents.BATTLE_VICTORY.subscribe(Priority.NORMAL, evt -> {
-      ServerPlayerEntity player = null;
-      Pokemon pokemon = null;
-      var winners = evt.getWinners();
-      for (BattleActor winnerActor : winners) {
-        if (winnerActor instanceof PlayerBattleActor playerBattleActor) {
-          player = playerBattleActor.getEntity();
-        } else if (winnerActor instanceof PokemonBattleActor pokemonBattleActor) {
-          pokemon = pokemonBattleActor.getPokemon().getOriginalPokemon();
-          if (pokemon.getPersistentData().getBoolean(CobbleRaids.TAG_FAKERAID)) {
-            UUID uuidBattle = pokemon.getPersistentData().getUuid(CobbleRaids.TAG_RAID_ACTIVE);
-            RaidStarted raidStarted = BattleManager.getActiveRaid(uuidBattle);
-            if (raidStarted != null) {
-              if (player == null) return Unit.INSTANCE;
-              raidStarted.finishBattle(player, pokemon);
-              return Unit.INSTANCE;
-            }
+    CobblemonEvents.BATTLE_STARTED_PRE.subscribe(Priority.HIGHEST, evt -> {
+      var battle = evt.getBattle();
+      var activePokemons = battle.getActivePokemon();
+      UUID raidUUID = null;
+      PokemonEntity pokemonEntity = null;
+      for (ActiveBattlePokemon activeBattlePokemon : activePokemons) {
+        var battlePokemon = activeBattlePokemon.getBattlePokemon();
+        if (battlePokemon == null) {
+          if (CobbleRaids.config.isDebug()) {
+            CobbleUtils.LOGGER.warn(CobbleRaids.MOD_ID, "BATTLE_STARTED_PRE: A battle has started but one of the " +
+              "battlePokemons is null.");
           }
+          continue;
         }
-      }
-      if (player == null) return Unit.INSTANCE;
-      for (BattleActor loserActor : evt.getLosers()) {
-        if (loserActor instanceof PokemonBattleActor pokemonBattleActor) {
-          pokemon = pokemonBattleActor.getPokemon().getOriginalPokemon();
-          if (pokemon.getPersistentData().getBoolean(CobbleRaids.TAG_FAKERAID)) {
-            UUID uuidBattle = pokemon.getPersistentData().getUuid(CobbleRaids.TAG_RAID_ACTIVE);
-            RaidStarted raidStarted = BattleManager.getActiveRaid(uuidBattle);
-            if (raidStarted != null) {
-              raidStarted.finishBattle(player, pokemon);
-              return Unit.INSTANCE;
-            }
+        pokemonEntity = battlePokemon.getEntity();
+        if (pokemonEntity == null) {
+          if (CobbleRaids.config.isDebug()) {
+            CobbleUtils.LOGGER.warn(CobbleRaids.MOD_ID, "BATTLE_STARTED_PRE: A battle has started but one of the pokemonEntities is null.");
           }
+          continue;
+        }
+        var pokemon = pokemonEntity.getPokemon();
+        var persistentData = pokemon.getPersistentData();
+        if (!persistentData.contains(Raid.RAID_NBT_KEY)) return Unit.INSTANCE;
+        raidUUID = persistentData.getUuid(Raid.RAID_NBT_KEY);
+        if (raidUUID != null) {
+          if (CobbleRaids.config.isDebug()) {
+            CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "BATTLE_STARTED_PRE: A battle has started and the raid UUID was found: " + raidUUID);
+          }
+          break;
         }
       }
-      return Unit.INSTANCE;
-    });
-
-    CobblemonEvents.BATTLE_FLED.subscribe(Priority.HIGHEST, evt -> {
-      ServerPlayerEntity player = null;
-      Pokemon pokemon = null;
-      for (BattleActor actor : evt.getBattle().getActors()) {
-        if (actor instanceof PlayerBattleActor playerBattleActor) {
-          player = playerBattleActor.getEntity();
-        } else if (actor instanceof PokemonBattleActor pokemonBattleActor) {
-          pokemon = pokemonBattleActor.getPokemon().getOriginalPokemon();
+      if (raidUUID == null) {
+        if (CobbleRaids.config.isDebug()) {
+          CobbleUtils.LOGGER.warn(CobbleRaids.MOD_ID, "BATTLE_STARTED_PRE: A battle has started but no raid UUID was found in any of the pokemons.");
         }
+        return Unit.INSTANCE;
       }
-      if (player == null || pokemon == null) return Unit.INSTANCE;
-      if (pokemon.getPersistentData().getBoolean(CobbleRaids.TAG_FAKERAID)) {
-        UUID uuidBattle = pokemon.getPersistentData().getUuid(CobbleRaids.TAG_RAID_ACTIVE);
-        RaidStarted raidStarted = BattleManager.getActiveRaid(uuidBattle);
-        if (raidStarted != null) {
-          raidStarted.finishBattle(player, pokemon);
-          return Unit.INSTANCE;
+      ServerPlayerEntity player = battle.getPlayers().getFirst();
+      if (player == null) {
+        if (CobbleRaids.config.isDebug()) {
+          CobbleUtils.LOGGER.warn(CobbleRaids.MOD_ID, "BATTLE_STARTED_PRE: A battle has started but no player was found.");
         }
+        return Unit.INSTANCE;
       }
+      evt.setReason(Text.empty());
+      evt.cancel();
+      var raid = CobbleRaids.raidManager.getRaid(raidUUID);
+      if (raid == null) {
+        pokemonEntity.remove(Entity.RemovalReason.DISCARDED);
+        return Unit.INSTANCE;
+      }
+      raid.openStartBattleMenu(player);
       return Unit.INSTANCE;
     });
   }
-
 }

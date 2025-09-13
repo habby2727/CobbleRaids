@@ -2,16 +2,14 @@ package com.kingpixel.cobbleraids.config;
 
 import com.google.gson.Gson;
 import com.kingpixel.cobbleraids.CobbleRaids;
-import com.kingpixel.cobbleraids.model.BlackListRaid;
+import com.kingpixel.cobbleraids.models.AdvancedBlacklist;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import lombok.Getter;
 import lombok.ToString;
 
-import java.time.DayOfWeek;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -22,39 +20,16 @@ import java.util.concurrent.CompletableFuture;
 @ToString
 public class Config {
   private boolean debug;
-  private String prefix;
   private String lang;
-  private boolean blindnessEffect;
-  private boolean moreHealthByEachPlayer;
-  private boolean blockXp;
-  private boolean needPokeBallRaids;
-  private List<String> pokeballs;
-  private int overLevel;
-  private int cooldown;
-  private int startShowBar;
-  private int secondsToStartCapture;
-  private int secondsToFinishCapture;
-  private List<DayOfWeek> days;
-  private List<String> commands;
-  private BlackListRaid banned;
+  private Set<String> commands;
+  private AdvancedBlacklist blacklist;
+
 
   public Config() {
     debug = false;
-    prefix = "§7[§6CobbleRaids§7] ";
     lang = "en";
-    overLevel = 0;
-    blindnessEffect = true;
-    moreHealthByEachPlayer = true;
-    blockXp = true;
-    needPokeBallRaids = false;
-    pokeballs = List.of("cobblemon:ancient_origin_ball");
-    cooldown = 30;
-    startShowBar = 5;
-    secondsToStartCapture = 60;
-    secondsToFinishCapture = 120;
-    days = Arrays.stream(DayOfWeek.values()).toList();
-    commands = List.of("cobbleraids", "raid");
-    banned = new BlackListRaid();
+    commands = Set.of("raids", "cobbleraids");
+    blacklist = new AdvancedBlacklist();
   }
 
   public void init() {
