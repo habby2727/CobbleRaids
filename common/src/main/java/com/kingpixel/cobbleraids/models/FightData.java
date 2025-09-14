@@ -30,7 +30,9 @@ public class FightData {
     if (CobbleRaids.config.isDebug()) {
       CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Stopping fight for player " + player.getName().getString() + " and raid " + raid.getRaidUUID());
     }
-    CobbleRaids.server.execute(() -> pokemonEntity.discard());
+    CobbleRaids.server.execute(() -> {
+      if (pokemonEntity != null) pokemonEntity.discard();
+    });
     CobbleRaids.raidManager.removeFightingData(battleUUID);
     var battle = Cobblemon.INSTANCE.getBattleRegistry().getBattle(battleUUID);
     if (battle != null) CobbleRaids.server.execute(battle::stop);

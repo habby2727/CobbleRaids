@@ -3,6 +3,7 @@ package com.kingpixel.cobbleraids.manager;
 import com.kingpixel.cobbleraids.models.FightData;
 import com.kingpixel.cobbleraids.models.Raid;
 import lombok.Data;
+import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.List;
 import java.util.Map;
@@ -28,16 +29,16 @@ public class RaidManager {
     activeRaids.put(raidUUID, raid);
   }
 
-  public void removeRaid(UUID raidUUID) {
-    activeRaids.remove(raidUUID);
+  public Raid removeRaid(UUID raidUUID) {
+    return activeRaids.remove(raidUUID);
   }
 
-  public void addFightingPlayer(UUID battleUUID, FightData fightData) {
-    fightingPlayers.put(battleUUID, fightData);
+  public void addFightingData(UUID BattleUUID, FightData fightData) {
+    fightingPlayers.put(BattleUUID, fightData);
   }
 
-  public void removeFightingData(UUID battleUUID) {
-    fightingPlayers.remove(battleUUID);
+  public void removeFightingData(UUID BattleUUID) {
+    fightingPlayers.remove(BattleUUID);
   }
 
   public FightData getFightingData(UUID BattleUUID) {
@@ -57,5 +58,13 @@ public class RaidManager {
       fightData.stop();
     });
     fightingPlayers.clear();
+  }
+
+  public void stopRaidPlayer(ServerPlayerEntity player) {
+    fightingPlayers.values().stream().filter(fight -> fight.getPlayer().getUuid().equals(player.getUuid())).findFirst().ifPresent(FightData::stop);
+  }
+
+  public FightData getFightingPlayer(UUID uuid) {
+    return fightingPlayers.values().stream().filter(fight -> fight.getPlayer().getUuid().equals(uuid)).findFirst().orElse(null);
   }
 }

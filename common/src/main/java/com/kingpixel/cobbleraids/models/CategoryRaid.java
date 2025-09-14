@@ -5,7 +5,9 @@ import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleutils.Model.DurationValue;
+import com.kingpixel.cobbleutils.api.PermissionApi;
 import lombok.Data;
+import net.minecraft.entity.boss.BossBar;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.Vec3d;
@@ -20,8 +22,15 @@ import java.util.Map;
 public class CategoryRaid {
   private static Map<String, ServerWorld> worldMap = new HashMap<>();
   private String id;
+  private String name;
+  private String permission;
   private boolean needTicket;
-  private DurationValue duration;
+  private String bossBarName;
+  private BossBar.Style bossBarStyle;
+  private BossBar.Color bossBarColor;
+  private DurationValue durationRaid;
+  private DurationValue timeBeforeStart;
+  private DurationValue durationCapture;
   private int health;
   private int overLevel;
   private int minLevel;
@@ -32,11 +41,17 @@ public class CategoryRaid {
   private Coords coords;
   // TODO: Glowing option
 
-
-  public CategoryRaid(String id) {
-    this.id = id;
+  public CategoryRaid() {
+    this.id = "default";
+    this.name = "Default Raid";
     this.needTicket = false;
-    this.duration = DurationValue.parse("30m");
+    this.permission = "";
+    this.bossBarName = "Raid ⭐ | %pokemon% | %health%/%maxhealth% HP";
+    this.bossBarStyle = BossBar.Style.PROGRESS;
+    this.bossBarColor = BossBar.Color.RED;
+    this.durationRaid = DurationValue.parse("30m");
+    this.timeBeforeStart = DurationValue.parse("30s");
+    this.durationCapture = DurationValue.parse("5m");
     this.health = 1000;
     this.overLevel = 100;
     this.minLevel = 1;
@@ -45,6 +60,39 @@ public class CategoryRaid {
     this.blacklist = new AdvancedBlacklist();
     this.world = "minecraft:overworld";
     this.coords = new Coords(0, 70, 0);
+  }
+
+  public CategoryRaid(String id) {
+    super();
+    this.id = id;
+  }
+
+  public int getHealth() {
+    if (health <= 0) return 100;
+    return health;
+  }
+
+  public boolean havePermission(ServerPlayerEntity player) {
+    return PermissionApi.hasPermission(player, permission, 2);
+  }
+
+  public void manageBossBar(Raid value) {
+    var bossBar = value.getBossBar();
+    value.refreshBossBar();
+    var players = value.getPlayersInWorld();
+    if (bossBar == null || players == null || players.isEmpty()) {
+      return;
+    }
+    for (ServerPlayerEntity player : players) {
+      if (player.isInRange(
+        value.getRaidEntity(),
+        64
+      )) {
+        bossBar.addPlayer(player);
+      } else {
+        bossBar.removePlayer(player);
+      }
+    }
   }
 
   public ServerWorld getWorld() {
@@ -77,7 +125,7 @@ public class CategoryRaid {
     pokemonEntity.setNoGravity(true);
     pokemonEntity.speed = 0;
     pokemonEntity.setHealth(pokemonEntity.getMaxHealth());
-    pokemonEntity.setPersistent();
+    if (!fight) pokemonEntity.setPersistent();
     pokemonEntity.setAiDisabled(true);
     pokemonEntity.setMovementSpeed(0);
     if (fight) {
@@ -88,7 +136,8 @@ public class CategoryRaid {
   }
 
   public boolean isBlackList(Pokemon pokemon) {
-    return blacklist.isBanned(pokemon);
+    if (blacklist.isBanned(pokemon)) return true;
+    return CobbleRaids.config.getBlacklist().isBanned(pokemon);
   }
 
 

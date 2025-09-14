@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.UUID;
@@ -24,6 +25,17 @@ import java.util.UUID;
 public abstract class InteractRaidMixin {
   @Unique private boolean cobbleRaids$raid = false;
   @Shadow private Pokemon pokemon;
+
+
+  @Inject(method = "updatePostDeath", at = @At("HEAD"))
+  private void InteractRaid$onUpdatePostDeath(CallbackInfo ci) {
+    if (hasNbt(pokemon)) {
+      PokemonEntity self = (PokemonEntity) (Object) this;
+      self.teleport(
+        self.getX(), -1000, self.getZ(), false
+      );
+    }
+  }
 
   @Inject(method = "interactMob", at = @At("HEAD"))
   private void InteractRaid$onInteract(PlayerEntity player, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
@@ -55,9 +67,19 @@ public abstract class InteractRaidMixin {
     if (pokemon == null) return;
     var persistentData = pokemon.getPersistentData();
     if (persistentData == null) return;
-    if (persistentData.contains(Raid.RAID_NBT_KEY)) {
-      cobbleRaids$raid = true;
-      cir.cancel();
+    if (hasNbt(pokemon)) {
+      cir.setReturnValue(false);
+      return;
     }
+  }
+
+  @Unique private boolean hasNbt(Pokemon pokemon) {
+    if (cobbleRaids$raid) return true;
+    if (pokemon.getPersistentData().contains(Raid.RAID_NBT_KEY)) {
+      cobbleRaids$raid = true;
+      return true;
+    }
+    return false;
+
   }
 }

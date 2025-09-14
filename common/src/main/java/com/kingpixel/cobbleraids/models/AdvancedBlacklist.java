@@ -25,6 +25,7 @@ public class AdvancedBlacklist {
   }
 
   public boolean isBanned(Pokemon pokemon) {
+    if (pokemon == null) return false;
     if (pokemonBlackList.isBlackListed(pokemon)) return true;
     var moveSet = pokemon.getMoveSet();
     for (Move move : moveSet) {

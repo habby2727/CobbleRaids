@@ -33,6 +33,8 @@ dependencies {
     // NeoGradle/ModDevGradle/VanillaGradle project
     compileOnly("net.kyori:adventure-platform-mod-shared:6.0.0") // for Minecraft 1.21.2-1.21.4
 
+    api("club.minnced:discord-webhooks:${property("discord_webhooks_version")}")
+
     // ! Tests
     testCompileOnly 'org.projectlombok:lombok:1.18.30'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'

@@ -6,6 +6,8 @@ import com.kingpixel.cobbleraids.models.AdvancedBlacklist;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.DataBaseConfig;
 import com.kingpixel.cobbleutils.Model.DataBaseType;
+import com.kingpixel.cobbleutils.Model.DurationValue;
+import com.kingpixel.cobbleutils.Model.WebHookData;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import lombok.Getter;
@@ -23,8 +25,10 @@ import java.util.concurrent.CompletableFuture;
 public class Config {
   private boolean debug;
   private String lang;
+  private DurationValue cooldownBetweenRaids = DurationValue.parse("30m");
   private Set<String> commands;
   private DataBaseConfig database;
+  private WebHookData webhook;
   private AdvancedBlacklist blacklist;
 
 
@@ -37,6 +41,7 @@ public class Config {
       database.setDatabase("cobbleraids");
       database.setType(DataBaseType.JSON);
     }
+    webhook = new WebHookData("", "", "Raids");
     blacklist = new AdvancedBlacklist();
   }
 

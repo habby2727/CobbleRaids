@@ -3,11 +3,18 @@ package com.kingpixel.cobbleraids;
 import com.cobblemon.mod.common.Cobblemon;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.kingpixel.cobbleraids.command.CommandTree;
-import com.kingpixel.cobbleraids.config.*;
+import com.kingpixel.cobbleraids.config.CategoryConfig;
+import com.kingpixel.cobbleraids.config.Config;
+import com.kingpixel.cobbleraids.config.Lang;
+import com.kingpixel.cobbleraids.config.RaidConfigs;
 import com.kingpixel.cobbleraids.database.DataBaseClient;
 import com.kingpixel.cobbleraids.database.DataBaseFactory;
 import com.kingpixel.cobbleraids.events.BattleEvents;
+import com.kingpixel.cobbleraids.events.RaidEvents;
+import com.kingpixel.cobbleraids.manager.CaptureSessionManager;
 import com.kingpixel.cobbleraids.manager.RaidManager;
+import com.kingpixel.cobbleraids.manager.RewardsManager;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.PlayerEvent;
@@ -28,15 +35,15 @@ public class CobbleRaids {
   public static int oldLevelCap = Cobblemon.INSTANCE.getConfig().getMaxPokemonLevel();
   public static RaidManager raidManager = new RaidManager();
   public static RewardsManager rewardsManager = new RewardsManager();
+  public static CaptureSessionManager captureSessionManager = new CaptureSessionManager();
   public static final Executor COBBLE_RAID_EXECUTOR = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
     .setNameFormat("Cobble-Raids-executor-%d")
     .setDaemon(true)
     .build());
-  private static final ScheduledExecutorService COBBLE_RAIDS_SCHEDULER = Executors.newSingleThreadScheduledExecutor(
-    new ThreadFactoryBuilder()
-      .setNameFormat("Cobble-Raids-scheduler-%d")
-      .setDaemon(true)
-      .build()
+  private static final ScheduledExecutorService COBBLE_RAIDS_SCHEDULER = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder()
+    .setNameFormat("Cobble-Raids-scheduler-%d")
+    .setDaemon(true)
+    .build()
   );
 
   public static void init() {
@@ -45,19 +52,68 @@ public class CobbleRaids {
   }
 
   private static void tasks() {
+    // Task to teleport out players that are fighting but are no longer in the raid area.
     COBBLE_RAIDS_SCHEDULER.scheduleWithFixedDelay(() -> {
-        if (server == null) return;
-        if (raidManager == null) return;
-        var fights = raidManager.getFightingPlayers();
-        if (fights == null || fights.isEmpty()) return;
-        fights.forEach((key, value) -> {
-          var player = value.getPlayer();
-          var raid = value.getRaid();
-          if (player == null || raid == null) return;
-          raid.teleportPlayerOut(player);
-        });
+        try {
+          if (server == null) return;
+          if (raidManager == null) return;
+          var fights = raidManager.getFightingPlayers();
+          if (fights == null || fights.isEmpty()) return;
+          fights.forEach((key, value) -> {
+            var player = value.getPlayer();
+            var raid = value.getRaid();
+            if (player == null || raid == null) return;
+            raid.teleportPlayerOut(player);
+          });
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
       }, 0, 50, TimeUnit.MILLISECONDS
     );
+
+    // Task to update the boss bar of all active raids.
+    COBBLE_RAIDS_SCHEDULER.scheduleWithFixedDelay(() -> {
+      try {
+        if (server == null) return;
+        if (raidManager == null) return;
+        var activeRaids = raidManager.getActiveRaids();
+        if (activeRaids == null || activeRaids.isEmpty()) return;
+        activeRaids.forEach((key, value) -> {
+          value.getCategoryRaid().manageBossBar(value);
+        });
+      } catch (Exception e) {
+        e.printStackTrace();
+        CobbleUtils.LOGGER.error("[BossBarTask] Error during boss bar management: " + e.getMessage());
+      }
+    }, 0, 1, TimeUnit.SECONDS);
+
+    // Task to finish raids that finish by time.
+    COBBLE_RAIDS_SCHEDULER.scheduleWithFixedDelay(() -> {
+      try {
+        if (server == null) return;
+        if (raidManager == null) return;
+        var activeRaids = raidManager.getActiveRaids();
+        if (activeRaids == null || activeRaids.isEmpty()) return;
+        activeRaids.forEach((key, value) -> {
+          value.sendActionBarTimeLeft();
+          if (value.isFinishByTime()) value.finishRaid();
+        });
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }, 0, 1, TimeUnit.SECONDS);
+    // Task Capture session timeout
+    COBBLE_RAIDS_SCHEDULER.scheduleWithFixedDelay(() -> {
+      try {
+        if (server == null) return;
+        if (captureSessionManager == null) return;
+        var sessions = captureSessionManager.getActiveSessions();
+        if (sessions == null || sessions.isEmpty()) return;
+        sessions.forEach((key, value) -> value.checkTimeout());
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }, 0, 1, TimeUnit.SECONDS);
   }
 
   public static void load() {
@@ -88,7 +144,8 @@ public class CobbleRaids {
     });
 
     LifecycleEvent.SERVER_STOPPING.register(server -> {
-      CobbleRaids.raidManager.stopAllRaids();
+      raidManager.stopAllRaids();
+      captureSessionManager.finishAllSessions();
     });
 
     LifecycleEvent.SERVER_LEVEL_LOAD.register(level -> server = level.getServer());
@@ -111,8 +168,11 @@ public class CobbleRaids {
           e.printStackTrace();
           return null;
         });
+      raidManager.stopRaidPlayer(player);
+      captureSessionManager.finishSessionPlayer(player.getUuid());
     });
 
+    RaidEvents.register();
     BattleEvents.register();
   }
 }

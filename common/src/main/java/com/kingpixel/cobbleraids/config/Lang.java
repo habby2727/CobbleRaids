@@ -16,6 +16,12 @@ public class Lang {
   private String prefix;
   private String reload;
   private String messageReceivedTicket;
+  private String actionBarRaidTimeLeft;
+  private String actionBarCaptureTimeLeft;
+  private String actionBarCaptureStartingIn;
+  private String notPermission;
+  private String messageStartBattle;
+
   private ConfirmMenu startBattleRaid;
 
   /**
@@ -26,6 +32,11 @@ public class Lang {
     reload = "%prefix% &aConfig reloaded.";
     messageReceivedTicket = "%prefix% &aYou have received %amount% tickets. You now have %total% tickets. Category: " +
       "%category%";
+    actionBarRaidTimeLeft = "&eTime left: &6%time%";
+    actionBarCaptureTimeLeft = "&eCapture time left: &6%time%";
+    actionBarCaptureStartingIn = "&eStarting in: &6%time%";
+    notPermission = "%prefix% &cYou do not have permission to do that.";
+    messageStartBattle = "%prefix% &aYou have started a battle raid against &e%pokemon%&a. Good luck!";
     startBattleRaid = new ConfirmMenu();
     startBattleRaid.setTitle("Start Battle Raid?");
   }

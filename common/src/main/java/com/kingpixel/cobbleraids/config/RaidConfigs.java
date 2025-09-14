@@ -46,6 +46,21 @@ public class RaidConfigs {
     return RAIDS_BY_CATEGORY.getOrDefault(categoryId, RAIDS_BY_CATEGORY.get("default"));
   }
 
+  public RaidData getRandomRaidByCategory(String categoryId) {
+    var raids = getRaidsByCategory(categoryId);
+    if (raids.isEmpty()) return RAIDS.get("default");
+    double totalchance = raids.stream().mapToDouble(RaidData::getChance).sum();
+    double random = Utils.getRandom().nextDouble() * totalchance;
+    double cumulativeChance = 0.0;
+    for (var raid : raids) {
+      cumulativeChance += raid.getChance();
+      if (random <= cumulativeChance) {
+        return raid;
+      }
+    }
+    return raids.getFirst();
+  }
+
   private void createDefaultRaid() {
     var defaultRaid = new RaidData("default", "default");
     RAIDS.put("default", defaultRaid);

@@ -17,12 +17,26 @@ import java.util.Map;
 public class RaidData {
   private String id;
   private final String category;
+  private double chance;
+  private final String capturePokemon;
   private final String pokemon;
   private final Map<Double, String> pokemonPhases;
+  // TODO: States raid: Shield, Health regen, Weather, Terrain, Status... <Range health percentage, State>
+
+  public RaidData() {
+    this.id = "default";
+    this.category = "default";
+    this.chance = 100;
+    this.capturePokemon = "pikachu";
+    this.pokemon = "pikachu";
+    this.pokemonPhases = new HashMap<>();
+  }
 
   public RaidData(String id, String category) {
     this.id = id;
     this.category = category;
+    this.chance = 100;
+    this.capturePokemon = "pikachu";
     this.pokemon = "pikachu";
     this.pokemonPhases = new HashMap<>();
   }
@@ -32,10 +46,10 @@ public class RaidData {
   }
 
   public String getActualPhase(Raid raid) {
+    if (pokemonPhases.isEmpty()) return pokemon;
     var currentHealth = raid.getHealth();
     var maxHealth = raid.getMaxHealth();
     var healthPercentage = (currentHealth / maxHealth) * 100;
-    if (pokemonPhases.isEmpty()) return pokemon;
 
     String result = pokemon;
     var entries = pokemonPhases.entrySet();
@@ -48,7 +62,8 @@ public class RaidData {
   }
 
   public boolean isBannedPokemon(Pokemon pokemon) {
-    return false;
+    if (getCategoryRaid().isBlackList(pokemon)) return true;
+    return CobbleRaids.config.getBlacklist().isBanned(pokemon);
   }
 
   public boolean isBannedPlayer(String playerUUID) {

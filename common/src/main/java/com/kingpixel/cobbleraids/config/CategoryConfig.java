@@ -25,6 +25,9 @@ public class CategoryConfig {
     for (var file : files) {
       try {
         var category = Utils.newGson().fromJson(Utils.readFileSync(file), CategoryRaid.class);
+        if (category.getHealth() <= 0) {
+          category.setHealth(100);
+        }
         String id = file.getName().replace(".json", "");
         categorys.put(id, category);
         Utils.writeFileAsync(file, Utils.newGson().toJson(category));
