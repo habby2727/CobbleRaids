@@ -3,6 +3,7 @@ package com.kingpixel.cobbleraids.command.admin;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.Raid;
 import com.kingpixel.cobbleraids.models.RaidData;
+import com.kingpixel.cobbleutils.Model.DurationValue;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.server.command.CommandManager;
@@ -39,7 +40,21 @@ public class RaidStartCommand {
                     e.printStackTrace();
                   }
                   return 1;
-                })
+                }).then(
+                  CommandManager.argument("time", StringArgumentType.string())
+                    .executes(context -> {
+                      try {
+                        String raidId = StringArgumentType.getString(context, "raidId");
+                        String time = StringArgumentType.getString(context, "time");
+                        long millis = DurationValue.parse(time).toMillis();
+                        Raid raid = new Raid(CobbleRaids.raidConfigs.getRaid(raidId), millis);
+                        CobbleRaids.raidManager.generateRaid(raid.getRaidUUID(), raid);
+                      } catch (Exception e) {
+                        e.printStackTrace();
+                      }
+                      return 1;
+                    })
+                )
             )
         )
     );

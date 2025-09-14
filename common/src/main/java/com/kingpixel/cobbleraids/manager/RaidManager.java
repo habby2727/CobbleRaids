@@ -51,6 +51,8 @@ public class RaidManager {
 
   public void stopAllRaids() {
     activeRaids.forEach((uuid, raid) -> {
+      raid.finishRaid(false);
+      if (raid.getRaidEntity() == null) return;
       raid.getRaidEntity().discard();
     });
     activeRaids.clear();

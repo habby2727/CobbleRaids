@@ -97,6 +97,10 @@ public class DamageReward {
           player,
           raid
         );
+      } else {
+        CobbleRaids.language.getTitleNotLuckyCapture().send(
+          player, raid.getRaidData()
+        );
       }
     }
   }

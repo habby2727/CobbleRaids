@@ -77,6 +77,7 @@ public class CategoryRaid {
   }
 
   public void manageBossBar(Raid value) {
+    if (value.getRaidEntity() == null) return;
     var bossBar = value.getBossBar();
     value.refreshBossBar();
     var players = value.getPlayersInWorld();
@@ -84,6 +85,7 @@ public class CategoryRaid {
       return;
     }
     for (ServerPlayerEntity player : players) {
+
       if (player.isInRange(
         value.getRaidEntity(),
         64

@@ -45,6 +45,7 @@ public class CaptureSessionData {
 
 
   public void startSession() {
+    CobbleRaids.language.getTitleStartCapture().send(player, raidData);
     CobbleRaids.captureSessionManager.getActiveSessions().remove(battleUUID);
     AtomicReference<UUID> battleUUID = new AtomicReference<>();
     final PokemonEntity[] pokemonEntity = {null};
@@ -139,9 +140,11 @@ public class CaptureSessionData {
   }
 
   public void finishSession() {
+    CobbleRaids.language.getTitleEndCapture().send(player, raidData);
     CobbleRaids.server.execute(() -> {
       var battle = Cobblemon.INSTANCE.getBattleRegistry().getBattle(battleUUID);
       if (battle != null) battle.stop();
+      if (pokemon == null) return;
       pokemon.discard();
     });
     CobbleRaids.captureSessionManager.getActiveSessions().remove(battleUUID);

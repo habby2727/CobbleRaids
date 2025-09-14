@@ -96,7 +96,12 @@ public class CobbleRaids {
         if (activeRaids == null || activeRaids.isEmpty()) return;
         activeRaids.forEach((key, value) -> {
           value.sendActionBarTimeLeft();
-          if (value.isFinishByTime()) value.finishRaid();
+          if (value.isFinishByTime()) {
+            if (CobbleRaids.config.isDebug()) {
+              CobbleUtils.LOGGER.info("[RaidFinishTask] Finishing raid " + value.getRaidUUID() + " by time.");
+            }
+            value.finishRaid(false);
+          }
         });
       } catch (Exception e) {
         e.printStackTrace();

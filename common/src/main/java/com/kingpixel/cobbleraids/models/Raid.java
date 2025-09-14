@@ -12,7 +12,9 @@ import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.database.DataBaseFactory;
 import com.kingpixel.cobbleraids.events.RaidEvents;
 import com.kingpixel.cobbleraids.events.models.RaidFinished;
+import com.kingpixel.cobbleraids.events.models.RaidNewPhase;
 import com.kingpixel.cobbleraids.events.models.RaidPostStarted;
+import com.kingpixel.cobbleraids.events.models.RaidPreStarted;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.AdventureTranslator;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
@@ -46,6 +48,7 @@ public class Raid {
   private long startTime;
   private long endTime;
   private UUID raidUUID;
+  private Pokemon pokemon;
   private PokemonEntity raidEntity;
   private RaidData raidData;
   private CategoryRaid categoryRaid;
@@ -54,10 +57,26 @@ public class Raid {
   private Map<UUID, Integer> damageMap;
   private ServerBossBar bossBar;
 
+
+  public Raid(RaidData raidData, long startTime) {
+    this.finish = false;
+    this.startTime = System.currentTimeMillis() + startTime;
+    this.endTime = this.startTime + raidData.getCategoryRaid().getDurationRaid().toMillis();
+    this.raidUUID = UUID.randomUUID();
+    this.raidData = raidData;
+    this.categoryRaid = raidData.getCategoryRaid();
+    this.health = categoryRaid.getHealth();
+    this.maxHealth = categoryRaid.getHealth();
+    this.pokemon = PokemonProperties.Companion.parse(raidData.getActualPhase(this)).create();
+    this.damageMap = new HashMap<>();
+    RaidEvents.RAID_STARTED_PRE.emit(new RaidPreStarted(this));
+  }
+
+  // Start Raid
   public Raid(RaidData raidData) {
     this.finish = false;
     this.startTime = System.currentTimeMillis();
-    this.endTime = startTime + raidData.getCategoryRaid().getDurationRaid().toMillis();
+    this.endTime = this.startTime + raidData.getCategoryRaid().getDurationRaid().toMillis();
     this.raidUUID = UUID.randomUUID();
     this.raidData = raidData;
     this.categoryRaid = raidData.getCategoryRaid();
@@ -65,17 +84,24 @@ public class Raid {
     this.maxHealth = categoryRaid.getHealth();
     this.damageMap = new HashMap<>();
     this.raidEntity = generateRaidEntity(false);
-    RaidEvents.RAID_STARTED_POST.emit(new RaidPostStarted(this));
+    this.pokemon = raidEntity.getPokemon();
+
+  }
+
+  public String replace(String text) {
+    return PokemonUtils.replace(text, getPokemon());
   }
 
   public ServerBossBar getBossBar() {
     if (bossBar == null) {
       bossBar = new ServerBossBar(
         AdventureTranslator.toNative(
-          categoryRaid.getBossBarName()
-            .replace("%pokemon%", raidEntity.getPokemon().showdownId())
-            .replace("%health%", String.valueOf(health))
-            .replace("%maxhealth%", String.valueOf(maxHealth)),
+          PokemonUtils.replace(
+            categoryRaid.getBossBarName()
+              .replace("%health%", String.valueOf(health))
+              .replace("%maxhealth%", String.valueOf(maxHealth)),
+            getPokemon()
+          ),
           CobbleRaids.language.getPrefix()
         ),
         categoryRaid.getBossBarColor(),
@@ -89,6 +115,10 @@ public class Raid {
   private int previousMaxHealth = -1;
   private String previousPhase = "";
 
+  public Pokemon getPokemon() {
+    return raidEntity == null ? this.pokemon : raidEntity.getPokemon();
+  }
+
   public void refreshBossBar() {
     if (previousHealth != health || previousMaxHealth != maxHealth || !previousPhase.equals(raidData.getActualPhase(this))) {
       previousHealth = health;
@@ -98,7 +128,7 @@ public class Raid {
             categoryRaid.getBossBarName()
               .replace("%health%", String.valueOf(health))
               .replace("%maxhealth%", String.valueOf(maxHealth)),
-            raidEntity.getPokemon()
+            getPokemon()
           )
         )
       );
@@ -109,17 +139,26 @@ public class Raid {
   private String actualPhase = "";
 
   private void refreshRaidEntity() {
-    var phase = raidData.getActualPhase(this);
-    if (phase.equals(actualPhase)) return;
-    actualPhase = phase;
-    Pokemon pokemon = PokemonProperties.Companion.parse(phase).create();
-    Pokemon pokemonRaid = raidEntity.getPokemon();
-    pokemonRaid.setSpecies(pokemon.getSpecies());
-    pokemonRaid.setForm(pokemon.getForm());
-    pokemonRaid.setForcedAspects(pokemon.getForcedAspects());
-    pokemonRaid.setGender(pokemon.getGender());
-    pokemonRaid.setShiny(pokemon.getShiny());
-    CobbleRaids.server.execute(() -> raidEntity.getPokemon().updateAspects());
+    try {
+      var phase = raidData.getActualPhase(this);
+      if (phase.equals(actualPhase)) return;
+
+      actualPhase = phase;
+      Pokemon p = PokemonProperties.Companion.parse(actualPhase).create();
+      pokemon = p;
+      Pokemon pR = raidEntity.getPokemon();
+      pR.setSpecies(p.getSpecies());
+      pR.setForm(p.getForm());
+      pR.setGender(p.getGender());
+      pR.setShiny(p.getShiny());
+      pR.setForcedAspects(p.getAspects());
+      CobbleRaids.server.execute(() -> {
+        raidEntity.getPokemon().updateAspects();
+      });
+      RaidEvents.RAID_NEW_PHASE.emit(new RaidNewPhase(this));
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   private void startBattle(ServerPlayerEntity player) {
@@ -249,6 +288,10 @@ public class Raid {
     if (pokemonEntity == null) {
       throw new IllegalStateException("Could not create PokemonEntity for raid");
     }
+    if (!fight) {
+      this.raidEntity = pokemonEntity;
+      RaidEvents.RAID_STARTED_POST.emit(new RaidPostStarted(this));
+    }
     return pokemonEntity;
 
   }
@@ -286,19 +329,21 @@ public class Raid {
     if (health > 0) {
       refreshRaidEntity();
       startBattle(player);
-    } else finishRaid();
+    } else finishRaid(true);
   }
 
   private synchronized void removeDamage(int damage) {
     health -= damage;
   }
 
-  public synchronized void finishRaid() {
+  public synchronized void finishRaid(boolean killed) {
     try {
       if (finish) return;
       finish = true;
-      RaidEvents.RAID_FINISHED.emit(new RaidFinished(this, true));
-      bossBar.clearPlayers();
+      RaidEvents.RAID_FINISHED.emit(new RaidFinished(this, killed));
+      if (bossBar != null) {
+        bossBar.clearPlayers();
+      }
       if (raidEntity != null) raidEntity.remove(Entity.RemovalReason.DISCARDED);
       CobbleRaids.raidManager.removeRaid(raidUUID);
       List<FightData> fights = CobbleRaids.raidManager.getFightingPlayers(raidUUID);
@@ -365,15 +410,39 @@ public class Raid {
   }
 
   public void sendActionBarTimeLeft() {
-    String format = PlayerUtils.getCooldown(endTime);
-    var players = getNearPlayers();
-    Text text = AdventureTranslator.toNative(
-      CobbleRaids.language.getActionBarRaidTimeLeft()
-        .replace("%time%", format),
-      CobbleRaids.language.getPrefix()
-    );
-    for (var player : players) {
-      player.sendMessage(text, true);
+    if (startTime >= System.currentTimeMillis()) {
+      // Raid waiting to start
+      if (CobbleRaids.config.isDebug()) {
+        CobbleUtils.LOGGER.info("[RaidActionBar-PreStart] Sending action bar for raid " + raidUUID);
+      }
+      String format = PlayerUtils.getCooldown(startTime);
+      var players = CobbleRaids.server.getPlayerManager().getPlayerList();
+      Text text = AdventureTranslator.toNative(
+        CobbleRaids.language.getActionBarRaidTimeStart()
+          .replace("%time%", format),
+        CobbleRaids.language.getPrefix()
+      );
+      for (var player : players) {
+        player.sendMessage(text, true);
+      }
+    } else if (endTime >= System.currentTimeMillis()) {
+      if (raidEntity == null) {
+        CobbleRaids.server.execute(() -> raidEntity = generateRaidEntity(false));
+      }
+      // Raid active in progress
+      if (CobbleRaids.config.isDebug()) {
+        CobbleUtils.LOGGER.info("[RaidActionBar-Active] Sending action bar for raid " + raidUUID);
+      }
+      String format = PlayerUtils.getCooldown(endTime);
+      var players = getNearPlayers();
+      Text text = AdventureTranslator.toNative(
+        CobbleRaids.language.getActionBarRaidTimeLeft()
+          .replace("%time%", format),
+        CobbleRaids.language.getPrefix()
+      );
+      for (var player : players) {
+        player.sendMessage(text, true);
+      }
     }
   }
 

@@ -19,8 +19,12 @@ public class RaidStopCommand {
           2
         ))
         .executes(context -> {
-          CobbleRaids.captureSessionManager.finishAllSessions();
-          CobbleRaids.raidManager.stopAllRaids();
+          try {
+            CobbleRaids.captureSessionManager.finishAllSessions();
+            CobbleRaids.raidManager.stopAllRaids();
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
           return 1;
         })
     );

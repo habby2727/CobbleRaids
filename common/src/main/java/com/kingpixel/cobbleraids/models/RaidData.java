@@ -19,6 +19,8 @@ public class RaidData {
   private final String category;
   private double chance;
   private final String capturePokemon;
+  transient
+  private Pokemon capturePokemonInstance;
   private final String pokemon;
   private final Map<Double, String> pokemonPhases;
   // TODO: States raid: Shield, Health regen, Weather, Terrain, Status... <Range health percentage, State>
@@ -39,6 +41,13 @@ public class RaidData {
     this.capturePokemon = "pikachu";
     this.pokemon = "pikachu";
     this.pokemonPhases = new HashMap<>();
+  }
+
+  public Pokemon getCapturePokemonInstance() {
+    if (capturePokemonInstance == null) {
+      capturePokemonInstance = PokemonProperties.Companion.parse(capturePokemon).create();
+    }
+    return capturePokemonInstance;
   }
 
   public CategoryRaid getCategoryRaid() {
