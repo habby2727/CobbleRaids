@@ -36,6 +36,8 @@ forge*changelog.txt
 .vscode/launch.json
 .vscode
 
+./common/libs/Cobblemon-fabric-1.7.0+1.21.1-HEAD-3a074bf.jar
+
 # Generated files
 */generated/resources/*
 /fabric/src/generated/resources/cobblemon-common.accesswidener
