@@ -9,7 +9,7 @@ fabric/run
 .env
 
 /forge/.architectury-transformer/debug.log
-
+backup-repo.git
 # eclipse
 bin
 *.launch
