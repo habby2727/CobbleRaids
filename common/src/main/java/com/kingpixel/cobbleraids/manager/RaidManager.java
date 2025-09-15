@@ -19,7 +19,9 @@ public class RaidManager {
   // Map<raidUUID, Raid>
   private final Map<UUID, Raid> activeRaids = new ConcurrentHashMap<>();
   // Map<BattleUUID, FightData>
-  private final Map<UUID, FightData> fightingPlayers = new ConcurrentHashMap<>();
+  private final Map<UUID, FightData> fightingByBattleUUID = new ConcurrentHashMap<>();
+  private final Map<UUID, FightData> fightingByPlayers = new ConcurrentHashMap<>();
+  private final Map<UUID, FightData> fightingByRaidUUID = new ConcurrentHashMap<>();
 
   public Raid getRaid(UUID raidUUID) {
     return activeRaids.get(raidUUID);
@@ -29,24 +31,31 @@ public class RaidManager {
     activeRaids.put(raidUUID, raid);
   }
 
-  public Raid removeRaid(UUID raidUUID) {
-    return activeRaids.remove(raidUUID);
+  public void removeRaid(UUID raidUUID) {
+    activeRaids.remove(raidUUID);
+
   }
 
   public void addFightingData(UUID BattleUUID, FightData fightData) {
-    fightingPlayers.put(BattleUUID, fightData);
+    fightingByBattleUUID.put(BattleUUID, fightData);
+    fightingByPlayers.put(fightData.getPlayer().getUuid(), fightData);
+    fightingByRaidUUID.put(fightData.getRaid().getRaidUUID(), fightData);
   }
 
   public void removeFightingData(UUID BattleUUID) {
-    fightingPlayers.remove(BattleUUID);
+    var fight = fightingByBattleUUID.remove(BattleUUID);
+    if (fight != null) {
+      fightingByPlayers.remove(fight.getPlayer().getUuid());
+      fightingByRaidUUID.remove(fight.getRaid().getRaidUUID());
+    }
   }
 
   public FightData getFightingData(UUID BattleUUID) {
-    return fightingPlayers.get(BattleUUID);
+    return fightingByBattleUUID.get(BattleUUID);
   }
 
-  public List<FightData> getFightingPlayers(UUID raidUUID) {
-    return fightingPlayers.values().stream().filter(fightData -> fightData.getRaid().getRaidUUID().equals(raidUUID)).toList();
+  public List<FightData> getFightingsByRaidUUID(UUID raidUUID) {
+    return fightingByBattleUUID.values().stream().filter(fightData -> fightData.getRaid().getRaidUUID().equals(raidUUID)).toList();
   }
 
   public void stopAllRaids() {
@@ -56,17 +65,20 @@ public class RaidManager {
       raid.getRaidEntity().discard();
     });
     activeRaids.clear();
-    fightingPlayers.forEach((uuid, fightData) -> {
+    fightingByBattleUUID.forEach((uuid, fightData) -> {
       fightData.stop();
     });
-    fightingPlayers.clear();
+    fightingByBattleUUID.clear();
   }
 
   public void stopRaidPlayer(ServerPlayerEntity player) {
-    fightingPlayers.values().stream().filter(fight -> fight.getPlayer().getUuid().equals(player.getUuid())).findFirst().ifPresent(FightData::stop);
+    var fight = fightingByPlayers.get(player.getUuid());
+    if (fight != null) {
+      fight.stop();
+    }
   }
 
-  public FightData getFightingPlayer(UUID uuid) {
-    return fightingPlayers.values().stream().filter(fight -> fight.getPlayer().getUuid().equals(uuid)).findFirst().orElse(null);
+  public FightData getFightingPlayer(UUID playerUUID) {
+    return fightingByPlayers.get(playerUUID);
   }
 }

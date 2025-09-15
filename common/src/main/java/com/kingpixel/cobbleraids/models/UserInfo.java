@@ -16,6 +16,7 @@ public class UserInfo {
   private UUID playerUUID;
   private String playerName;
   private Map<String, Integer> tickets;
+  private Map<String, Long> bans;
 
   public UserInfo(ServerPlayerEntity player) {
     this.playerUUID = player.getUuid();
@@ -36,5 +37,22 @@ public class UserInfo {
   public void addTickets(String categoryId, int amount) {
     tickets.put(categoryId, tickets.getOrDefault(categoryId, 0) + amount);
     DataBaseFactory.INSTANCE.saveOrUpdateUserInfo(this);
+  }
+
+  public boolean isBanned(CategoryRaid categoryRaid) {
+    if (bans == null) return false;
+    long finishAt = bans.getOrDefault(categoryRaid.getId(), 0L);
+    if (finishAt == 0L) return false;
+    if (System.currentTimeMillis() > finishAt) {
+      bans.remove(categoryRaid.getId());
+      DataBaseFactory.INSTANCE.saveOrUpdateUserInfo(this);
+      return false;
+    }
+    return true;
+  }
+
+  public void banCategory(String categoryId, long durationMs) {
+    if (bans == null) bans = new HashMap<>();
+    bans.put(categoryId, System.currentTimeMillis() + durationMs);
   }
 }

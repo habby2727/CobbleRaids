@@ -1,10 +1,7 @@
 package com.kingpixel.cobbleraids.command;
 
 import com.kingpixel.cobbleraids.CobbleRaids;
-import com.kingpixel.cobbleraids.command.admin.RaidStartCommand;
-import com.kingpixel.cobbleraids.command.admin.RaidStopCommand;
-import com.kingpixel.cobbleraids.command.admin.ReloadCommand;
-import com.kingpixel.cobbleraids.command.admin.TicketCommand;
+import com.kingpixel.cobbleraids.command.admin.*;
 import com.kingpixel.cobbleraids.command.base.RaidJoinCommand;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.command.CommandRegistryAccess;
@@ -24,6 +21,7 @@ public class CommandTree {
       RaidStopCommand.register(base);
       RaidJoinCommand.register(base);
       TicketCommand.register(base);
+      RaidBanCommand.register(base);
 
       dispatcher.register(base);
     }

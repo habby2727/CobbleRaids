@@ -19,7 +19,8 @@ dependencies {
     modImplementation("ca.landonjw.gooeylibs:fabric-api-repack:${property("gooeylibs_version")}")
     modImplementation(fileTree("libs") { include("*.jar") })
     implementation("org.mongodb:mongodb-driver-sync:${property("mongodb_version")}")
-
+    // Caffeine
+    modImplementation("com.github.ben-manes.caffeine:caffeine:${property("caffeine_version")}")
     // Lombok
     annotationProcessor("org.projectlombok:lombok:${property("lombok_version")}")
     implementation("org.projectlombok:lombok:${property("lombok_version")}")

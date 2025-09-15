@@ -1,11 +1,13 @@
 package com.kingpixel.cobbleraids.database;
 
 import com.kingpixel.cobbleraids.CobbleRaids;
+import com.kingpixel.cobbleraids.models.Raid;
 import com.kingpixel.cobbleraids.models.UserInfo;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.Utils;
 import net.minecraft.server.network.ServerPlayerEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -25,7 +27,7 @@ public class DataBaseJson extends DataBaseClient {
 
   @Override public UserInfo findUserByPlayer(ServerPlayerEntity player) {
     UUID uuid = player.getUuid();
-    UserInfo userinfo = cache.get(uuid);
+    UserInfo userinfo = cacheUser.getIfPresent(uuid);
     if (userinfo != null) return userinfo;
     var file = Utils.getAbsolutePath(PATH_DATA + uuid + ".json");
     if (file.exists()) {
@@ -38,16 +40,24 @@ public class DataBaseJson extends DataBaseClient {
     if (userinfo == null) {
       userinfo = new UserInfo(player);
     }
-    cache.put(uuid, userinfo);
+    cacheUser.put(uuid, userinfo);
     Utils.writeFileAsync(file, Utils.newGson().toJson(userinfo));
     return userinfo;
+  }
+
+  @Override public List<Raid> getHistoryRaids(int page, int pageSize) {
+    return List.of();
   }
 
 
   @Override public void saveOrUpdateUserInfo(UserInfo userinfo) {
     UUID uuid = userinfo.getPlayerUUID();
-    cache.put(uuid, userinfo);
+    cacheUser.put(uuid, userinfo);
     var file = Utils.getAbsolutePath(PATH_DATA + uuid + ".json");
     Utils.writeFileAsync(file, Utils.newGson().toJson(userinfo));
+  }
+
+  @Override public void saveOrUpdateHistoryRaid(Raid raid) {
+
   }
 }

@@ -34,10 +34,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.chunk.ChunkStatus;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author Carlos Varas Alonso - 13/09/2025 2:28
@@ -50,14 +47,20 @@ public class Raid {
   private long startTime;
   private long endTime;
   private UUID raidUUID;
+  transient
   private Pokemon pokemon;
+  transient
   private PokemonEntity raidEntity;
+  transient
   private RaidData raidData;
+  transient
   private CategoryRaid categoryRaid;
   private int health;
   private int maxHealth;
   private Map<UUID, Integer> damageMap;
+  transient
   private ServerBossBar bossBar;
+  private List<UUID> playersInitCaptureSession = new ArrayList<>();
 
 
   public Raid(RaidData raidData, long startTime) {
@@ -113,8 +116,11 @@ public class Raid {
     return bossBar;
   }
 
+  transient
   private int previousHealth = -1;
+  transient
   private int previousMaxHealth = -1;
+  transient
   private String previousPhase = "";
 
   public Pokemon getPokemon() {
@@ -351,9 +357,15 @@ public class Raid {
       if (bossBar != null) {
         bossBar.clearPlayers();
       }
-      if (raidEntity != null) raidEntity.remove(Entity.RemovalReason.DISCARDED);
+      CobbleRaids.server.execute(() -> {
+        var pos = raidEntity.getChunkPos();
+        if (!raidEntity.getWorld().getChunkManager().isChunkLoaded(pos.x, pos.z)) {
+          raidEntity.getWorld().getChunkManager().getChunk(pos.x, pos.z, ChunkStatus.FULL, false);
+        }
+        if (raidEntity != null) raidEntity.remove(Entity.RemovalReason.DISCARDED);
+      });
       CobbleRaids.raidManager.removeRaid(raidUUID);
-      List<FightData> fights = CobbleRaids.raidManager.getFightingPlayers(raidUUID);
+      List<FightData> fights = CobbleRaids.raidManager.getFightingsByRaidUUID(raidUUID);
       for (FightData fight : fights) {
         UIManager.closeUI(fight.getPlayer());
         fight.stop();
@@ -361,6 +373,7 @@ public class Raid {
       if (killed) {
         CobbleRaids.rewardsManager.giveRewards(this, damageMap);
       }
+      DataBaseFactory.INSTANCE.saveOrUpdateHistoryRaid(this);
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -371,6 +384,15 @@ public class Raid {
       PlayerUtils.sendMessage(
         player,
         "§c[§6CobbleRaids§c] §cThis raid has already finished.§r",
+        CobbleRaids.language.getPrefix(),
+        TypeMessage.CHAT
+      );
+      return;
+    }
+    if (DataBaseFactory.INSTANCE.findUserByPlayer(player).isBanned(categoryRaid)) {
+      PlayerUtils.sendMessage(
+        player,
+        "§c[§6CobbleRaids§c] §cYou are banned from this raid category.§r",
         CobbleRaids.language.getPrefix(),
         TypeMessage.CHAT
       );

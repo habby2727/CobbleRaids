@@ -92,6 +92,7 @@ public class DamageReward {
       // Lógica para iniciar la sesión de captura
       boolean isOkey = Utils.getRandom().nextInt(chance) == 0;
       if (isOkey && activeCaptureSession) {
+        raid.getPlayersInitCaptureSession().add(player.getUuid());
         // raid.getCaptureSessionManager().startSession(player, raid);
         CobbleRaids.captureSessionManager.startSession(
           player,

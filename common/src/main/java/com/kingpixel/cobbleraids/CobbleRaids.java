@@ -12,6 +12,7 @@ import com.kingpixel.cobbleraids.database.DataBaseFactory;
 import com.kingpixel.cobbleraids.events.BattleEvents;
 import com.kingpixel.cobbleraids.events.RaidEvents;
 import com.kingpixel.cobbleraids.manager.CaptureSessionManager;
+import com.kingpixel.cobbleraids.manager.RaidHistory;
 import com.kingpixel.cobbleraids.manager.RaidManager;
 import com.kingpixel.cobbleraids.manager.RewardsManager;
 import com.kingpixel.cobbleutils.CobbleUtils;
@@ -36,6 +37,7 @@ public class CobbleRaids {
   public static RaidManager raidManager = new RaidManager();
   public static RewardsManager rewardsManager = new RewardsManager();
   public static CaptureSessionManager captureSessionManager = new CaptureSessionManager();
+  public static RaidHistory raidHistory = new RaidHistory();
   public static final Executor COBBLE_RAID_EXECUTOR = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder()
     .setNameFormat("Cobble-Raids-executor-%d")
     .setDaemon(true)
@@ -57,7 +59,7 @@ public class CobbleRaids {
         try {
           if (server == null) return;
           if (raidManager == null) return;
-          var fights = raidManager.getFightingPlayers();
+          var fights = raidManager.getFightingByBattleUUID();
           if (fights == null || fights.isEmpty()) return;
           fights.forEach((key, value) -> {
             var player = value.getPlayer();
@@ -167,7 +169,7 @@ public class CobbleRaids {
       CompletableFuture.runAsync(() -> {
           var userinfo = DataBaseFactory.INSTANCE.findUserByPlayer(player);
           DataBaseFactory.INSTANCE.saveOrUpdateUserInfo(userinfo);
-          DataBaseClient.cache.remove(player.getUuid());
+          DataBaseClient.cacheUser.invalidate(player.getUuid());
         }, COBBLE_RAID_EXECUTOR)
         .exceptionally(e -> {
           e.printStackTrace();
