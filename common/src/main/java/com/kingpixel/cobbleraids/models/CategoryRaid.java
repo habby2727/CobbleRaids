@@ -10,6 +10,7 @@ import lombok.Data;
 import net.minecraft.entity.boss.BossBar;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.HashMap;
@@ -28,6 +29,7 @@ public class CategoryRaid {
   private String bossBarName;
   private BossBar.Style bossBarStyle;
   private BossBar.Color bossBarColor;
+  private Formatting glowingColor;
   private DurationValue durationRaid;
   private DurationValue timeBeforeStart;
   private DurationValue durationCapture;
@@ -49,6 +51,7 @@ public class CategoryRaid {
     this.bossBarName = "Raid ⭐ | %pokemon% | %health%/%maxhealth% HP";
     this.bossBarStyle = BossBar.Style.PROGRESS;
     this.bossBarColor = BossBar.Color.RED;
+    this.glowingColor = Formatting.YELLOW;
     this.durationRaid = DurationValue.parse("30m");
     this.timeBeforeStart = DurationValue.parse("30s");
     this.durationCapture = DurationValue.parse("5m");

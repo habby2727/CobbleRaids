@@ -26,6 +26,8 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.boss.ServerBossBar;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.scoreboard.ServerScoreboard;
+import net.minecraft.scoreboard.Team;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
@@ -133,6 +135,7 @@ public class Raid {
         )
       );
       bossBar.setPercent(Math.max(0f, Math.min(1f, (float) health / maxHealth)));
+      glowing();
     }
   }
 
@@ -155,6 +158,7 @@ public class Raid {
       CobbleRaids.server.execute(() -> {
         raidEntity.getPokemon().updateAspects();
       });
+      glowing();
       RaidEvents.RAID_NEW_PHASE.emit(new RaidNewPhase(this));
     } catch (Exception e) {
       e.printStackTrace();
@@ -290,6 +294,7 @@ public class Raid {
     }
     if (!fight) {
       this.raidEntity = pokemonEntity;
+      glowing();
       RaidEvents.RAID_STARTED_POST.emit(new RaidPostStarted(this));
     }
     return pokemonEntity;
@@ -444,6 +449,23 @@ public class Raid {
         player.sendMessage(text, true);
       }
     }
+  }
+
+  private void glowing() {
+    if (raidEntity == null) return;
+    CobbleRaids.server.execute(() -> {
+      raidEntity.addStatusEffect(new StatusEffectInstance(StatusEffects.GLOWING, Integer.MAX_VALUE, Integer.MAX_VALUE));
+
+      ServerScoreboard scoreboard = CobbleRaids.server.getScoreboard();
+
+      Team team = scoreboard.getTeam("raid_" + categoryRaid.getId());
+      if (team == null) {
+        team = scoreboard.addTeam("raid_" + categoryRaid.getId());
+      }
+      team.setColor(categoryRaid.getGlowingColor());
+
+      scoreboard.addScoreHolderToTeam(raidEntity.getUuid().toString(), team);
+    });
   }
 
   public List<ServerPlayerEntity> getPlayersInWorld() {

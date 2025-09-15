@@ -7,8 +7,7 @@ import com.kingpixel.cobbleraids.CobbleRaids;
 import lombok.Data;
 import net.minecraft.item.ItemStack;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Carlos Varas Alonso - 13/09/2025 2:28
@@ -22,7 +21,7 @@ public class RaidData {
   transient
   private Pokemon capturePokemonInstance;
   private final String pokemon;
-  private final Map<Double, String> pokemonPhases;
+  private final NavigableMap<Double, String> pokemonPhases = new TreeMap<>(Comparator.reverseOrder());
   // TODO: States raid: Shield, Health regen, Weather, Terrain, Status... <Range health percentage, State>
 
   public RaidData() {
@@ -31,7 +30,6 @@ public class RaidData {
     this.chance = 100;
     this.capturePokemon = "pikachu";
     this.pokemon = "pikachu";
-    this.pokemonPhases = new HashMap<>();
   }
 
   public RaidData(String id, String category) {
@@ -40,7 +38,6 @@ public class RaidData {
     this.chance = 100;
     this.capturePokemon = "pikachu";
     this.pokemon = "pikachu";
-    this.pokemonPhases = new HashMap<>();
   }
 
   public Pokemon getCapturePokemonInstance() {
@@ -54,21 +51,25 @@ public class RaidData {
     return CobbleRaids.categorys.getCategory(category);
   }
 
+
   public String getActualPhase(Raid raid) {
     if (pokemonPhases.isEmpty()) return pokemon;
-    var currentHealth = raid.getHealth();
-    var maxHealth = raid.getMaxHealth();
-    var healthPercentage = (currentHealth / maxHealth) * 100;
 
-    String result = pokemon;
-    var entries = pokemonPhases.entrySet();
-    for (Map.Entry<Double, String> doubleStringEntry : entries) {
-      if (healthPercentage <= doubleStringEntry.getKey()) {
-        result = doubleStringEntry.getValue();
+    double currentHealth = raid.getHealth();
+    double maxHealth = raid.getMaxHealth();
+    double healthPercentage = (currentHealth / maxHealth) * 100.0;
+
+    // Buscar la primera fase cuyo umbral sea >= vida actual
+    for (Map.Entry<Double, String> entry : pokemonPhases.entrySet()) {
+      if (healthPercentage <= entry.getKey()) {
+        return entry.getValue();
       }
     }
-    return result;
+
+    // Si no entra en ningún rango, devolvemos la forma base
+    return pokemon;
   }
+
 
   public boolean isBannedPokemon(Pokemon pokemon) {
     if (getCategoryRaid().isBlackList(pokemon)) return true;

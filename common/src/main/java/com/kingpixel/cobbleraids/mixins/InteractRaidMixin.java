@@ -25,7 +25,7 @@ import java.util.UUID;
 public abstract class InteractRaidMixin {
   @Unique private boolean cobbleRaids$raid = false;
   @Shadow private Pokemon pokemon;
-
+  
 
   @Inject(method = "updatePostDeath", at = @At("HEAD"))
   private void InteractRaid$onUpdatePostDeath(CallbackInfo ci) {
