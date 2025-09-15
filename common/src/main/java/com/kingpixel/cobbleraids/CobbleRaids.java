@@ -100,7 +100,7 @@ public class CobbleRaids {
             if (CobbleRaids.config.isDebug()) {
               CobbleUtils.LOGGER.info("[RaidFinishTask] Finishing raid " + value.getRaidUUID() + " by time.");
             }
-            value.finishRaid(false);
+            value.finishRaid();
           }
         });
       } catch (Exception e) {

@@ -15,6 +15,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
@@ -25,6 +26,11 @@ import java.util.concurrent.atomic.AtomicReference;
 @Data
 public class CaptureSessionData {
   public static final String CAPTURE_NBT_KEY = "capture_session";
+  public static final Set<String> REMOVE_PERSISTENT_DATA = Set.of(
+    CAPTURE_NBT_KEY,
+    Raid.RAID_CATEGORY_NBT_KEY,
+    Raid.RAID_NBT_KEY
+  );
   private boolean started;
   private UUID battleUUID;
   private RaidData raidData;

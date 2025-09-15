@@ -157,8 +157,8 @@ public class Raid {
       pR.setForcedAspects(p.getAspects());
       CobbleRaids.server.execute(() -> {
         raidEntity.getPokemon().updateAspects();
+        glowing();
       });
-      glowing();
       RaidEvents.RAID_NEW_PHASE.emit(new RaidNewPhase(this));
     } catch (Exception e) {
       e.printStackTrace();
@@ -266,6 +266,7 @@ public class Raid {
     var pokemon = properties.create();
     if (fight) {
       pokemon.getPersistentData().putString(RAID_CATEGORY_NBT_KEY, categoryRaid.getId());
+      pokemon.getPersistentData().putUuid(RAID_NBT_KEY, raidUUID);
     } else {
       pokemon.getPersistentData().putUuid(RAID_NBT_KEY, raidUUID);
     }
@@ -334,17 +335,18 @@ public class Raid {
     if (health > 0) {
       refreshRaidEntity();
       startBattle(player);
-    } else finishRaid(true);
+    } else finishRaid();
   }
 
   private synchronized void removeDamage(int damage) {
     health -= damage;
   }
 
-  public synchronized void finishRaid(boolean killed) {
+  public synchronized void finishRaid() {
     try {
       if (finish) return;
       finish = true;
+      boolean killed = health <= 0;
       RaidEvents.RAID_FINISHED.emit(new RaidFinished(this, killed));
       if (bossBar != null) {
         bossBar.clearPlayers();
@@ -356,7 +358,9 @@ public class Raid {
         UIManager.closeUI(fight.getPlayer());
         fight.stop();
       }
-      CobbleRaids.rewardsManager.giveRewards(this, damageMap);
+      if (killed) {
+        CobbleRaids.rewardsManager.giveRewards(this, damageMap);
+      }
     } catch (Exception e) {
       e.printStackTrace();
     }

@@ -8,6 +8,7 @@ import com.cobblemon.mod.common.battles.actor.PokemonBattleActor;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.kingpixel.cobbleraids.CobbleRaids;
+import com.kingpixel.cobbleraids.models.CaptureSessionData;
 import com.kingpixel.cobbleraids.models.Raid;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import kotlin.Unit;
@@ -30,6 +31,15 @@ public class BattleEvents {
       if (evt.getCaptureResult().isSuccessfulCapture()) {
         captureSession.setTime();
         CobbleRaids.rewardsManager.giveRewardCapture(captureSession);
+      }
+      return Unit.INSTANCE;
+    });
+
+    CobblemonEvents.POKEMON_CAPTURED.subscribe(Priority.HIGHEST, evt -> {
+      var pokemon = evt.getPokemon();
+      var persistentData = pokemon.getPersistentData();
+      for (String key : CaptureSessionData.REMOVE_PERSISTENT_DATA) {
+        persistentData.remove(key);
       }
       return Unit.INSTANCE;
     });
