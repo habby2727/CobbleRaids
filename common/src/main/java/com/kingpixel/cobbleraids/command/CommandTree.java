@@ -20,6 +20,7 @@ public class CommandTree {
       RaidStartCommand.register(base);
       RaidStopCommand.register(base);
       RaidJoinCommand.register(base);
+      RaidHistoryCommand.register(base);
       TicketCommand.register(base);
       RaidBanCommand.register(base);
 
