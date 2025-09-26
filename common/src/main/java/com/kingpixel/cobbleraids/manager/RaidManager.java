@@ -1,5 +1,6 @@
 package com.kingpixel.cobbleraids.manager;
 
+import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.FightData;
 import com.kingpixel.cobbleraids.models.Raid;
 import lombok.Data;
@@ -16,6 +17,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Data
 public class RaidManager {
+  private boolean randomRaidOn;
+  private UUID randomRaidUUID;
   // Map<raidUUID, Raid>
   private final Map<UUID, Raid> activeRaids = new ConcurrentHashMap<>();
   // Map<BattleUUID, FightData>
@@ -33,7 +36,10 @@ public class RaidManager {
 
   public void removeRaid(UUID raidUUID) {
     activeRaids.remove(raidUUID);
-
+    if (randomRaidUUID.equals(raidUUID)) {
+      randomRaidOn = false;
+      randomRaidUUID = null;
+    }
   }
 
   public void addFightingData(UUID BattleUUID, FightData fightData) {
@@ -80,5 +86,24 @@ public class RaidManager {
 
   public FightData getFightingPlayer(UUID playerUUID) {
     return fightingByPlayers.get(playerUUID);
+  }
+
+  public void initRandomRaid() {
+    this.randomRaidOn = true;
+    var category = CobbleRaids.categorys.getRandomCategory();
+    if (category == null) {
+      this.randomRaidOn = false;
+      this.randomRaidUUID = null;
+      return;
+    }
+    var raidData = category.getRandomRaid();
+    if (raidData == null) {
+      this.randomRaidOn = false;
+      this.randomRaidUUID = null;
+      return;
+    }
+    var raid = new Raid(raidData, CobbleRaids.config.getCooldownBetweenRaids().toMillis());
+    randomRaidUUID = raid.getRaidUUID();
+    CobbleRaids.raidManager.generateRaid(raid.getRaidUUID(), raid);
   }
 }

@@ -6,6 +6,7 @@ import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleutils.Model.DurationValue;
 import com.kingpixel.cobbleutils.api.PermissionApi;
+import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import net.minecraft.entity.boss.BossBar;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -22,6 +23,7 @@ import java.util.Map;
 @Data
 public class CategoryRaid {
   private static Map<String, ServerWorld> worldMap = new HashMap<>();
+  private double chance;
   private String id;
   private String name;
   private String permission;
@@ -44,6 +46,7 @@ public class CategoryRaid {
   // TODO: Glowing option
 
   public CategoryRaid() {
+    this.chance = 1.0;
     this.id = "default";
     this.name = "Default Raid";
     this.needTicket = false;
@@ -62,7 +65,8 @@ public class CategoryRaid {
     this.radio = 5;
     this.blacklist = new AdvancedBlacklist();
     this.world = "minecraft:overworld";
-    this.coords = new Coords(0, 70, 0);
+    if (coords == null)
+      this.coords = new Coords(0, 70, 0);
   }
 
   public CategoryRaid(String id) {
@@ -88,7 +92,6 @@ public class CategoryRaid {
       return;
     }
     for (ServerPlayerEntity player : players) {
-
       if (player.isInRange(
         value.getRaidEntity(),
         64
@@ -103,10 +106,10 @@ public class CategoryRaid {
   public ServerWorld getWorld() {
     var serverWorld = worldMap.get(this.world);
     if (serverWorld != null) return serverWorld;
-    for (ServerWorld world1 : CobbleRaids.server.getWorlds()) {
-      if (world1.getRegistryKey().getValue().toString().equals(this.world)) {
-        worldMap.put(this.world, world1);
-        return world1;
+    for (ServerWorld w : CobbleRaids.server.getWorlds()) {
+      if (w.getRegistryKey().getValue().toString().equals(this.world)) {
+        worldMap.put(this.world, w);
+        return w;
       }
     }
     return CobbleRaids.server.getOverworld();
@@ -143,6 +146,12 @@ public class CategoryRaid {
   public boolean isBlackList(Pokemon pokemon) {
     if (blacklist.isBanned(pokemon)) return true;
     return CobbleRaids.config.getBlacklist().isBanned(pokemon);
+  }
+
+  public RaidData getRandomRaid() {
+    var list = CobbleRaids.raidConfigs.getRaidsByCategory(id);
+    if (list == null || list.isEmpty()) return null;
+    return list.get(Utils.getRandom().nextInt(list.size()));
   }
 
 

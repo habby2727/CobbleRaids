@@ -50,6 +50,7 @@ public class CobbleRaids {
 
   public static void init() {
     events();
+    files();
     tasks();
   }
 
@@ -117,6 +118,19 @@ public class CobbleRaids {
         var sessions = captureSessionManager.getActiveSessions();
         if (sessions == null || sessions.isEmpty()) return;
         sessions.forEach((key, value) -> value.checkTimeout());
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }, 0, 1, TimeUnit.SECONDS);
+
+    // Task to Init a random raid if no raid is active.
+    COBBLE_RAIDS_SCHEDULER.scheduleWithFixedDelay(() -> {
+      try {
+        if (server == null) return;
+        if (raidManager == null) return;
+        if (!raidManager.isRandomRaidOn()) {
+          raidManager.initRandomRaid();
+        }
       } catch (Exception e) {
         e.printStackTrace();
       }

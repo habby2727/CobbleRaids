@@ -7,8 +7,10 @@ import com.cobblemon.mod.common.battles.BattleFormat;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
+import com.kingpixel.cobbleutils.Model.messages.HiperMessage;
 import com.kingpixel.cobbleutils.util.AdventureTranslator;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
+import com.kingpixel.cobbleutils.util.PokemonUtils;
 import kotlin.Unit;
 import lombok.Data;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -51,7 +53,8 @@ public class CaptureSessionData {
 
 
   public void startSession() {
-    CobbleRaids.language.getTitleStartCapture().send(player, raidData);
+    HiperMessage message = CobbleRaids.language.getMessageStartCapture();
+    message.sendMessage(player, PokemonUtils.replace(message.getRawMessage(), raidData.getCapturePokemonInstance()), CobbleRaids.language.getPrefix(), false);
     CobbleRaids.captureSessionManager.getActiveSessions().remove(battleUUID);
     AtomicReference<UUID> battleUUID = new AtomicReference<>();
     final PokemonEntity[] pokemonEntity = {null};
@@ -146,7 +149,8 @@ public class CaptureSessionData {
   }
 
   public void finishSession() {
-    CobbleRaids.language.getTitleEndCapture().send(player, raidData);
+    HiperMessage message = CobbleRaids.language.getMessageEndCapture();
+    message.sendMessage(player, PokemonUtils.replace(message.getRawMessage(), raidData.getCapturePokemonInstance()), CobbleRaids.language.getPrefix(), false);
     CobbleRaids.server.execute(() -> {
       var battle = Cobblemon.INSTANCE.getBattleRegistry().getBattle(battleUUID);
       if (battle != null) battle.stop();

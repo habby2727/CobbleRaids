@@ -2,6 +2,7 @@ package com.kingpixel.cobbleraids.command.admin;
 
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.database.DataBaseFactory;
+import com.kingpixel.cobbleutils.api.PermissionApi;
 import com.kingpixel.cobbleutils.util.AdventureTranslator;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -22,6 +23,11 @@ public class TicketCommand {
   public static void register(LiteralArgumentBuilder<ServerCommandSource> base) {
     base.then(
       CommandManager.literal("ticket")
+        .requires(source -> PermissionApi.hasPermission(
+          source,
+          PERMISSION,
+          2
+        ))
         .then(
           CommandManager.argument("category", StringArgumentType.string())
             .suggests((context, builder) -> {

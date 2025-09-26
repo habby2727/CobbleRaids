@@ -8,6 +8,8 @@ import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.events.models.*;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.WebHookData;
+import com.kingpixel.cobbleutils.Model.messages.HiperMessage;
+import com.kingpixel.cobbleutils.Model.messages.MessageType;
 import com.kingpixel.cobbleutils.events.EventChannel;
 import lombok.Data;
 import org.jetbrains.annotations.Nullable;
@@ -32,16 +34,10 @@ public class RaidEvents {
     // Raid Finished event
     RAID_FINISHED.subscribe(raidFinished -> {
       try {
-        CobbleRaids.language.getTitleEndRaid().send(null, raidFinished.getRaid());
-        var webHook = CobbleRaids.config.getWebhook();
-        if (!webHook.isENABLED()) return;
-        var client = getWebhookClient(webHook);
-        if (client == null) return;
         var raid = raidFinished.getRaid();
-        var killed = raidFinished.isKilled();
-        List<WebhookEmbed> embeds = new ArrayList<>();
-        var builder = new WebhookEmbedBuilder()
-          .setTitle(new WebhookEmbed.EmbedTitle("Raid Finished", ""));
+        HiperMessage message = CobbleRaids.language.getMessageEndRaid();
+        message.sendMessage(null, raid.replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
+        var webHook = CobbleRaids.config.getWebhook();
         AtomicReference<StringBuilder> desc = new AtomicReference<StringBuilder>(new StringBuilder("Table of " +
           "participants:\n"));
         AtomicReference<Integer> amount = new AtomicReference<>(0);
@@ -60,7 +56,18 @@ public class RaidEvents {
               " " +
                 "damage\n");
           });
-        builder.setDescription(String.valueOf(desc.get()));
+        String finalDesc = desc.get().toString();
+        HiperMessage hiperMessage = new HiperMessage("cb:" + finalDesc, MessageType.CHAT_BROADCAST);
+        hiperMessage.sendMessage(null, hiperMessage.getRawMessage(), CobbleRaids.language.getPrefix(), false);
+        if (!webHook.isENABLED()) return;
+        var client = getWebhookClient(webHook);
+        if (client == null) return;
+        var killed = raidFinished.isKilled();
+        List<WebhookEmbed> embeds = new ArrayList<>();
+        var builder = new WebhookEmbedBuilder()
+          .setTitle(new WebhookEmbed.EmbedTitle("Raid Finished", ""));
+
+        builder.setDescription(finalDesc);
         builder.setTimestamp(Instant.now());
 
         embeds.add(builder.build());
@@ -77,7 +84,8 @@ public class RaidEvents {
     // Raid Pre Started event
     RAID_STARTED_PRE.subscribe(raidPreStarted -> {
       try {
-        CobbleRaids.language.getTitlePreStartRaid().send(null, raidPreStarted.getRaid());
+        HiperMessage message = CobbleRaids.language.getMessagePreStartRaid();
+        message.sendMessage(null, raidPreStarted.getRaid().replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
         var webHook = CobbleRaids.config.getWebhook();
         if (!webHook.isENABLED()) return;
         var client = getWebhookClient(webHook);
@@ -107,7 +115,8 @@ public class RaidEvents {
     // Raid Post Started event
     RAID_STARTED_POST.subscribe(raidPostStarted -> {
       try {
-        CobbleRaids.language.getTitleStartRaid().send(null, raidPostStarted.getRaid());
+        HiperMessage message = CobbleRaids.language.getMessageStartRaid();
+        message.sendMessage(null, raidPostStarted.getRaid().replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
         var webHook = CobbleRaids.config.getWebhook();
         if (!webHook.isENABLED()) return;
         var client = getWebhookClient(webHook);
@@ -138,12 +147,13 @@ public class RaidEvents {
     // Raid new Phase event
     RAID_NEW_PHASE.subscribe(raidNewPhase -> {
       try {
-        CobbleRaids.language.getTitleNewPhaseRaid().send(null, raidNewPhase.getRaid());
+        var raid = raidNewPhase.getRaid();
+        HiperMessage message = CobbleRaids.language.getMessageNewPhaseRaid();
+        message.sendMessage(null, raid.replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
         var webHook = CobbleRaids.config.getWebhook();
         if (!webHook.isENABLED()) return;
         var client = getWebhookClient(webHook);
         if (client == null) return;
-        var raid = raidNewPhase.getRaid();
         List<WebhookEmbed> embeds = new ArrayList<>();
         var builder = new WebhookEmbedBuilder()
           .setTitle(new WebhookEmbed.EmbedTitle("Raid New Phase", ""));

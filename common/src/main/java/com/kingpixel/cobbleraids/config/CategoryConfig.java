@@ -4,6 +4,7 @@ import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.CategoryRaid;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +30,7 @@ public class CategoryConfig {
           category.setHealth(100);
         }
         String id = file.getName().replace(".json", "");
+        category.setId(id);
         categorys.put(id, category);
         Utils.writeFileAsync(file, Utils.newGson().toJson(category));
       } catch (Exception e) {
@@ -45,5 +47,9 @@ public class CategoryConfig {
 
   public CategoryRaid getCategory(String id) {
     return categorys.getOrDefault(id, categorys.get("default"));
+  }
+
+  public @Nullable CategoryRaid getRandomCategory() {
+    return categorys.values().stream().skip((int) (categorys.size() * Math.random())).findFirst().orElse(null);
   }
 }

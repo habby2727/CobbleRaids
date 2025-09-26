@@ -283,7 +283,7 @@ public class Raid {
       serverWorld.getChunkManager().getChunk(x, z, ChunkStatus.FULL, false);
     }
     var pokemonEntity = pokemon.sendOut(
-      categoryRaid.getWorld(),
+      serverWorld,
       coords.getVec3d(),
       null,
       entity -> {
@@ -440,8 +440,21 @@ public class Raid {
     return System.currentTimeMillis() >= endTime;
   }
 
+  private boolean preNotifyActionBar = false;
+
   public void sendActionBarTimeLeft() {
+    long actionBar = CobbleRaids.config.getStartSendActionBar().toMillis(); // 15000 ms = 15 seconds
+    if (System.currentTimeMillis() < startTime - actionBar && System.currentTimeMillis() < endTime - actionBar) {
+      if (CobbleRaids.config.isDebug()) {
+        CobbleUtils.LOGGER.info("[RaidActionBar] Not sending action bar for raid " + raidUUID);
+      }
+      return;
+    }
     if (startTime >= System.currentTimeMillis()) {
+      if (!preNotifyActionBar) {
+        preNotifyActionBar = true;
+        RaidEvents.RAID_STARTED_PRE.emit(new RaidPreStarted(this));
+      }
       // Raid waiting to start
       if (CobbleRaids.config.isDebug()) {
         CobbleUtils.LOGGER.info("[RaidActionBar-PreStart] Sending action bar for raid " + raidUUID);

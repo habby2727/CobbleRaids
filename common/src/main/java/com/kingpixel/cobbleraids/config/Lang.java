@@ -2,8 +2,8 @@ package com.kingpixel.cobbleraids.config;
 
 import com.google.gson.Gson;
 import com.kingpixel.cobbleraids.CobbleRaids;
-import com.kingpixel.cobbleraids.models.TitleSubTitle;
 import com.kingpixel.cobbleutils.CobbleUtils;
+import com.kingpixel.cobbleutils.Model.messages.HiperMessage;
 import com.kingpixel.cobbleutils.ui.ConfirmMenu;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Getter;
@@ -24,13 +24,13 @@ public class Lang {
   private String notPermission;
   private String messageStartBattle;
 
-  private TitleSubTitle titlePreStartRaid;
-  private TitleSubTitle titleStartRaid;
-  private TitleSubTitle titleNewPhaseRaid;
-  private TitleSubTitle titleEndRaid;
-  private TitleSubTitle titleNotLuckyCapture;
-  private TitleSubTitle titleStartCapture;
-  private TitleSubTitle titleEndCapture;
+  private HiperMessage messagePreStartRaid;
+  private HiperMessage messageStartRaid;
+  private HiperMessage messageNewPhaseRaid;
+  private HiperMessage messageEndRaid;
+  private HiperMessage messageNotLuckyCapture;
+  private HiperMessage messageStartCapture;
+  private HiperMessage messageEndCapture;
 
   private ConfirmMenu startBattleRaid;
 
@@ -42,20 +42,32 @@ public class Lang {
     reload = "%prefix% &aConfig reloaded.";
     messageReceivedTicket = "%prefix% &aYou have received %amount% tickets. You now have %total% tickets. Category: " +
       "%category%";
-    titleNotLuckyCapture = new TitleSubTitle("&c&lOh no!", "&eYou were not lucky enough to capture &6%pokemon%&e. Better " +
-      "luck next time!");
-    actionBarRaidTimeLeft = "&eTime left: &6%time%";
-    actionBarRaidTimeStart = "&eStarting in: &6%time%";
-    actionBarCaptureTimeLeft = "&eCapture time left: &6%time%";
-    actionBarCaptureStartingIn = "&eStarting in: &6%time%";
+    actionBarRaidTimeLeft = "%prefix% &eTime left: &6%time%";
+    actionBarRaidTimeStart = "%prefix% &eStarting in: &6%time%";
+    actionBarCaptureTimeLeft = "%prefix% &eCapture time left: &6%time%";
+    actionBarCaptureStartingIn = "%prefix% &eStarting in: &6%time%";
     notPermission = "%prefix% &cYou do not have permission to do that.";
     messageStartBattle = "%prefix% &aYou have started a battle raid against &e%pokemon%&a. Good luck!";
-    titlePreStartRaid = new TitleSubTitle("&6&lRaid Incoming!", "&ePrepare for battle against &6%pokemon%&e!");
-    titleStartRaid = new TitleSubTitle("&c&lRaid Started!", "&eDefeat &6%pokemon%&e!");
-    titleNewPhaseRaid = new TitleSubTitle("&e&lNew Phase!", "&eThe raid boss has changed to &6%pokemon%&e!");
-    titleEndRaid = new TitleSubTitle("&6&lRaid Finished!", "&eThe raid has ended. Thanks for playing!");
-    titleStartCapture = new TitleSubTitle("&a&lCapture Started!", "&eYou can now try to capture &6%pokemon%&e!");
-    titleEndCapture = new TitleSubTitle("&c&lCapture Ended!", "&eThe capture session has ended.");
+    messagePreStartRaid = new HiperMessage("titlesubtitle_broadcast: title:&6&lRaid Incoming! subtitle: &ePrepare for" +
+      " battle against &6%pokemon%&e! sound:minecraft:entity.dragon_fireball.explode volume:1.0 pitch:1.0",
+      null);
+    messageStartRaid = new HiperMessage("titlesubtitle_broadcast: title:&c&lRaid Started! subtitle: &eDefeat " + "&6%pokemon%&e! " +
+      "sound:minecraft:entity.ender_dragon.growl volume:1.0 pitch:1.0",
+      null);
+    messageNotLuckyCapture = new HiperMessage("titlesubtitle: title:&c&lOh no! subtitle:&eYou were not lucky enough to " +
+      "capture &6%pokemon%&e. Better luck next time! sound:minecraft:entity.villager.no volume:1.0 pitch:1.0",
+      null);
+    messageNewPhaseRaid = new HiperMessage("titlesubtitle_broadcast: title:&e&lNew Phase! subtitle:&eThe raid boss has " +
+      "changed to &6%pokemon%&e! sound:minecraft:block.note_block.pling volume:1.0 pitch:1.0",
+      null);
+    messageEndRaid = new HiperMessage("titlesubtitle_broadcast: title:&6&lRaid Finished! subtitle:&eThe raid has ended. " +
+      "Thanks for playing! sound:minecraft:entity.player.levelup volume:1.0 pitch:1.0",
+      null);
+    messageStartCapture = new HiperMessage("titlesubtitle_broadcast: title:&a&lCapture Started! subtitle:&eYou can now try to " +
+      "capture &6%pokemon%&e! sound:minecraft:block.note_block.chime volume:1.0 pitch:1.0",
+      null);
+    messageEndCapture = new HiperMessage("titlesubtitle_broadcast: title:&c&lCapture Ended! subtitle:&eThe capture session has ended. " +
+      "sound:minecraft:block.note_block.bass volume:1.0 pitch:1.0", null);
     startBattleRaid = new ConfirmMenu();
     startBattleRaid.setTitle("Start Battle Raid?");
   }
