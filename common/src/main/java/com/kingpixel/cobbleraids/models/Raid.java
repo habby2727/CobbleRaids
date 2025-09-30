@@ -74,7 +74,7 @@ public class Raid {
     this.maxHealth = categoryRaid.getHealth();
     this.pokemon = PokemonProperties.Companion.parse(raidData.getActualPhase(this)).create();
     this.damageMap = new HashMap<>();
-    RaidEvents.RAID_STARTED_PRE.emit(new RaidPreStarted(this));
+
   }
 
   // Start Raid
@@ -358,11 +358,13 @@ public class Raid {
         bossBar.clearPlayers();
       }
       CobbleRaids.server.execute(() -> {
-        var pos = raidEntity.getChunkPos();
-        if (!raidEntity.getWorld().getChunkManager().isChunkLoaded(pos.x, pos.z)) {
-          raidEntity.getWorld().getChunkManager().getChunk(pos.x, pos.z, ChunkStatus.FULL, false);
+        if (raidEntity != null) {
+          var pos = raidEntity.getChunkPos();
+          if (!raidEntity.getWorld().getChunkManager().isChunkLoaded(pos.x, pos.z)) {
+            raidEntity.getWorld().getChunkManager().getChunk(pos.x, pos.z, ChunkStatus.FULL, false);
+          }
+          raidEntity.remove(Entity.RemovalReason.DISCARDED);
         }
-        if (raidEntity != null) raidEntity.remove(Entity.RemovalReason.DISCARDED);
       });
       CobbleRaids.raidManager.removeRaid(raidUUID);
       List<FightData> fights = CobbleRaids.raidManager.getFightingsByRaidUUID(raidUUID);

@@ -25,7 +25,7 @@ import java.util.UUID;
 public abstract class InteractRaidMixin {
   @Unique private boolean cobbleRaids$raid = false;
   @Shadow private Pokemon pokemon;
-  
+
 
   @Inject(method = "updatePostDeath", at = @At("HEAD"))
   private void InteractRaid$onUpdatePostDeath(CallbackInfo ci) {
@@ -63,14 +63,11 @@ public abstract class InteractRaidMixin {
   @Unique private void cobbleRaids$shouldDamage(CallbackInfoReturnable<Boolean> cir) {
     PokemonEntity self = (PokemonEntity) (Object) this;
     if (self == null) return;
-    if (cobbleRaids$raid) cir.setReturnValue(false);
+    if (cobbleRaids$raid) cir.cancel();
     if (pokemon == null) return;
     var persistentData = pokemon.getPersistentData();
     if (persistentData == null) return;
-    if (hasNbt(pokemon)) {
-      cir.setReturnValue(false);
-      return;
-    }
+    if (hasNbt(pokemon)) cir.cancel();
   }
 
   @Unique private boolean hasNbt(Pokemon pokemon) {

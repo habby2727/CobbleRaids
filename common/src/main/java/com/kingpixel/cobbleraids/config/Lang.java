@@ -63,10 +63,10 @@ public class Lang {
     messageEndRaid = new HiperMessage("titlesubtitle_broadcast: title:&6&lRaid Finished! subtitle:&eThe raid has ended. " +
       "Thanks for playing! sound:minecraft:entity.player.levelup volume:1.0 pitch:1.0",
       null);
-    messageStartCapture = new HiperMessage("titlesubtitle_broadcast: title:&a&lCapture Started! subtitle:&eYou can now try to " +
+    messageStartCapture = new HiperMessage("titlesubtitle: title:&a&lCapture Started! subtitle:&eYou can now try to " +
       "capture &6%pokemon%&e! sound:minecraft:block.note_block.chime volume:1.0 pitch:1.0",
       null);
-    messageEndCapture = new HiperMessage("titlesubtitle_broadcast: title:&c&lCapture Ended! subtitle:&eThe capture session has ended. " +
+    messageEndCapture = new HiperMessage("titlesubtitle: title:&c&lCapture Ended! subtitle:&eThe capture session has ended. " +
       "sound:minecraft:block.note_block.bass volume:1.0 pitch:1.0", null);
     startBattleRaid = new ConfirmMenu();
     startBattleRaid.setTitle("Start Battle Raid?");
