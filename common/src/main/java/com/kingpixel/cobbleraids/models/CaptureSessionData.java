@@ -98,6 +98,7 @@ public class CaptureSessionData {
         Cobblemon.INSTANCE.getConfig().getDefaultFleeDistance(),
         party
       );
+
       startBattle.ifSuccessful(pokemonBattle -> {
           battleUUID.set(pokemonBattle.getBattleId());
           return Unit.INSTANCE;

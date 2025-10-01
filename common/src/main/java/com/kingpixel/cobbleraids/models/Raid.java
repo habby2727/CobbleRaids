@@ -197,9 +197,11 @@ public class Raid {
     if (leader == null) return;
 
     PokemonEntity raidEntity = generateRaidEntity(true);
-    raidEntity.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, Integer.MAX_VALUE, 255));
+    raidEntity.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, Integer.MAX_VALUE, 255, false,
+      false));
     if (!CobbleRaids.config.isDebug()) {
-      raidEntity.addStatusEffect(new StatusEffectInstance(StatusEffects.INVISIBILITY, Integer.MAX_VALUE, 255));
+      raidEntity.addStatusEffect(new StatusEffectInstance(StatusEffects.INVISIBILITY, Integer.MAX_VALUE, 255, false,
+        false));
     }
 
     Pokemon finalLeader = leader;
