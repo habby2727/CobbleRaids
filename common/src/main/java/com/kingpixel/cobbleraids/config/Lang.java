@@ -24,6 +24,12 @@ public class Lang {
   private String notPermission;
   private String messageStartBattle;
 
+  //LeaderBoard
+  private String leaderBoardTitle;
+  private String leaderBoardLine;
+  private String leaderBoardFooter;
+
+  // Messages with HiperFormat
   private HiperMessage messagePreStartRaid;
   private HiperMessage messageStartRaid;
   private HiperMessage messageNewPhaseRaid;
@@ -48,6 +54,11 @@ public class Lang {
     actionBarCaptureStartingIn = "%prefix% &eStarting in: &6%time%";
     notPermission = "%prefix% &cYou do not have permission to do that.";
     messageStartBattle = "%prefix% &aYou have started a battle raid against &e%pokemon%&a. Good luck!";
+
+    leaderBoardTitle = "&6&lRaid Leaderboard\n";
+    leaderBoardLine = "&e%position%. &6%player% &e- &6%damage% damage\n";
+    leaderBoardFooter = "&eThanks for playing!";
+
     messagePreStartRaid = new HiperMessage("titlesubtitle_broadcast: title:&6&lRaid Incoming! subtitle: &ePrepare for" +
       " battle against &6%pokemon%&e! sound:minecraft:entity.dragon_fireball.explode volume:1.0 pitch:1.0",
       null);

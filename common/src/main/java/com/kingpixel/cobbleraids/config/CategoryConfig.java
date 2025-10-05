@@ -6,8 +6,8 @@ import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Carlos Varas Alonso - 13/09/2025 2:38
@@ -15,7 +15,7 @@ import java.util.Map;
 @Data
 public class CategoryConfig {
   public static final String PATH_CATEGORIES = CobbleRaids.PATH + "/categories/";
-  private final Map<String, CategoryRaid> categorys = new HashMap<>();
+  private final Map<String, CategoryRaid> categorys = new ConcurrentHashMap<>();
 
   public void init() {
     categorys.clear();

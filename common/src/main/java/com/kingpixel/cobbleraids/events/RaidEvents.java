@@ -38,13 +38,12 @@ public class RaidEvents {
         HiperMessage message = CobbleRaids.language.getMessageEndRaid();
         message.sendMessage(null, raid.replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
         var webHook = CobbleRaids.config.getWebhook();
-        AtomicReference<StringBuilder> desc = new AtomicReference<StringBuilder>(new StringBuilder("Table of " +
-          "participants:\n"));
+        AtomicReference<StringBuilder> desc =
+          new AtomicReference<>(new StringBuilder(CobbleRaids.language.getLeaderBoardTitle()));
         AtomicReference<Integer> amount = new AtomicReference<>(0);
         raid.getDamageMap().entrySet().stream()
           .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
           .forEach(entry -> {
-            if (amount.get() >= 10) return;
             var uuid = entry.getKey();
             var userCache = CobbleRaids.server.getUserCache();
             if (userCache == null) return;
@@ -52,10 +51,12 @@ public class RaidEvents {
             if (player.isEmpty()) return;
             amount.getAndSet(amount.get() + 1);
             var name = player.get().getName();
-            desc.get().append(amount.get()).append(" - ").append(name).append(": ").append(entry.getValue()).append(
-              " " +
-                "damage\n");
+            desc.get().append(CobbleRaids.language.getLeaderBoardLine()
+              .replace("%position%", amount.get().toString())
+              .replace("%player%", name)
+              .replace("%damage%", entry.getValue().toString()));
           });
+        desc.get().append(CobbleRaids.language.getLeaderBoardFooter());
         String finalDesc = desc.get().toString();
         HiperMessage hiperMessage = new HiperMessage("cb:" + finalDesc, MessageType.CHAT_BROADCAST);
         hiperMessage.sendMessage(null, hiperMessage.getRawMessage(), CobbleRaids.language.getPrefix(), false);

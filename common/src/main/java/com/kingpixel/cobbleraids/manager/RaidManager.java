@@ -5,6 +5,7 @@ import com.kingpixel.cobbleraids.models.FightData;
 import com.kingpixel.cobbleraids.models.Raid;
 import lombok.Data;
 import net.minecraft.server.network.ServerPlayerEntity;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -24,7 +25,6 @@ public class RaidManager {
   // Map<BattleUUID, FightData>
   private final Map<UUID, FightData> fightingByBattleUUID = new ConcurrentHashMap<>();
   private final Map<UUID, FightData> fightingByPlayers = new ConcurrentHashMap<>();
-  private final Map<UUID, FightData> fightingByRaidUUID = new ConcurrentHashMap<>();
 
   public Raid getRaid(UUID raidUUID) {
     return activeRaids.get(raidUUID);
@@ -35,29 +35,28 @@ public class RaidManager {
   }
 
   public void removeRaid(UUID raidUUID) {
+    if (raidUUID == null) return;
     activeRaids.remove(raidUUID);
+    if (randomRaidUUID == null) return;
     if (randomRaidUUID.equals(raidUUID)) {
       randomRaidOn = false;
       randomRaidUUID = null;
     }
   }
 
-  public void addFightingData(UUID BattleUUID, FightData fightData) {
-    fightingByBattleUUID.put(BattleUUID, fightData);
+  public void addFightingData(UUID battleUUID, FightData fightData) {
+    fightingByBattleUUID.put(battleUUID, fightData);
     fightingByPlayers.put(fightData.getPlayer().getUuid(), fightData);
-    fightingByRaidUUID.put(fightData.getRaid().getRaidUUID(), fightData);
   }
 
-  public void removeFightingData(UUID BattleUUID) {
-    var fight = fightingByBattleUUID.remove(BattleUUID);
-    if (fight != null) {
-      fightingByPlayers.remove(fight.getPlayer().getUuid());
-      fightingByRaidUUID.remove(fight.getRaid().getRaidUUID());
-    }
+  public void removeFightingData(UUID battleUUID) {
+    var fight = fightingByBattleUUID.remove(battleUUID);
+    if (fight != null) fightingByPlayers.remove(fight.getPlayer().getUuid());
   }
 
-  public FightData getFightingData(UUID BattleUUID) {
-    return fightingByBattleUUID.get(BattleUUID);
+  public @Nullable FightData getFightingData(UUID battleUUID) {
+    if (battleUUID == null) return null;
+    return fightingByBattleUUID.get(battleUUID);
   }
 
   public List<FightData> getFightingsByRaidUUID(UUID raidUUID) {
@@ -71,20 +70,19 @@ public class RaidManager {
       raid.getRaidEntity().discard();
     });
     activeRaids.clear();
-    fightingByBattleUUID.forEach((uuid, fightData) -> {
-      fightData.stop();
-    });
+    fightingByBattleUUID.forEach((uuid, fightData) -> fightData.stop(true));
     fightingByBattleUUID.clear();
   }
 
   public void stopRaidPlayer(ServerPlayerEntity player) {
     var fight = fightingByPlayers.get(player.getUuid());
     if (fight != null) {
-      fight.stop();
+      fight.stop(true);
     }
   }
 
   public FightData getFightingPlayer(UUID playerUUID) {
+    if (!fightingByPlayers.containsKey(playerUUID)) return null;
     return fightingByPlayers.get(playerUUID);
   }
 

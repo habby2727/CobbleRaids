@@ -26,15 +26,17 @@ public class FightData {
     this.pokemonEntity = pokemonEntity;
   }
 
-  public void stop() {
-    if (CobbleRaids.config.isDebug()) {
-      CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Stopping fight for player " + player.getName().getString() + " and raid " + raid.getRaidUUID());
-    }
+  public void stop(boolean stopBattle) {
     CobbleRaids.server.execute(() -> {
-      if (pokemonEntity != null) pokemonEntity.discard();
+      try {
+        CobbleRaids.raidManager.removeFightingData(battleUUID);
+        var battle = Cobblemon.INSTANCE.getBattleRegistry().getBattle(battleUUID);
+        if (battle != null && stopBattle) battle.stop();
+        if (pokemonEntity != null) pokemonEntity.discard();
+      } catch (Exception e) {
+        CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error stopping fight for player " + player.getName().getString() + " and raid " + raid.getRaidUUID() + ": " + e.getMessage());
+        e.printStackTrace();
+      }
     });
-    CobbleRaids.raidManager.removeFightingData(battleUUID);
-    var battle = Cobblemon.INSTANCE.getBattleRegistry().getBattle(battleUUID);
-    if (battle != null) CobbleRaids.server.execute(battle::stop);
   }
 }

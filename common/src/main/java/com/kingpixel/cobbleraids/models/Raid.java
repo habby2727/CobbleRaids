@@ -5,7 +5,6 @@ import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
 import com.cobblemon.mod.common.battles.BattleBuilder;
 import com.cobblemon.mod.common.battles.BattleFormat;
-import com.cobblemon.mod.common.battles.actor.PlayerBattleActor;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
@@ -15,7 +14,7 @@ import com.kingpixel.cobbleraids.events.models.RaidFinished;
 import com.kingpixel.cobbleraids.events.models.RaidNewPhase;
 import com.kingpixel.cobbleraids.events.models.RaidPostStarted;
 import com.kingpixel.cobbleraids.events.models.RaidPreStarted;
-import com.kingpixel.cobbleutils.CobbleUtils;
+import com.kingpixel.cobbleutils.Model.DurationValue;
 import com.kingpixel.cobbleutils.util.AdventureTranslator;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
 import com.kingpixel.cobbleutils.util.PokemonUtils;
@@ -26,6 +25,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.boss.ServerBossBar;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.scoreboard.ServerScoreboard;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -34,7 +34,10 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.chunk.ChunkStatus;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Carlos Varas Alonso - 13/09/2025 2:28
@@ -57,7 +60,7 @@ public class Raid {
   private CategoryRaid categoryRaid;
   private int health;
   private int maxHealth;
-  private Map<UUID, Integer> damageMap;
+  private ConcurrentHashMap<UUID, Integer> damageMap = new ConcurrentHashMap<>();
   transient
   private ServerBossBar bossBar;
   private List<UUID> playersInitCaptureSession = new ArrayList<>();
@@ -73,8 +76,6 @@ public class Raid {
     this.health = categoryRaid.getHealth();
     this.maxHealth = categoryRaid.getHealth();
     this.pokemon = PokemonProperties.Companion.parse(raidData.getActualPhase(this)).create();
-    this.damageMap = new HashMap<>();
-
   }
 
   // Start Raid
@@ -87,10 +88,8 @@ public class Raid {
     this.categoryRaid = raidData.getCategoryRaid();
     this.health = categoryRaid.getHealth();
     this.maxHealth = categoryRaid.getHealth();
-    this.damageMap = new HashMap<>();
+    this.damageMap = new ConcurrentHashMap<>();
     this.raidEntity = generateRaidEntity(false);
-    this.pokemon = raidEntity.getPokemon();
-
   }
 
   public String replace(String text) {
@@ -172,10 +171,10 @@ public class Raid {
   }
 
   private void startBattle(ServerPlayerEntity player) {
-    if (finish || health <= 0) return;
-    UserInfo userInfo = DataBaseFactory.INSTANCE.findUserByPlayer(player);
-    if (categoryRaid.isNeedTicket() && !damageMap.containsKey(player.getUuid())) {
-      if (!userInfo.hasTicket(categoryRaid)) {
+    try {
+      if (finish || health <= 0) return;
+      UserInfo userInfo = DataBaseFactory.INSTANCE.findUserByPlayer(player);
+      if (categoryRaid.isNeedTicket() && !damageMap.containsKey(player.getUuid()) && !userInfo.hasTicket(categoryRaid)) {
         PlayerUtils.sendMessage(
           player,
           "§c[§6CobbleRaids§c] §cYou don't have a ticket to join this raid!§r",
@@ -184,131 +183,177 @@ public class Raid {
         );
         return;
       }
-    }
 
-    var party = Cobblemon.INSTANCE.getStorage().getParty(player);
-    Pokemon leader = null;
-    for (Pokemon pokemon : party) {
-      if (pokemon != null && !raidData.isBannedPokemon(pokemon)) {
-        leader = pokemon;
-        break;
+
+      var party = Cobblemon.INSTANCE.getStorage().getParty(player);
+      Pokemon leader = null;
+      for (Pokemon pokemon : party) {
+        if (pokemon != null && !raidData.isBannedPokemon(pokemon)) {
+          leader = pokemon;
+          break;
+        }
       }
-    }
-    if (leader == null) return;
+      if (leader == null) return;
 
-    PokemonEntity raidEntity = generateRaidEntity(true);
-    raidEntity.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, Integer.MAX_VALUE, 255, false,
-      false));
-    if (!CobbleRaids.config.isDebug()) {
-      raidEntity.addStatusEffect(new StatusEffectInstance(StatusEffects.INVISIBILITY, Integer.MAX_VALUE, 255, false,
-        false));
-    }
+      PokemonEntity raidEntity = generateRaidEntity(true);
 
-    Pokemon finalLeader = leader;
-
-    var fightData = CobbleRaids.raidManager.getFightingPlayer(player.getUuid());
-    if (fightData != null) fightData.stop();
-
-    var startBattle = BattleBuilder.INSTANCE.pve(
-      player,
-      raidEntity,
-      finalLeader.getUuid(),
-      BattleFormat.Companion.getGEN_9_SINGLES(),
-      true,
-      true,
-      Cobblemon.INSTANCE.getConfig().getDefaultFleeDistance(),
-      party
-    );
-    startBattle.ifSuccessful(pokemonBattle -> {
-      var actor = (PlayerBattleActor) pokemonBattle.getActor(player);
-      if (actor == null) {
-        CobbleUtils.LOGGER.fatal("Could not find actor for player " + player.getName().getString() + " in battle " + pokemonBattle.getBattleId());
-        return Unit.INSTANCE;
+      if (!CobbleRaids.config.isDebug()) {
+        raidEntity.addStatusEffect(new StatusEffectInstance(StatusEffects.INVISIBILITY, Integer.MAX_VALUE, 255, false,
+          false));
       }
-      CobbleRaids.raidManager.addFightingData(
-        pokemonBattle.getBattleId(),
-        new FightData(
-          pokemonBattle.getBattleId(),
-          this,
-          player,
-          raidEntity
-        )
-      );
-      PlayerUtils.sendMessage(
-        player,
-        PokemonUtils.replace(
-          CobbleRaids.language.getMessageStartBattle(),
-          raidEntity.getPokemon()
-        ),
-        CobbleRaids.language.getPrefix(),
-        TypeMessage.CHAT
-      );
-      if (!damageMap.isEmpty() && !damageMap.containsKey(player.getUuid())) {
+
+      raidEntity.getPokemon().getPersistentData().putString(RAID_CATEGORY_NBT_KEY, categoryRaid.getId());
+
+      Pokemon finalLeader = leader;
+
+      var fightData = CobbleRaids.raidManager.getFightingPlayer(player.getUuid());
+      if (fightData != null) fightData.stop(true);
+
+      var battle = Cobblemon.INSTANCE.getBattleRegistry().getBattleByParticipatingPlayer(player);
+      if (battle != null) battle.stop();
+      if (!damageMap.containsKey(player.getUuid())) {
         userInfo.removeTicket(categoryRaid);
-        maxHealth += categoryRaid.getHealth();
-        health += categoryRaid.getHealth();
-        damageMap.put(player.getUuid(), 0);
+        incrementHealth(player);
       }
-      teleportPlayerOut(player);
-      return Unit.INSTANCE;
-    });
-    startBattle.ifErrored(erroredBattleStart -> {
-      PlayerUtils.sendMessage(
+      var startBattle = BattleBuilder.INSTANCE.pve(
         player,
-        "§c[§6CobbleRaids§c] §cCould not start the battle, please try again later.§r",
-        CobbleRaids.language.getPrefix(),
-        TypeMessage.CHAT
+        raidEntity,
+        finalLeader.getUuid(),
+        BattleFormat.Companion.getGEN_9_SINGLES(),
+        false,
+        CobbleRaids.config.isHealthParty(),
+        Cobblemon.INSTANCE.getConfig().getDefaultFleeDistance(),
+        party
       );
-      raidEntity.discard();
-      return Unit.INSTANCE;
-    });
-
-    raidEntity.getPokemon().getPersistentData().putString(RAID_CATEGORY_NBT_KEY, categoryRaid.getId());
-
+      startBattle.ifSuccessful(pokemonBattle -> {
+        try {
+          UUID battleId = pokemonBattle.getBattleId();
+          CobbleRaids.raidManager.addFightingData(
+            battleId,
+            new FightData(
+              battleId,
+              this,
+              player,
+              raidEntity
+            )
+          );
+          PlayerUtils.sendMessage(
+            player,
+            PokemonUtils.replace(
+              CobbleRaids.language.getMessageStartBattle(),
+              raidEntity.getPokemon()
+            ),
+            CobbleRaids.language.getPrefix(),
+            TypeMessage.CHAT
+          );
+          teleportPlayerOut(player);
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+        return Unit.INSTANCE;
+      });
+      startBattle.ifErrored(erroredBattleStart -> {
+        PlayerUtils.sendMessage(
+          player,
+          "§c[§6CobbleRaids§c] §cCould not start the battle, please try again later.§r",
+          CobbleRaids.language.getPrefix(),
+          TypeMessage.CHAT
+        );
+        CobbleRaids.server.execute(raidEntity::discard);
+        return Unit.INSTANCE;
+      });
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
-  private PokemonEntity generateRaidEntity(boolean fight) {
-    var result = raidData.getActualPhase(this);
-    var properties = PokemonProperties.Companion.parse(result.trim() + " uncatchable=yes");
-    var coords = categoryRaid.getCoords();
-    var pokemon = properties.create();
-    if (fight) {
-      pokemon.getPersistentData().putString(RAID_CATEGORY_NBT_KEY, categoryRaid.getId());
-      pokemon.getPersistentData().putUuid(RAID_NBT_KEY, raidUUID);
-    } else {
-      pokemon.getPersistentData().putUuid(RAID_NBT_KEY, raidUUID);
+  private synchronized void incrementHealth(ServerPlayerEntity player) {
+    int size = damageMap.size() + 1;
+    if (size > 1) {
+      this.maxHealth += categoryRaid.getHealth();
+      this.health += categoryRaid.getHealth();
+      refreshBossBar();
     }
+    damageMap.put(player.getUuid(), 0);
+  }
+
+  // Cache of base Pokémon per result (Pokemon, not PokemonEntity)
+  private final ConcurrentHashMap<String, Pokemon> cachedPokemons = new ConcurrentHashMap<>();
+
+  /**
+   * Generates a raid Pokémon (still returns PokemonEntity)
+   * The Pokemon is cached, so cloning can be done in another thread
+   */
+  private PokemonEntity generateRaidEntity(boolean fight) {
+    var result = raidData.getActualPhase(this).trim();
+
+    // Get or create cached Pokemon (the non-entity object)
+    Pokemon basePokemon = cachedPokemons.computeIfAbsent(result, key -> {
+      var properties = PokemonProperties.Companion.parse(key + " uncatchable=yes");
+      Pokemon p = properties.create();
+      p.getMoveSet().getMoves().forEach(m -> m.setCurrentPp(999));
+      return p;
+    });
+
+    // Clone the cached Pokemon for this raid
+    Pokemon clonePokemon = clonePokemon(basePokemon, fight);
+
+    // Prepare world and chunk
+    var coords = categoryRaid.getCoords();
     ServerWorld serverWorld = categoryRaid.getWorld();
     int x = coords.x() >> 4;
     int z = coords.z() >> 4;
-    if (!serverWorld.isChunkLoaded(x, z)) {
-      serverWorld.getChunkManager().getChunk(x, z, ChunkStatus.FULL, false);
-    }
-    var pokemonEntity = pokemon.sendOut(
+
+    if (!serverWorld.isChunkLoaded(x, z)) serverWorld.getChunkManager().getChunk(x, z, ChunkStatus.FULL, false);
+
+    Vec3d pos = coords.getVec3d();
+    if (fight) pos = new Vec3d(pos.x + (Math.random() * 8 - 4), pos.y, pos.z + (Math.random() * 8 - 4));
+
+    // Spawn the Pokémon as an entity
+    var pokemonEntity = clonePokemon.sendOut(
       serverWorld,
-      coords.getVec3d(),
+      pos,
       null,
       entity -> {
         categoryRaid.compute(entity, fight);
-        if (fight) {
-          entity.getPokemon().getPersistentData().putString(RAID_CATEGORY_NBT_KEY, categoryRaid.getId());
-        } else {
-          entity.getPokemon().getPersistentData().putUuid(RAID_NBT_KEY, raidUUID);
-        }
+
+        if (fight) entity.getPokemon().getPersistentData().putString(RAID_CATEGORY_NBT_KEY, categoryRaid.getId());
+        else entity.getPokemon().getPersistentData().putUuid(RAID_NBT_KEY, raidUUID);
+
         return Unit.INSTANCE;
       }
     );
-    if (pokemonEntity == null) {
-      throw new IllegalStateException("Could not create PokemonEntity for raid");
+    if (pokemonEntity != null) {
+      pokemonEntity.setInvulnerable(true);
+      pokemonEntity.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, Integer.MAX_VALUE, 255, false,
+        CobbleRaids.config.isDebug()));
+      pokemonEntity.addStatusEffect(new StatusEffectInstance(StatusEffects.RESISTANCE, Integer.MAX_VALUE, 255, false,
+        CobbleRaids.config.isDebug()));
+      pokemonEntity.addStatusEffect(new StatusEffectInstance(StatusEffects.ABSORPTION, Integer.MAX_VALUE, 255, false,
+        CobbleRaids.config.isDebug()));
     }
+    if (pokemonEntity == null) throw new IllegalStateException("Could not create PokemonEntity for raid");
+
+    // Post-creation logic if not a fight
     if (!fight) {
       this.raidEntity = pokemonEntity;
       glowing();
       RaidEvents.RAID_STARTED_POST.emit(new RaidPostStarted(this));
     }
-    return pokemonEntity;
 
+    return pokemonEntity;
   }
+
+  /**
+   * Clones a base Pokemon and applies raid-specific data
+   */
+  private Pokemon clonePokemon(Pokemon base, boolean fight) {
+    Pokemon clone = base.clone(true, DynamicRegistryManager.EMPTY);
+    clone.getPersistentData().putUuid(RAID_NBT_KEY, raidUUID);
+    if (fight) clone.getPersistentData().putString(RAID_CATEGORY_NBT_KEY, categoryRaid.getId());
+    return clone;
+  }
+
 
   public void teleportPlayerOut(ServerPlayerEntity player) {
     double radio = categoryRaid.getRadio();
@@ -328,9 +373,9 @@ public class Raid {
   }
 
   public void updateHealth(FightData fightData, int damage) {
-    fightData.stop();
+
     ServerPlayerEntity player = fightData.getPlayer();
-    damageMap.compute(player.getUuid(), (k, damageFromMap) -> (damageFromMap == null ? 0 : damageFromMap) + damage);
+    damageMap.computeIfPresent(player.getUuid(), (k, damageFromMap) -> damageFromMap + damage);
     removeDamage(damage);
     if (CobbleRaids.config.isDebug()) {
       PlayerUtils.sendMessage(
@@ -342,12 +387,13 @@ public class Raid {
     }
     if (health > 0) {
       refreshRaidEntity();
-      startBattle(player);
+      openStartBattleMenu(player);
+      fightData.stop(true);
     } else finishRaid();
   }
 
   private synchronized void removeDamage(int damage) {
-    health -= damage;
+    this.health -= damage;
   }
 
   public synchronized void finishRaid() {
@@ -367,16 +413,16 @@ public class Raid {
           }
           raidEntity.remove(Entity.RemovalReason.DISCARDED);
         }
+        CobbleRaids.raidManager.removeRaid(raidUUID);
+        List<FightData> fights = CobbleRaids.raidManager.getFightingsByRaidUUID(raidUUID);
+        for (FightData fight : fights) {
+          UIManager.closeUI(fight.getPlayer());
+          fight.stop(true);
+        }
+        if (killed) {
+          CobbleRaids.rewardsManager.giveRewards(this, damageMap);
+        }
       });
-      CobbleRaids.raidManager.removeRaid(raidUUID);
-      List<FightData> fights = CobbleRaids.raidManager.getFightingsByRaidUUID(raidUUID);
-      for (FightData fight : fights) {
-        UIManager.closeUI(fight.getPlayer());
-        fight.stop();
-      }
-      if (killed) {
-        CobbleRaids.rewardsManager.giveRewards(this, damageMap);
-      }
       DataBaseFactory.INSTANCE.saveOrUpdateHistoryRaid(this);
     } catch (Exception e) {
       e.printStackTrace();
@@ -411,11 +457,12 @@ public class Raid {
       );
       return;
     }
-    if (PlayerUtils.isBattle(player)) return;
     CobbleRaids.language.getStartBattleRaid().open(
       player,
       raidData.getActualPhasePokemonItem(this),
       confirm -> {
+        if (PlayerUtils.isBattle(player)) return;
+        PlayerUtils.isCooldownMenu(player, "raid_start_battle", DurationValue.parse("1s"));
         startBattle(player);
         UIManager.closeUI(player);
       },
@@ -448,20 +495,11 @@ public class Raid {
 
   public void sendActionBarTimeLeft() {
     long actionBar = CobbleRaids.config.getStartSendActionBar().toMillis(); // 15000 ms = 15 seconds
-    if (System.currentTimeMillis() < startTime - actionBar && System.currentTimeMillis() < endTime - actionBar) {
-      if (CobbleRaids.config.isDebug()) {
-        CobbleUtils.LOGGER.info("[RaidActionBar] Not sending action bar for raid " + raidUUID);
-      }
-      return;
-    }
+    if (System.currentTimeMillis() < startTime - actionBar && System.currentTimeMillis() < endTime - actionBar) return;
     if (startTime >= System.currentTimeMillis()) {
       if (!preNotifyActionBar) {
         preNotifyActionBar = true;
         RaidEvents.RAID_STARTED_PRE.emit(new RaidPreStarted(this));
-      }
-      // Raid waiting to start
-      if (CobbleRaids.config.isDebug()) {
-        CobbleUtils.LOGGER.info("[RaidActionBar-PreStart] Sending action bar for raid " + raidUUID);
       }
       String format = PlayerUtils.getCooldown(startTime);
       var players = CobbleRaids.server.getPlayerManager().getPlayerList();
@@ -476,10 +514,6 @@ public class Raid {
     } else if (endTime >= System.currentTimeMillis()) {
       if (raidEntity == null) {
         CobbleRaids.server.execute(() -> raidEntity = generateRaidEntity(false));
-      }
-      // Raid active in progress
-      if (CobbleRaids.config.isDebug()) {
-        CobbleUtils.LOGGER.info("[RaidActionBar-Active] Sending action bar for raid " + raidUUID);
       }
       String format = PlayerUtils.getCooldown(endTime);
       var players = getNearPlayers();

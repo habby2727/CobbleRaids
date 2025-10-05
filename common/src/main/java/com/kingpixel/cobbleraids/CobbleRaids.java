@@ -42,11 +42,12 @@ public class CobbleRaids {
     .setNameFormat("Cobble-Raids-executor-%d")
     .setDaemon(true)
     .build());
-  private static final ScheduledExecutorService COBBLE_RAIDS_SCHEDULER = Executors.newSingleThreadScheduledExecutor(new ThreadFactoryBuilder()
-    .setNameFormat("Cobble-Raids-scheduler-%d")
-    .setDaemon(true)
-    .build()
-  );
+  private static final ScheduledExecutorService COBBLE_RAIDS_SCHEDULER =
+    Executors.newScheduledThreadPool(4, new ThreadFactoryBuilder()
+      .setNameFormat("Cobble-Raids-scheduler-%d")
+      .setDaemon(true)
+      .build()
+    );
 
   public static void init() {
     events();
@@ -100,9 +101,6 @@ public class CobbleRaids {
         activeRaids.forEach((key, value) -> {
           value.sendActionBarTimeLeft();
           if (value.isFinishByTime()) {
-            if (CobbleRaids.config.isDebug()) {
-              CobbleUtils.LOGGER.info("[RaidFinishTask] Finishing raid " + value.getRaidUUID() + " by time.");
-            }
             value.finishRaid();
           }
         });
@@ -135,6 +133,24 @@ public class CobbleRaids {
         e.printStackTrace();
       }
     }, 0, 1, TimeUnit.SECONDS);
+
+    // Task to check if the player continue in a battle if the player disconnect and reconnect.
+    COBBLE_RAIDS_SCHEDULER.scheduleWithFixedDelay(() -> {
+      if (server == null) return;
+      if (raidManager == null) return;
+      var entries = raidManager.getFightingByPlayers().entrySet();
+      if (entries.isEmpty()) return;
+      for (var entry : entries) {
+        var fightData = entry.getValue();
+        var player = fightData.getPlayer();
+        if (player == null) {
+          fightData.stop(true);
+          continue;
+        }
+        var battle = Cobblemon.INSTANCE.getBattleRegistry().getBattleByParticipatingPlayer(player);
+        if (battle == null) fightData.stop(true);
+      }
+    }, 0, 10, TimeUnit.SECONDS);
   }
 
   public static void load() {
@@ -146,8 +162,8 @@ public class CobbleRaids {
   private static void files() {
     config.init();
     language.init();
-    raidConfigs.init();
     categorys.init();
+    raidConfigs.init();
     rewardsManager.init();
   }
 
@@ -180,6 +196,8 @@ public class CobbleRaids {
     });
 
     PlayerEvent.PLAYER_QUIT.register((player) -> {
+      var fightData = raidManager.getFightingPlayer(player.getUuid());
+      if (fightData != null) fightData.stop(true);
       CompletableFuture.runAsync(() -> {
           var userinfo = DataBaseFactory.INSTANCE.findUserByPlayer(player);
           DataBaseFactory.INSTANCE.saveOrUpdateUserInfo(userinfo);

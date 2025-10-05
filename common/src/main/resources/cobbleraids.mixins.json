@@ -4,7 +4,9 @@
   "package": "com.kingpixel.cobbleraids.mixins",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "InteractRaidMixin"
+    "InteractRaidMixin",
+    "LivingEntityPreventDropMixin",
+    "PokemonPreventDropMixin"
   ],
   "injectors": {
     "defaultRequire": 1

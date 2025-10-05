@@ -32,6 +32,7 @@ public class RaidStartCommand {
                 .suggests((context, builder) -> {
                   String categoryId = StringArgumentType.getString(context, "category");
                   var list = CobbleRaids.raidConfigs.getRaidsByCategory(categoryId);
+                  if (list == null || list.isEmpty()) return builder.buildFuture();
                   for (RaidData raidData : list) {
                     builder.suggest(raidData.getId());
                   }

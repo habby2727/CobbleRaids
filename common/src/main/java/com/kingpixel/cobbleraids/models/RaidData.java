@@ -84,9 +84,6 @@ public class RaidData {
   private Map<String, ItemStack> cacheDisplay = new HashMap<>();
 
   public ItemStack getActualPhasePokemonItem(Raid raid) {
-    if (cacheDisplay == null) {
-      cacheDisplay = new HashMap<>();
-    }
     String result = getActualPhase(raid);
     ItemStack display = cacheDisplay.get(result);
     if (display != null) return display;

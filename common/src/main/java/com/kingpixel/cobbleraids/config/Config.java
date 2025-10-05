@@ -25,6 +25,7 @@ import java.util.concurrent.CompletableFuture;
 public class Config {
   private boolean debug;
   private String lang;
+  private boolean healthParty;
   private DurationValue cooldownBetweenRaids = DurationValue.parse("30m");
   private DurationValue startSendActionBar = DurationValue.parse("15m");
   private Set<String> commands;
@@ -36,6 +37,7 @@ public class Config {
   public Config() {
     debug = false;
     lang = "en";
+    healthParty = false;
     commands = Set.of("raids", "cobbleraids");
     if (database == null) {
       database = new DataBaseConfig();

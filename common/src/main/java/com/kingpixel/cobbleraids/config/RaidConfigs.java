@@ -1,21 +1,23 @@
 package com.kingpixel.cobbleraids.config;
 
 import com.kingpixel.cobbleraids.CobbleRaids;
+import com.kingpixel.cobbleraids.models.CategoryRaid;
 import com.kingpixel.cobbleraids.models.RaidData;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.Utils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Carlos Varas Alonso - 13/09/2025 2:28
  */
 public class RaidConfigs {
   private static final String PATH_RAIDS = CobbleRaids.PATH + "/raids/";
-  public static final Map<String, RaidData> RAIDS = new HashMap<>();
-  public static final Map<String, List<RaidData>> RAIDS_BY_CATEGORY = new HashMap<>();
+  public static final Map<String, RaidData> RAIDS = new ConcurrentHashMap<>();
+  public static final Map<String, List<RaidData>> RAIDS_BY_CATEGORY = new ConcurrentHashMap<>();
 
   public void init() {
     RAIDS.clear();
@@ -30,7 +32,13 @@ public class RaidConfigs {
         var raid = Utils.newGson().fromJson(Utils.readFileSync(file), RaidData.class);
         String id = file.getName().replace(".json", "");
         RAIDS.put(id, raid);
-        RAIDS_BY_CATEGORY.computeIfAbsent(raid.getCategoryRaid().getId(), k -> new ArrayList<>()).add(raid);
+        CategoryRaid category = raid.getCategoryRaid();
+        if (category == null) {
+          CobbleUtils.LOGGER.warn("Raid " + id + " has an invalid category.");
+          continue;
+        } else {
+          RAIDS_BY_CATEGORY.computeIfAbsent(category.getId(), k -> new ArrayList<>()).add(raid);
+        }
         Utils.writeFileAsync(file, Utils.newGson().toJson(raid));
       } catch (Exception e) {
         e.printStackTrace();
