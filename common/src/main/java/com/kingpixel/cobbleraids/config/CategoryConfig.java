@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Data
 public class CategoryConfig {
   public static final String PATH_CATEGORIES = CobbleRaids.PATH + "/categories/";
-  private final Map<String, CategoryRaid> categorys = new ConcurrentHashMap<>();
+  private Map<String, CategoryRaid> categorys = new ConcurrentHashMap<>();
 
   public void init() {
     categorys.clear();

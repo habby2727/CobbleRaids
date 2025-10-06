@@ -26,6 +26,7 @@ public class Config {
   private boolean debug;
   private String lang;
   private boolean healthParty;
+  private boolean xpBlock;
   private DurationValue cooldownBetweenRaids = DurationValue.parse("30m");
   private DurationValue startSendActionBar = DurationValue.parse("15m");
   private Set<String> commands;
@@ -38,6 +39,7 @@ public class Config {
     debug = false;
     lang = "en";
     healthParty = false;
+    xpBlock = true;
     commands = Set.of("raids", "cobbleraids");
     if (database == null) {
       database = new DataBaseConfig();

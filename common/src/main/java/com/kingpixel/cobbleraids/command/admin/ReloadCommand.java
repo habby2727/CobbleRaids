@@ -20,13 +20,13 @@ public class ReloadCommand {
       CommandManager.literal("reload")
         .requires(source -> PermissionApi.hasPermission(source, PERMISSION, 2))
         .executes(context -> {
+          CobbleRaids.load();
           context.getSource().sendMessage(
             AdventureTranslator.toNative(
               CobbleRaids.language.getReload(),
               CobbleRaids.language.getPrefix()
             )
           );
-          CobbleRaids.load();
           return 1;
         }));
   }

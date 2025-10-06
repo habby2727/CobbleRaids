@@ -65,6 +65,8 @@ public class CaptureSessionData {
         player.getPos(),
         null,
         entity -> {
+          entity.getPokemon().setNickname(player.getName().copy());
+          entity.setCustomName(player.getName().copy());
           return Unit.INSTANCE;
         }
       );

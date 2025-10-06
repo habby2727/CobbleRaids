@@ -6,7 +6,8 @@
   "mixins": [
     "InteractRaidMixin",
     "LivingEntityPreventDropMixin",
-    "PokemonPreventDropMixin"
+    "PokemonPreventDropMixin",
+    "PreventXPMixin"
   ],
   "injectors": {
     "defaultRequire": 1

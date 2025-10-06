@@ -300,7 +300,9 @@ public class Raid {
 
     // Prepare world and chunk
     var coords = categoryRaid.getCoords();
-    ServerWorld serverWorld = categoryRaid.getWorld();
+    ServerWorld serverWorld = categoryRaid.getWorldInstance();
+    if (serverWorld == null)
+      throw new IllegalStateException("World " + categoryRaid.getWorld() + " not found for raid " + raidUUID);
     int x = coords.x() >> 4;
     int z = coords.z() >> 4;
 
@@ -363,7 +365,7 @@ public class Raid {
     Vec3d direction = posPlayer.subtract(coords).normalize();
     Vec3d newPos = coords.add(direction.multiply(radio + 5));
     CobbleRaids.server.execute(() -> player.teleport(
-      categoryRaid.getWorld(),
+      categoryRaid.getWorldInstance(),
       newPos.x,
       posPlayer.getY(),
       newPos.z,
@@ -479,7 +481,7 @@ public class Raid {
   }
 
   public List<ServerPlayerEntity> getNearPlayers() {
-    return categoryRaid.getWorld().getPlayers(player ->
+    return categoryRaid.getWorldInstance().getPlayers(player ->
       player.getPos().isInRange(
         categoryRaid.getCoords().getVec3d(),
         64
@@ -546,6 +548,6 @@ public class Raid {
   }
 
   public List<ServerPlayerEntity> getPlayersInWorld() {
-    return categoryRaid.getWorld().getPlayers();
+    return categoryRaid.getWorldInstance().getPlayers();
   }
 }

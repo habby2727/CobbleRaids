@@ -13,16 +13,15 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.Vec3d;
-
-import java.util.HashMap;
-import java.util.Map;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Carlos Varas Alonso - 13/09/2025 2:35
  */
 @Data
 public class CategoryRaid {
-  private static Map<String, ServerWorld> worldMap = new HashMap<>();
+  transient
+  private ServerWorld worldInstance;
   private double chance;
   private String id;
   private String name;
@@ -103,16 +102,15 @@ public class CategoryRaid {
     }
   }
 
-  public ServerWorld getWorld() {
-    var serverWorld = worldMap.get(this.world);
-    if (serverWorld != null) return serverWorld;
+  @Nullable public ServerWorld getWorldInstance() {
+    if (worldInstance != null) return worldInstance;
     for (ServerWorld w : CobbleRaids.server.getWorlds()) {
       if (w.getRegistryKey().getValue().toString().equals(this.world)) {
-        worldMap.put(this.world, w);
-        return w;
+        worldInstance = w;
+        return worldInstance;
       }
     }
-    return CobbleRaids.server.getOverworld();
+    return null;
   }
 
   public boolean haveMinLevel(ServerPlayerEntity player) {

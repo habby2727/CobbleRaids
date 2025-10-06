@@ -5,6 +5,7 @@ import com.kingpixel.cobbleraids.models.CategoryRaid;
 import com.kingpixel.cobbleraids.models.RaidData;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.Utils;
+import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,14 +15,15 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author Carlos Varas Alonso - 13/09/2025 2:28
  */
+@Data
 public class RaidConfigs {
   private static final String PATH_RAIDS = CobbleRaids.PATH + "/raids/";
-  public static final Map<String, RaidData> RAIDS = new ConcurrentHashMap<>();
-  public static final Map<String, List<RaidData>> RAIDS_BY_CATEGORY = new ConcurrentHashMap<>();
+  private Map<String, RaidData> raids = new ConcurrentHashMap<>();
+  private Map<String, List<RaidData>> raidsByCategory = new ConcurrentHashMap<>();
 
   public void init() {
-    RAIDS.clear();
-    RAIDS_BY_CATEGORY.clear();
+    raids.clear();
+    raidsByCategory.clear();
     var files = Utils.getFiles(Utils.getAbsolutePath(PATH_RAIDS));
     if (files.isEmpty()) {
       createDefaultRaid();
@@ -31,13 +33,13 @@ public class RaidConfigs {
       try {
         var raid = Utils.newGson().fromJson(Utils.readFileSync(file), RaidData.class);
         String id = file.getName().replace(".json", "");
-        RAIDS.put(id, raid);
+        raids.put(id, raid);
         CategoryRaid category = raid.getCategoryRaid();
         if (category == null) {
           CobbleUtils.LOGGER.warn("Raid " + id + " has an invalid category.");
           continue;
         } else {
-          RAIDS_BY_CATEGORY.computeIfAbsent(category.getId(), k -> new ArrayList<>()).add(raid);
+          raidsByCategory.computeIfAbsent(category.getId(), k -> new ArrayList<>()).add(raid);
         }
         Utils.writeFileAsync(file, Utils.newGson().toJson(raid));
       } catch (Exception e) {
@@ -47,16 +49,16 @@ public class RaidConfigs {
   }
 
   public RaidData getRaid(String id) {
-    return RAIDS.getOrDefault(id, RAIDS.get("default"));
+    return raids.getOrDefault(id, raids.get("default"));
   }
 
   public List<RaidData> getRaidsByCategory(String categoryId) {
-    return RAIDS_BY_CATEGORY.getOrDefault(categoryId, RAIDS_BY_CATEGORY.get("default"));
+    return raidsByCategory.getOrDefault(categoryId, raidsByCategory.get("default"));
   }
 
   public RaidData getRandomRaidByCategory(String categoryId) {
     var raids = getRaidsByCategory(categoryId);
-    if (raids.isEmpty()) return RAIDS.get("default");
+    if (raids.isEmpty()) return this.raids.get("default");
     double totalchance = raids.stream().mapToDouble(RaidData::getChance).sum();
     double random = Utils.getRandom().nextDouble() * totalchance;
     double cumulativeChance = 0.0;
@@ -71,7 +73,7 @@ public class RaidConfigs {
 
   private void createDefaultRaid() {
     var defaultRaid = new RaidData("default", "default");
-    RAIDS.put("default", defaultRaid);
+    raids.put("default", defaultRaid);
     Utils.writeFileAsync(PATH_RAIDS, "default.json", Utils.newGson().toJson(defaultRaid));
   }
 }
