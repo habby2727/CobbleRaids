@@ -288,8 +288,9 @@ public class Raid {
     var result = raidData.getActualPhase(this).trim();
 
     // Get or create cached Pokemon (the non-entity object)
-    Pokemon basePokemon = cachedPokemons.computeIfAbsent(result, key -> {
-      var properties = PokemonProperties.Companion.parse(key + " uncatchable=yes");
+    Pokemon basePokemon = cachedPokemons.computeIfAbsent(result + (fight ? "f" : "r"), key -> {
+      String uncaughtable = fight ? "" : "uncatchable=yes";
+      var properties = PokemonProperties.Companion.parse(result + " " + uncaughtable);
       Pokemon p = properties.create();
       p.getMoveSet().getMoves().forEach(m -> m.setCurrentPp(999));
       return p;
