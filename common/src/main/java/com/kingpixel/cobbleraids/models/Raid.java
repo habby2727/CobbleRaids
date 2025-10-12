@@ -288,9 +288,8 @@ public class Raid {
     var result = raidData.getActualPhase(this).trim();
 
     // Get or create cached Pokemon (the non-entity object)
-    Pokemon basePokemon = cachedPokemons.computeIfAbsent(result + (fight ? "f" : "r"), key -> {
-      String uncaughtable = fight ? "" : "uncatchable=yes";
-      var properties = PokemonProperties.Companion.parse(result + " " + uncaughtable);
+    Pokemon basePokemon = cachedPokemons.computeIfAbsent(result, key -> {
+      var properties = PokemonProperties.Companion.parse(result + " uncatchable=yes");
       Pokemon p = properties.create();
       p.getMoveSet().getMoves().forEach(m -> m.setCurrentPp(999));
       return p;
@@ -304,8 +303,8 @@ public class Raid {
     ServerWorld serverWorld = categoryRaid.getWorldInstance();
     if (serverWorld == null)
       throw new IllegalStateException("World " + categoryRaid.getWorld() + " not found for raid " + raidUUID);
-    int x = coords.x() >> 4;
-    int z = coords.z() >> 4;
+    int x = coords.getX() >> 4;
+    int z = coords.getZ() >> 4;
 
     if (!serverWorld.isChunkLoaded(x, z)) serverWorld.getChunkManager().getChunk(x, z, ChunkStatus.FULL, false);
 

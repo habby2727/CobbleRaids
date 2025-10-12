@@ -41,4 +41,8 @@ public class CaptureSessionManager {
       s.finishSession();
     });
   }
+
+  public void removeSession(UUID battleUUID) {
+    activeSessions.remove(battleUUID);
+  }
 }

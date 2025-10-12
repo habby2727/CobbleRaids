@@ -153,8 +153,17 @@ public class CategoryRaid {
   }
 
 
-  public record Coords(int x, int y, int z) {
-    private static Vec3d vec3d;
+  @Data
+  public static class Coords {
+    private int x;
+    private int y;
+    private int z;
+    transient
+    private Vec3d vec3d;
+
+    public Coords(int x, int y, int z) {
+      vec3d = new Vec3d(x, y, z);
+    }
 
     public Vec3d getVec3d() {
       if (vec3d != null) return vec3d;
