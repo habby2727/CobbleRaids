@@ -9,8 +9,8 @@ import com.kingpixel.cobbleraids.config.Lang;
 import com.kingpixel.cobbleraids.config.RaidConfigs;
 import com.kingpixel.cobbleraids.database.DataBaseClient;
 import com.kingpixel.cobbleraids.database.DataBaseFactory;
-import com.kingpixel.cobbleraids.events.BattleEvents;
-import com.kingpixel.cobbleraids.events.RaidEvents;
+import com.kingpixel.cobbleraids.events.cobblemon.*;
+import com.kingpixel.cobbleraids.events.raids.RaidEvents;
 import com.kingpixel.cobbleraids.manager.CaptureSessionManager;
 import com.kingpixel.cobbleraids.manager.RaidHistory;
 import com.kingpixel.cobbleraids.manager.RaidManager;
@@ -212,6 +212,12 @@ public class CobbleRaids {
     });
 
     RaidEvents.register();
-    BattleEvents.register();
+    PokeBallCaptureCompletedEvent.register();
+    PokeSentEvent.register();
+    BattleStartedPreEvent.register();
+    BattleFaintedEvent.register();
+    BattleFledEvent.register();
+    BattleVictoryEvent.register();
+    PokemonCapturedEvent.register();
   }
 }

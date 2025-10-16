@@ -64,21 +64,23 @@ public class RaidManager {
   }
 
   public void stopAllRaids() {
-    activeRaids.forEach((uuid, raid) -> {
+    for (Map.Entry<UUID, Raid> entry : activeRaids.entrySet()) {
+      var raid = entry.getValue();
       raid.finishRaid();
-      if (raid.getRaidEntity() == null) return;
+      if (raid.getRaidEntity() == null) continue;
       raid.getRaidEntity().discard();
-    });
+    }
     activeRaids.clear();
-    fightingByBattleUUID.forEach((uuid, fightData) -> fightData.stop(true));
-    fightingByBattleUUID.clear();
+    for (Map.Entry<UUID, FightData> entry : fightingByBattleUUID.entrySet()) {
+      var fightData = entry.getValue();
+      fightData.stop(true);
+    }
   }
 
   public void stopRaidPlayer(ServerPlayerEntity player) {
     var fight = fightingByPlayers.get(player.getUuid());
-    if (fight != null) {
-      fight.stop(true);
-    }
+    if (fight != null) fight.stop(true);
+
   }
 
   public FightData getFightingPlayer(UUID playerUUID) {

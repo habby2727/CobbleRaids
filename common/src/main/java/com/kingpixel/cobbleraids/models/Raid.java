@@ -9,11 +9,11 @@ import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.database.DataBaseFactory;
-import com.kingpixel.cobbleraids.events.RaidEvents;
-import com.kingpixel.cobbleraids.events.models.RaidFinished;
-import com.kingpixel.cobbleraids.events.models.RaidNewPhase;
-import com.kingpixel.cobbleraids.events.models.RaidPostStarted;
-import com.kingpixel.cobbleraids.events.models.RaidPreStarted;
+import com.kingpixel.cobbleraids.events.raids.RaidEvents;
+import com.kingpixel.cobbleraids.events.raids.models.RaidFinished;
+import com.kingpixel.cobbleraids.events.raids.models.RaidNewPhase;
+import com.kingpixel.cobbleraids.events.raids.models.RaidPostStarted;
+import com.kingpixel.cobbleraids.events.raids.models.RaidPreStarted;
 import com.kingpixel.cobbleutils.Model.DurationValue;
 import com.kingpixel.cobbleutils.util.AdventureTranslator;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
@@ -21,6 +21,7 @@ import com.kingpixel.cobbleutils.util.PokemonUtils;
 import com.kingpixel.cobbleutils.util.TypeMessage;
 import kotlin.Unit;
 import lombok.Data;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.boss.ServerBossBar;
 import net.minecraft.entity.effect.StatusEffectInstance;
@@ -32,6 +33,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
 
 import java.util.ArrayList;
@@ -155,11 +157,12 @@ public class Raid {
       Pokemon p = PokemonProperties.Companion.parse(actualPhase).create();
       pokemon = p;
       Pokemon pR = raidEntity.getPokemon();
-      pR.setSpecies(p.getSpecies());
+      raidEntity.setPokemon(p.clone(true, DynamicRegistryManager.EMPTY));
+/*      pR.setSpecies(p.getSpecies());
       pR.setForm(p.getForm());
       pR.setGender(p.getGender());
       pR.setShiny(p.getShiny());
-      pR.setForcedAspects(p.getAspects());
+      pR.setForcedAspects(p.getAspects());*/
       CobbleRaids.server.execute(() -> {
         raidEntity.getPokemon().updateAspects();
         glowing();
@@ -193,6 +196,14 @@ public class Raid {
           break;
         }
       }
+      if (FabricLoader.getInstance().isModLoaded("cobblesize")) {
+        for (Pokemon p : party) {
+          if (p == null) continue;
+          if (p.getPersistentData().getString("size").equals("custom")) continue;
+          p.setScaleModifier(0.01f);
+        }
+      }
+
       if (leader == null) return;
 
       PokemonEntity raidEntity = generateRaidEntity(true);
@@ -222,7 +233,7 @@ public class Raid {
         BattleFormat.Companion.getGEN_9_SINGLES(),
         false,
         CobbleRaids.config.isHealthParty(),
-        Cobblemon.INSTANCE.getConfig().getDefaultFleeDistance(),
+        Cobblemon.INSTANCE.getConfig().getDefaultFleeDistance() + 16,
         party
       );
       startBattle.ifSuccessful(pokemonBattle -> {
@@ -404,15 +415,12 @@ public class Raid {
       finish = true;
       boolean killed = health <= 0;
       RaidEvents.RAID_FINISHED.emit(new RaidFinished(this, killed));
-      if (bossBar != null) {
-        bossBar.clearPlayers();
-      }
+      if (bossBar != null) bossBar.clearPlayers();
       CobbleRaids.server.execute(() -> {
+        Chunk chunk = null;
         if (raidEntity != null) {
           var pos = raidEntity.getChunkPos();
-          if (!raidEntity.getWorld().getChunkManager().isChunkLoaded(pos.x, pos.z)) {
-            raidEntity.getWorld().getChunkManager().getChunk(pos.x, pos.z, ChunkStatus.FULL, false);
-          }
+          chunk = raidEntity.getWorld().getChunk(pos.x, pos.z);
           raidEntity.remove(Entity.RemovalReason.DISCARDED);
         }
         CobbleRaids.raidManager.removeRaid(raidUUID);
@@ -421,9 +429,8 @@ public class Raid {
           UIManager.closeUI(fight.getPlayer());
           fight.stop(true);
         }
-        if (killed) {
-          CobbleRaids.rewardsManager.giveRewards(this, damageMap);
-        }
+        if (killed) CobbleRaids.rewardsManager.giveRewards(this, damageMap);
+        if (chunk != null) chunk.setNeedsSaving(true);
       });
       DataBaseFactory.INSTANCE.saveOrUpdateHistoryRaid(this);
     } catch (Exception e) {

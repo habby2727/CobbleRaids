@@ -1,4 +1,4 @@
-package com.kingpixel.cobbleraids.events;
+package com.kingpixel.cobbleraids.events.cobblemon;
 
 import com.cobblemon.mod.common.api.Priority;
 import com.cobblemon.mod.common.api.battles.model.actor.BattleActor;
@@ -8,7 +8,6 @@ import com.cobblemon.mod.common.battles.actor.PokemonBattleActor;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.kingpixel.cobbleraids.CobbleRaids;
-import com.kingpixel.cobbleraids.models.CaptureSessionData;
 import com.kingpixel.cobbleraids.models.Raid;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import kotlin.Unit;
@@ -19,114 +18,10 @@ import net.minecraft.text.Text;
 import java.util.UUID;
 
 /**
- * @author Carlos Varas Alonso - 13/09/2025 5:09
+ * @author Carlos Varas Alonso - 15/10/2025 21:23
  */
-public class BattleEvents {
+public class BattleStartedPreEvent {
   public static void register() {
-    CobblemonEvents.POKE_BALL_CAPTURE_CALCULATED.subscribe(Priority.HIGHEST, evt -> {
-      try {
-        var battleId = evt.getPokemonEntity().getBattleId();
-        if (battleId == null) return Unit.INSTANCE;
-        var captureSession = CobbleRaids.captureSessionManager.getActiveSessions().get(battleId);
-        if (captureSession == null) return Unit.INSTANCE;
-        if (evt.getCaptureResult().isSuccessfulCapture()) {
-          captureSession.setTime();
-          CobbleRaids.rewardsManager.giveRewardCapture(captureSession);
-        }
-      } catch (Exception e) {
-        CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error in POKE_BALL_CAPTURE_CALCULATED event: " + e.getMessage());
-        e.printStackTrace();
-      }
-      return Unit.INSTANCE;
-    });
-
-    CobblemonEvents.POKEMON_CAPTURED.subscribe(Priority.HIGHEST, evt -> {
-      try {
-        var pokemon = evt.getPokemon();
-        var persistentData = pokemon.getPersistentData();
-        for (String key : CaptureSessionData.REMOVE_PERSISTENT_DATA) {
-          persistentData.remove(key);
-        }
-      } catch (Exception e) {
-        CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error in POKEMON_CAPTURED event: " + e.getMessage());
-        e.printStackTrace();
-      }
-      return Unit.INSTANCE;
-    });
-
-    CobblemonEvents.BATTLE_VICTORY.subscribe(Priority.HIGHEST, evt -> {
-      try {
-        var battle = evt.getBattle();
-        var battleId = battle.getBattleId();
-        var fight = CobbleRaids.raidManager.getFightingData(battleId);
-        var captureSession = CobbleRaids.captureSessionManager.finishSession(battleId);
-        if (captureSession != null) {
-          if (CobbleRaids.config.isDebug()) {
-            CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "BATTLE_VICTORY: A player has won a capture session.");
-          }
-          captureSession.finishSession();
-          return Unit.INSTANCE;
-        }
-        if (fight != null) fight.stop(false);
-        return Unit.INSTANCE;
-      } catch (Exception e) {
-        CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error in BATTLE_VICTORY event: " + e.getMessage());
-        e.printStackTrace();
-      }
-      return Unit.INSTANCE;
-    });
-
-    CobblemonEvents.BATTLE_FLED.subscribe(Priority.HIGHEST, evt -> {
-      try {
-        var battle = evt.getBattle();
-        var battleId = battle.getBattleId();
-
-        var captureSession = CobbleRaids.captureSessionManager.finishSession(battleId);
-        if (captureSession != null) {
-          if (CobbleRaids.config.isDebug()) {
-            CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "BATTLE_FLED: A player has fled a capture session.");
-          }
-          return Unit.INSTANCE;
-        }
-        var fight = CobbleRaids.raidManager.getFightingData(battleId);
-        if (fight == null) {
-          if (CobbleRaids.config.isDebug()) {
-            CobbleUtils.LOGGER.warn(CobbleRaids.MOD_ID, "BATTLE_FLED: A player has fled but the fight is null.");
-          }
-          return Unit.INSTANCE;
-        }
-        if (CobbleRaids.config.isDebug()) {
-          CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "BATTLE_FLED: A player has fled the raid battle.");
-        }
-        fight.stop(false);
-      } catch (Exception e) {
-        CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error in BATTLE_FLED event: " + e.getMessage());
-        e.printStackTrace();
-      }
-      return Unit.INSTANCE;
-    });
-
-    CobblemonEvents.BATTLE_FAINTED.subscribe(Priority.HIGHEST, evt -> {
-      try {
-        var pokemonKilled = evt.getKilled();
-        var battle = evt.getBattle();
-        var pokemonEntity = pokemonKilled.getEntity();
-        if (pokemonEntity == null) return Unit.INSTANCE;
-        var captureSession = CobbleRaids.captureSessionManager.finishSession(battle.getBattleId());
-        if (captureSession != null) return Unit.INSTANCE;
-        var fight = CobbleRaids.raidManager.getFightingData(battle.getBattleId());
-        if (fight == null) return Unit.INSTANCE;
-        if (!fight.getPokemonEntity().equals(pokemonEntity)) return Unit.INSTANCE;
-        var raid = fight.getRaid();
-        if (raid == null) return Unit.INSTANCE;
-        raid.updateHealth(fight, pokemonKilled.getMaxHealth());
-      } catch (Exception e) {
-        CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error in BATTLE_FAINTED event: " + e.getMessage());
-        e.printStackTrace();
-      }
-      return Unit.INSTANCE;
-    });
-
     CobblemonEvents.BATTLE_STARTED_PRE.subscribe(Priority.HIGHEST, evt -> {
       try {
         var battle = evt.getBattle();

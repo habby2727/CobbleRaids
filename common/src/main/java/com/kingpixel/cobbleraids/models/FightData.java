@@ -4,6 +4,7 @@ import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleutils.CobbleUtils;
+import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import net.minecraft.server.network.ServerPlayerEntity;
 
@@ -39,4 +40,34 @@ public class FightData {
       }
     });
   }
+
+  public void teleportPokemon(PokemonEntity targetPokemon) {
+    if (pokemonEntity == null || targetPokemon == null) return;
+
+    var world = pokemonEntity.getWorld();
+    if (world == null || world.isClient) return;
+    
+    // Posición base: el Pokémon principal de la FightData
+    var basePos = pokemonEntity.getBlockPos();
+
+    // Calcular desplazamiento aleatorio a unos 32 bloques de distancia
+    int distance = 32;
+    double angle = Utils.getRandom().nextDouble() * (2 * Math.PI);
+    double offsetX = Math.cos(angle) * distance;
+    double offsetZ = Math.sin(angle) * distance;
+
+    // Calcular coordenadas destino
+    double newX = basePos.getX() + offsetX;
+    double newZ = basePos.getZ() + offsetZ;
+    int topY = world.getTopY(net.minecraft.world.Heightmap.Type.MOTION_BLOCKING_NO_LEAVES,
+      (int) newX, (int) newZ);
+
+    // Evita alturas fuera de rango
+    if (topY <= world.getBottomY() || topY >= world.getTopY()) return;
+
+    // Teletransportar al Pokémon
+    targetPokemon.teleport(newX + 0.5, topY, newZ + 0.5, false);
+  }
+
+
 }

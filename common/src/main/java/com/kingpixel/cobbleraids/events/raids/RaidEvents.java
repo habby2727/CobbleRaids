@@ -1,11 +1,11 @@
-package com.kingpixel.cobbleraids.events;
+package com.kingpixel.cobbleraids.events.raids;
 
 import club.minnced.discord.webhook.WebhookClient;
 import club.minnced.discord.webhook.send.WebhookEmbed;
 import club.minnced.discord.webhook.send.WebhookEmbedBuilder;
 import club.minnced.discord.webhook.send.WebhookMessage;
 import com.kingpixel.cobbleraids.CobbleRaids;
-import com.kingpixel.cobbleraids.events.models.*;
+import com.kingpixel.cobbleraids.events.raids.models.*;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.WebHookData;
 import com.kingpixel.cobbleutils.Model.messages.HiperMessage;
@@ -85,13 +85,13 @@ public class RaidEvents {
     // Raid Pre Started event
     RAID_STARTED_PRE.subscribe(raidPreStarted -> {
       try {
+        var raid = raidPreStarted.getRaid();
         HiperMessage message = CobbleRaids.language.getMessagePreStartRaid();
-        message.sendMessage(null, raidPreStarted.getRaid().replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
+        message.sendMessage(null, raid.replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
         var webHook = CobbleRaids.config.getWebhook();
         if (!webHook.isENABLED()) return;
         var client = getWebhookClient(webHook);
         if (client == null) return;
-        var raid = raidPreStarted.getRaid();
         List<WebhookEmbed> embeds = new ArrayList<>();
         var builder = new WebhookEmbedBuilder()
           .setTitle(new WebhookEmbed.EmbedTitle("Raid Starting Soon", ""));
@@ -116,13 +116,13 @@ public class RaidEvents {
     // Raid Post Started event
     RAID_STARTED_POST.subscribe(raidPostStarted -> {
       try {
+        var raid = raidPostStarted.getRaid();
         HiperMessage message = CobbleRaids.language.getMessageStartRaid();
-        message.sendMessage(null, raidPostStarted.getRaid().replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
+        message.sendMessage(null, raid.replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
         var webHook = CobbleRaids.config.getWebhook();
         if (!webHook.isENABLED()) return;
         var client = getWebhookClient(webHook);
         if (client == null) return;
-        var raid = raidPostStarted.getRaid();
         List<WebhookEmbed> embeds = new ArrayList<>();
         var builder = new WebhookEmbedBuilder()
           .setTitle(new WebhookEmbed.EmbedTitle("Raid Started", ""));

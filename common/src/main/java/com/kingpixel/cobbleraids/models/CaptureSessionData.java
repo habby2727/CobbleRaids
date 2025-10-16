@@ -97,7 +97,7 @@ public class CaptureSessionData {
         BattleFormat.Companion.getGEN_9_SINGLES(),
         false,
         true,
-        Cobblemon.INSTANCE.getConfig().getDefaultFleeDistance(),
+        Cobblemon.INSTANCE.getConfig().getDefaultFleeDistance() + 16,
         party
       );
 
