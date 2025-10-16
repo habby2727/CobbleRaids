@@ -11,12 +11,14 @@ import com.kingpixel.cobbleutils.Model.WebHookData;
 import com.kingpixel.cobbleutils.Model.messages.HiperMessage;
 import com.kingpixel.cobbleutils.Model.messages.MessageType;
 import com.kingpixel.cobbleutils.events.EventChannel;
+import com.kingpixel.cobbleutils.util.PokemonUtils;
 import lombok.Data;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -36,7 +38,7 @@ public class RaidEvents {
       try {
         var raid = raidFinished.getRaid();
         HiperMessage message = CobbleRaids.language.getMessageEndRaid();
-        message.sendMessage(null, raid.replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
+        message.sendMessage((UUID) null, raid.replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
         var webHook = CobbleRaids.config.getWebhook();
         AtomicReference<StringBuilder> desc =
           new AtomicReference<>(new StringBuilder(CobbleRaids.language.getLeaderBoardTitle()));
@@ -57,13 +59,14 @@ public class RaidEvents {
               .replace("%damage%", entry.getValue().toString()));
           });
         desc.get().append(CobbleRaids.language.getLeaderBoardFooter());
+        
         String finalDesc = desc.get().toString();
+        finalDesc = PokemonUtils.replace(finalDesc, raid.getPokemon());
         HiperMessage hiperMessage = new HiperMessage("cb:" + finalDesc, MessageType.CHAT_BROADCAST);
-        hiperMessage.sendMessage(null, hiperMessage.getRawMessage(), CobbleRaids.language.getPrefix(), false);
+        hiperMessage.sendMessage((UUID) null, hiperMessage.getRawMessage(), CobbleRaids.language.getPrefix(), false);
         if (!webHook.isENABLED()) return;
         var client = getWebhookClient(webHook);
         if (client == null) return;
-        var killed = raidFinished.isKilled();
         List<WebhookEmbed> embeds = new ArrayList<>();
         var builder = new WebhookEmbedBuilder()
           .setTitle(new WebhookEmbed.EmbedTitle("Raid Finished", ""));
@@ -87,7 +90,7 @@ public class RaidEvents {
       try {
         var raid = raidPreStarted.getRaid();
         HiperMessage message = CobbleRaids.language.getMessagePreStartRaid();
-        message.sendMessage(null, raid.replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
+        message.sendMessage((UUID) null, raid.replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
         var webHook = CobbleRaids.config.getWebhook();
         if (!webHook.isENABLED()) return;
         var client = getWebhookClient(webHook);
@@ -118,7 +121,7 @@ public class RaidEvents {
       try {
         var raid = raidPostStarted.getRaid();
         HiperMessage message = CobbleRaids.language.getMessageStartRaid();
-        message.sendMessage(null, raid.replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
+        message.sendMessage((UUID) null, raid.replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
         var webHook = CobbleRaids.config.getWebhook();
         if (!webHook.isENABLED()) return;
         var client = getWebhookClient(webHook);
@@ -150,7 +153,7 @@ public class RaidEvents {
       try {
         var raid = raidNewPhase.getRaid();
         HiperMessage message = CobbleRaids.language.getMessageNewPhaseRaid();
-        message.sendMessage(null, raid.replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
+        message.sendMessage((UUID) null, raid.replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
         var webHook = CobbleRaids.config.getWebhook();
         if (!webHook.isENABLED()) return;
         var client = getWebhookClient(webHook);
@@ -173,7 +176,8 @@ public class RaidEvents {
     });
   }
 
-  @Nullable private static WebhookClient getWebhookClient(WebHookData webHook) {
+  @Nullable
+  private static WebhookClient getWebhookClient(WebHookData webHook) {
     if (webHook.getURL_WEBHOOK() == null || webHook.getURL_WEBHOOK().isEmpty()) return null;
     return WebHookData.webhooks.computeIfAbsent(
       CobbleRaids.MOD_ID,

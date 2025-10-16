@@ -16,15 +16,21 @@ import java.util.concurrent.ConcurrentHashMap;
 public class CaptureSessionManager {
   // UUID Battle - CaptureSessionData
   private Map<UUID, CaptureSessionData> activeSessions = new ConcurrentHashMap<>();
+  // UUID Player - CaptureSessionData
+  private Map<UUID, CaptureSessionData> playerSessions = new ConcurrentHashMap<>();
 
   public void startSession(ServerPlayerEntity player, Raid raid) {
     var session = new CaptureSessionData(raid, player);
     activeSessions.put(session.getBattleUUID(), session);
+    playerSessions.put(player.getUuid(), session);
   }
 
   public CaptureSessionData finishSession(UUID battleUUID) {
     var session = activeSessions.remove(battleUUID);
-    if (session != null) session.finishSession();
+    if (session != null) {
+      playerSessions.remove(session.getPlayer().getUuid());
+      session.finishSession();
+    }
     return session;
   }
 
@@ -35,14 +41,18 @@ public class CaptureSessionManager {
   }
 
   public void finishSessionPlayer(UUID uuid) {
-    var session = activeSessions.values().stream().filter(s -> s.getPlayer().getUuid().equals(uuid)).findFirst();
-    session.ifPresent(s -> {
-      activeSessions.remove(s.getBattleUUID());
-      s.finishSession();
-    });
+    var session = playerSessions.remove(uuid);
+    if (session != null) {
+      activeSessions.remove(session.getBattleUUID());
+      session.finishSession();
+    }
   }
 
   public void removeSession(UUID battleUUID) {
     activeSessions.remove(battleUUID);
+  }
+
+  public CaptureSessionData getSessionByPlayer(UUID uuid) {
+    return playerSessions.get(uuid);
   }
 }

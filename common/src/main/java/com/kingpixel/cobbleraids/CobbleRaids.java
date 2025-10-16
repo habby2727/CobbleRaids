@@ -15,11 +15,15 @@ import com.kingpixel.cobbleraids.manager.CaptureSessionManager;
 import com.kingpixel.cobbleraids.manager.RaidHistory;
 import com.kingpixel.cobbleraids.manager.RaidManager;
 import com.kingpixel.cobbleraids.manager.RewardsManager;
+import com.kingpixel.cobbleraids.models.RaidBall;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.PlayerEvent;
+import net.fabricmc.fabric.api.event.player.UseItemCallback;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.TypedActionResult;
 
 import java.util.concurrent.*;
 
@@ -187,13 +191,14 @@ public class CobbleRaids {
 
     LifecycleEvent.SERVER_LEVEL_LOAD.register(level -> server = level.getServer());
 
-    PlayerEvent.PLAYER_JOIN.register((player) -> {
-      CompletableFuture.runAsync(() -> DataBaseFactory.INSTANCE.findUserByPlayer(player), COBBLE_RAID_EXECUTOR)
-        .exceptionally(e -> {
-          e.printStackTrace();
-          return null;
-        });
-    });
+    PlayerEvent.PLAYER_JOIN.register((player) -> CompletableFuture.runAsync(() -> {
+        DataBaseFactory.INSTANCE.findUserByPlayer(player);
+        RaidBall.removeRaidBalls(player);
+      }, COBBLE_RAID_EXECUTOR)
+      .exceptionally(e -> {
+        e.printStackTrace();
+        return null;
+      }));
 
     PlayerEvent.PLAYER_QUIT.register((player) -> {
       var fightData = raidManager.getFightingPlayer(player.getUuid());
@@ -209,6 +214,17 @@ public class CobbleRaids {
         });
       raidManager.stopRaidPlayer(player);
       captureSessionManager.finishSessionPlayer(player.getUuid());
+    });
+
+    UseItemCallback.EVENT.register((playerEntity, world, hand) -> {
+      ItemStack stack = playerEntity.getStackInHand(hand);
+      if (!stack.isEmpty() && RaidBall.isRaidBall(stack)) {
+        var captureSession = captureSessionManager.getSessionByPlayer(playerEntity.getUuid());
+        return captureSession == null ?
+          TypedActionResult.fail(stack) :
+          TypedActionResult.success(stack);
+      }
+      return TypedActionResult.success(stack);
     });
 
     RaidEvents.register();
