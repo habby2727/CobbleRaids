@@ -20,10 +20,7 @@ import com.kingpixel.cobbleutils.CobbleUtils;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.PlayerEvent;
-import net.fabricmc.fabric.api.event.player.UseItemCallback;
-import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.util.TypedActionResult;
 
 import java.util.concurrent.*;
 
@@ -214,17 +211,6 @@ public class CobbleRaids {
         });
       raidManager.stopRaidPlayer(player);
       captureSessionManager.finishSessionPlayer(player.getUuid());
-    });
-
-    UseItemCallback.EVENT.register((playerEntity, world, hand) -> {
-      ItemStack stack = playerEntity.getStackInHand(hand);
-      if (!stack.isEmpty() && RaidBall.isRaidBall(stack)) {
-        var captureSession = captureSessionManager.getSessionByPlayer(playerEntity.getUuid());
-        return captureSession == null ?
-          TypedActionResult.fail(stack) :
-          TypedActionResult.success(stack);
-      }
-      return TypedActionResult.success(stack);
     });
 
     RaidEvents.register();

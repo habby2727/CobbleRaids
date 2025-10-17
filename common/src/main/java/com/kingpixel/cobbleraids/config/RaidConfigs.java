@@ -33,6 +33,7 @@ public class RaidConfigs {
       try {
         var raid = Utils.newGson().fromJson(Utils.readFileSync(file), RaidData.class);
         String id = file.getName().replace(".json", "");
+        raid.setId(id);
         raids.put(id, raid);
         CategoryRaid category = raid.getCategoryRaid();
         if (category == null) {

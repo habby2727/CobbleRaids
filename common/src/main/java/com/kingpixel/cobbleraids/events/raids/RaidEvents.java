@@ -37,48 +37,53 @@ public class RaidEvents {
     RAID_FINISHED.subscribe(raidFinished -> {
       try {
         var raid = raidFinished.getRaid();
-        HiperMessage message = CobbleRaids.language.getMessageEndRaid();
-        message.sendMessage((UUID) null, raid.replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
-        var webHook = CobbleRaids.config.getWebhook();
-        AtomicReference<StringBuilder> desc =
-          new AtomicReference<>(new StringBuilder(CobbleRaids.language.getLeaderBoardTitle()));
-        AtomicReference<Integer> amount = new AtomicReference<>(0);
-        raid.getDamageMap().entrySet().stream()
-          .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
-          .forEach(entry -> {
-            var uuid = entry.getKey();
-            var userCache = CobbleRaids.server.getUserCache();
-            if (userCache == null) return;
-            var player = userCache.getByUuid(uuid);
-            if (player.isEmpty()) return;
-            amount.getAndSet(amount.get() + 1);
-            var name = player.get().getName();
-            desc.get().append(CobbleRaids.language.getLeaderBoardLine()
-              .replace("%position%", amount.get().toString())
-              .replace("%player%", name)
-              .replace("%damage%", entry.getValue().toString()));
-          });
-        desc.get().append(CobbleRaids.language.getLeaderBoardFooter());
-        
-        String finalDesc = desc.get().toString();
-        finalDesc = PokemonUtils.replace(finalDesc, raid.getPokemon());
-        HiperMessage hiperMessage = new HiperMessage("cb:" + finalDesc, MessageType.CHAT_BROADCAST);
-        hiperMessage.sendMessage((UUID) null, hiperMessage.getRawMessage(), CobbleRaids.language.getPrefix(), false);
-        if (!webHook.isENABLED()) return;
-        var client = getWebhookClient(webHook);
-        if (client == null) return;
-        List<WebhookEmbed> embeds = new ArrayList<>();
-        var builder = new WebhookEmbedBuilder()
-          .setTitle(new WebhookEmbed.EmbedTitle("Raid Finished", ""));
+        if (raidFinished.isKilled()) {
+          HiperMessage message = CobbleRaids.language.getMessageEndRaidKilled();
+          message.sendMessage((UUID) null, raid.replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
+          var webHook = CobbleRaids.config.getWebhook();
+          AtomicReference<StringBuilder> desc =
+            new AtomicReference<>(new StringBuilder(CobbleRaids.language.getLeaderBoardTitle()));
+          AtomicReference<Integer> amount = new AtomicReference<>(0);
+          raid.getDamageMap().entrySet().stream()
+            .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
+            .forEach(entry -> {
+              var uuid = entry.getKey();
+              var userCache = CobbleRaids.server.getUserCache();
+              if (userCache == null) return;
+              var player = userCache.getByUuid(uuid);
+              if (player.isEmpty()) return;
+              amount.getAndSet(amount.get() + 1);
+              var name = player.get().getName();
+              desc.get().append(CobbleRaids.language.getLeaderBoardLine()
+                .replace("%position%", amount.get().toString())
+                .replace("%player%", name)
+                .replace("%damage%", entry.getValue().toString()));
+            });
+          desc.get().append(CobbleRaids.language.getLeaderBoardFooter());
 
-        builder.setDescription(finalDesc);
-        builder.setTimestamp(Instant.now());
+          String finalDesc = desc.get().toString();
+          finalDesc = PokemonUtils.replace(finalDesc, raid.getPokemon());
+          HiperMessage leaderBoardMessage = new HiperMessage("cb:" + finalDesc, MessageType.CHAT_BROADCAST);
+          leaderBoardMessage.sendMessage((UUID) null, leaderBoardMessage.getRawMessage(), CobbleRaids.language.getPrefix(), false);
+          if (!webHook.isENABLED()) return;
+          var client = getWebhookClient(webHook);
+          if (client == null) return;
+          List<WebhookEmbed> embeds = new ArrayList<>();
+          var builder = new WebhookEmbedBuilder()
+            .setTitle(new WebhookEmbed.EmbedTitle("Raid Finished", ""));
 
-        embeds.add(builder.build());
-        WebhookMessage webhookMessage = WebhookMessage.embeds(
-          embeds
-        );
-        client.send(webhookMessage);
+          builder.setDescription(finalDesc);
+          builder.setTimestamp(Instant.now());
+
+          embeds.add(builder.build());
+          WebhookMessage webhookMessage = WebhookMessage.embeds(
+            embeds
+          );
+          client.send(webhookMessage);
+        } else {
+          HiperMessage message = CobbleRaids.language.getMessageEndRaidNotKilled();
+          message.sendMessage((UUID) null, raid.replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
+        }
       } catch (Exception e) {
         CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error sending raid finished webhook: " + e.getMessage());
         e.printStackTrace();

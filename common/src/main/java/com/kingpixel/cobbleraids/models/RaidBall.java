@@ -14,7 +14,7 @@ import net.minecraft.util.collection.DefaultedList;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class RaidBall extends ItemModel {
-  private String id;
+  private String id = "default";
   private double catchChance = 1.0;
 
   public RaidBall() {
@@ -29,6 +29,11 @@ public class RaidBall extends ItemModel {
         }
       }
     }
+  }
+
+  public void giveToPlayer(ServerPlayerEntity player) {
+    ItemStack itemStack = getItemStack();
+    player.getInventory().insertStack(itemStack);
   }
 
   public void giveToPlayer(ServerPlayerEntity player, int amount) {
@@ -52,18 +57,18 @@ public class RaidBall extends ItemModel {
 
   private void applyNbt(ItemStack itemStack) {
     var nbtComponent = itemStack.get(DataComponentTypes.CUSTOM_DATA);
-    var nbtCompound = nbtComponent != null ? nbtComponent.getNbt() : new NbtCompound();
-    if (nbtComponent == null) nbtComponent = NbtComponent.of(nbtCompound);
+    var nbtCompound = nbtComponent != null ? nbtComponent.copyNbt() : new NbtCompound();
     nbtCompound.putBoolean("raid_ball", true);
     nbtCompound.putString("raid_ball_id", id);
     nbtCompound.putDouble("raid_ball_chance", catchChance);
-    itemStack.set(DataComponentTypes.CUSTOM_DATA, nbtComponent);
+
+    itemStack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbtCompound));
   }
 
   public static boolean isRaidBall(ItemStack stack) {
     var nbtComponent = stack.get(DataComponentTypes.CUSTOM_DATA);
     if (nbtComponent == null) return false;
     var nbt = nbtComponent.getNbt();
-    return nbt != null && nbt.getBoolean("raid_ball");
+    return nbt != null && nbt.contains("raid_ball");
   }
 }
