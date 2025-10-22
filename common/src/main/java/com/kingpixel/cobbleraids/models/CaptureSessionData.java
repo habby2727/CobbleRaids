@@ -105,7 +105,6 @@ public class CaptureSessionData {
         this.battleUUID = pokemonBattle.getBattleId();
         CobbleRaids.captureSessionManager.getActiveSessions().put(this.battleUUID, this);
         this.started = true;
-        new RaidBall().giveToPlayer(player, 16);
         return Unit.INSTANCE;
       });
       startBattle.ifErrored(erroredBattleStart -> {

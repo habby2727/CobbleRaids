@@ -2,6 +2,7 @@ package com.kingpixel.cobbleraids.models.rewards;
 
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.Raid;
+import com.kingpixel.cobbleraids.models.RaidBall;
 import com.kingpixel.cobbleutils.Model.AdvancedItemChance;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
@@ -74,16 +75,24 @@ public class DamageReward {
     private boolean activeCaptureSession;
     private int chance;
     private AdvancedItemChance reward;
+    private List<RaidBall> raidBalls;
 
     public DamageRewardData() {
       this.activeCaptureSession = true;
       this.chance = 1;
       this.reward = new AdvancedItemChance();
+      this.raidBalls = new ArrayList<>();
+      this.raidBalls.add(new RaidBall());
     }
 
     public void giveRewards(ServerPlayerEntity player, Raid raid) {
       if (reward != null) {
         reward.giveRewards(player);
+      }
+      if (raidBalls != null && !raidBalls.isEmpty()) {
+        for (RaidBall raidBall : raidBalls) {
+          raidBall.giveToPlayer(player, 1);
+        }
       }
       startSessionCapture(player, raid);
     }
