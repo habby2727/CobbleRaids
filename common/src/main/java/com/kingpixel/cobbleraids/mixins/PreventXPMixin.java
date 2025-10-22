@@ -19,7 +19,7 @@ public abstract class PreventXPMixin {
   private double injectedExpGainLock(double term4, BattlePokemon battlePokemon, BattlePokemon opponentPokemon) {
     if (!CobbleRaids.config.isXpBlock()) return term4;
     var opponent = opponentPokemon.getOriginalPokemon();
-    if (!cobbleRaids$isRaidPokemon(opponent)) return 0;
+    if (cobbleRaids$isRaidPokemon(opponent) && CobbleRaids.config.isXpBlock()) return 0;
     return term4;
   }
 

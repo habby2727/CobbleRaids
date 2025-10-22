@@ -33,7 +33,8 @@ public class Lang {
   private HiperMessage messagePreStartRaid;
   private HiperMessage messageStartRaid;
   private HiperMessage messageNewPhaseRaid;
-  private HiperMessage messageEndRaid;
+  private HiperMessage messageEndRaidKilled;
+  private HiperMessage messageEndRaidNotKilled;
   private HiperMessage messageNotLuckyCapture;
   private HiperMessage messageStartCapture;
   private HiperMessage messageEndCapture;
@@ -71,8 +72,11 @@ public class Lang {
     messageNewPhaseRaid = new HiperMessage("titlesubtitle_broadcast: title:&e&lNew Phase! subtitle:&eThe raid boss has " +
       "changed to &6%pokemon%&e! sound:minecraft:block.note_block.pling volume:1.0 pitch:1.0",
       null);
-    messageEndRaid = new HiperMessage("titlesubtitle_broadcast: title:&6&lRaid Finished! subtitle:&eThe raid has ended. " +
+    messageEndRaidKilled = new HiperMessage("titlesubtitle_broadcast: title:&6&lRaid Finished! subtitle:&eThe raid has ended. " +
       "Thanks for playing! sound:minecraft:entity.player.levelup volume:1.0 pitch:1.0",
+      null);
+    messageEndRaidNotKilled = new HiperMessage("titlesubtitle_broadcast: title:&c&lRaid Ended! subtitle:&eThe raid has ended " +
+      "without defeating the boss. sound:minecraft:entity.villager.no volume:1.0 pitch:1.0",
       null);
     messageStartCapture = new HiperMessage("titlesubtitle: title:&a&lCapture Started! subtitle:&eYou can now try to " +
       "capture &6%pokemon%&e! sound:minecraft:block.note_block.chime volume:1.0 pitch:1.0",

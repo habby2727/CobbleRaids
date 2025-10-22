@@ -14,6 +14,7 @@ import com.kingpixel.cobbleraids.events.raids.models.RaidFinished;
 import com.kingpixel.cobbleraids.events.raids.models.RaidNewPhase;
 import com.kingpixel.cobbleraids.events.raids.models.RaidPostStarted;
 import com.kingpixel.cobbleraids.events.raids.models.RaidPreStarted;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.DurationValue;
 import com.kingpixel.cobbleutils.util.AdventureTranslator;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
@@ -32,6 +33,7 @@ import net.minecraft.scoreboard.Team;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkStatus;
@@ -77,7 +79,8 @@ public class Raid {
     this.categoryRaid = raidData.getCategoryRaid();
     this.health = categoryRaid.getHealth();
     this.maxHealth = categoryRaid.getHealth();
-    this.pokemon = PokemonProperties.Companion.parse(raidData.getActualPhase(this)).create();
+    actualPhase = raidData.getActualPhase(this);
+    this.pokemon = PokemonProperties.Companion.parse(actualPhase).create();
   }
 
   // Start Raid
@@ -141,7 +144,7 @@ public class Raid {
           )
         )
       );
-      bossBar.setPercent(Math.max(0f, Math.min(1f, (float) health / maxHealth)));
+      bossBar.setPercent(MathHelper.clamp((float) health / maxHealth, 0f, 1f));
       glowing();
     }
   }
@@ -151,18 +154,30 @@ public class Raid {
   private void refreshRaidEntity() {
     try {
       var phase = raidData.getActualPhase(this);
-      if (phase.equals(actualPhase)) return;
-
+      if (phase.equals(actualPhase)) {
+        if (CobbleRaids.config.isDebug()) {
+          CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Raid Entity phase unchanged: " +
+            raidEntity.getPokemon().getDisplayName().getString() +
+            " Phase: " + actualPhase
+          );
+        }
+        return;
+      }
+      if (CobbleRaids.config.isDebug()) {
+        CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Raid Entity phase changed: " +
+          raidEntity.getPokemon().getDisplayName().getString() +
+          " From Phase: " + actualPhase + " To Phase: " + phase
+        );
+      }
       actualPhase = phase;
-      Pokemon p = PokemonProperties.Companion.parse(actualPhase).create();
+      Pokemon p = PokemonProperties.Companion.parse(phase).create();
       pokemon = p;
       Pokemon pR = raidEntity.getPokemon();
-      raidEntity.setPokemon(p.clone(true, DynamicRegistryManager.EMPTY));
-/*      pR.setSpecies(p.getSpecies());
+      pR.setSpecies(p.getSpecies());
       pR.setForm(p.getForm());
       pR.setGender(p.getGender());
       pR.setShiny(p.getShiny());
-      pR.setForcedAspects(p.getAspects());*/
+      pR.setForcedAspects(p.getAspects());
       CobbleRaids.server.execute(() -> {
         raidEntity.getPokemon().updateAspects();
         glowing();
@@ -206,14 +221,14 @@ public class Raid {
 
       if (leader == null) return;
 
-      PokemonEntity raidEntity = generateRaidEntity(true);
+      PokemonEntity fightEntity = generateRaidEntity(true);
 
       if (!CobbleRaids.config.isDebug()) {
-        raidEntity.addStatusEffect(new StatusEffectInstance(StatusEffects.INVISIBILITY, Integer.MAX_VALUE, 255, false,
+        fightEntity.addStatusEffect(new StatusEffectInstance(StatusEffects.INVISIBILITY, Integer.MAX_VALUE, 255, false,
           false));
       }
 
-      raidEntity.getPokemon().getPersistentData().putString(RAID_CATEGORY_NBT_KEY, categoryRaid.getId());
+      fightEntity.getPokemon().getPersistentData().putString(RAID_CATEGORY_NBT_KEY, categoryRaid.getId());
 
       Pokemon finalLeader = leader;
 
@@ -228,7 +243,7 @@ public class Raid {
       }
       var startBattle = BattleBuilder.INSTANCE.pve(
         player,
-        raidEntity,
+        fightEntity,
         finalLeader.getUuid(),
         BattleFormat.Companion.getGEN_9_SINGLES(),
         false,
@@ -245,14 +260,14 @@ public class Raid {
               battleId,
               this,
               player,
-              raidEntity
+              fightEntity
             )
           );
           PlayerUtils.sendMessage(
             player,
             PokemonUtils.replace(
               CobbleRaids.language.getMessageStartBattle(),
-              raidEntity.getPokemon()
+              fightEntity.getPokemon()
             ),
             CobbleRaids.language.getPrefix(),
             TypeMessage.CHAT
@@ -270,7 +285,7 @@ public class Raid {
           CobbleRaids.language.getPrefix(),
           TypeMessage.CHAT
         );
-        CobbleRaids.server.execute(raidEntity::discard);
+        CobbleRaids.server.execute(fightEntity::discard);
         return Unit.INSTANCE;
       });
     } catch (Exception e) {
@@ -349,6 +364,12 @@ public class Raid {
 
     // Post-creation logic if not a fight
     if (!fight) {
+      if (CobbleRaids.config.isDebug()) {
+        CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Raid Entity spawned: " +
+          pokemonEntity.getPokemon().getDisplayName().getString() +
+          " at " + pokemonEntity.getPos().toString()
+        );
+      }
       this.raidEntity = pokemonEntity;
       glowing();
       RaidEvents.RAID_STARTED_POST.emit(new RaidPostStarted(this));
@@ -470,10 +491,22 @@ public class Raid {
       player,
       raidData.getActualPhasePokemonItem(this),
       confirm -> {
-        if (PlayerUtils.isBattle(player)) return;
-        PlayerUtils.isCooldownMenu(player, "raid_start_battle", DurationValue.parse("1s"));
-        startBattle(player);
-        UIManager.closeUI(player);
+        try {
+          if (PlayerUtils.isBattle(player)) {
+            PlayerUtils.sendMessage(
+              player,
+              "§c[§6CobbleRaids§c] §cYou are already in a battle.§r",
+              CobbleRaids.language.getPrefix(),
+              TypeMessage.CHAT
+            );
+            return;
+          }
+          PlayerUtils.isCooldownMenu(player, "raid_start_battle", DurationValue.parse("1s"));
+          startBattle(player);
+          UIManager.closeUI(player);
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
       },
       cancel -> {
         PlayerUtils.sendMessage(

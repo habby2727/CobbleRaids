@@ -3,6 +3,7 @@ package com.kingpixel.cobbleraids.config;
 import com.google.gson.Gson;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.AdvancedBlacklist;
+import com.kingpixel.cobbleraids.models.RaidBall;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.DataBaseConfig;
 import com.kingpixel.cobbleutils.Model.DataBaseType;
@@ -27,6 +28,8 @@ public class Config {
   private String lang;
   private boolean healthParty;
   private boolean xpBlock;
+  private boolean raidBallEnabled = true;
+  private RaidBall raidBall = new RaidBall();
   private DurationValue cooldownBetweenRaids = DurationValue.parse("30m");
   private DurationValue startSendActionBar = DurationValue.parse("15m");
   private Set<String> commands;
@@ -40,6 +43,8 @@ public class Config {
     lang = "en";
     healthParty = false;
     xpBlock = true;
+    raidBall.setDisplayname("&6&lRaid Ball");
+
     commands = Set.of("raids", "cobbleraids");
     if (database == null) {
       database = new DataBaseConfig();

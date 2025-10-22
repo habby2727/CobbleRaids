@@ -6,9 +6,9 @@
   "mixins": [
     "InteractRaidMixin",
     "LivingEntityPreventDropMixin",
-    "PokeBallMixin",
     "PokemonPreventDropMixin",
-    "PreventXPMixin"
+    "PreventXPMixin",
+    "RaidBallMixin"
   ],
   "injectors": {
     "defaultRequire": 1

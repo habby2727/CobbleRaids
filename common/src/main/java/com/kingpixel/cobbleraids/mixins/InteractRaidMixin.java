@@ -69,6 +69,7 @@ public abstract class InteractRaidMixin {
       if (cobbleRaids$isRaidPokemon() || persistentData.contains(Raid.RAID_NBT_KEY)) cir.cancel();
     } catch (Exception e) {
       CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error in InteractRaidMixin onDamage: " + e.getMessage());
+      e.printStackTrace();
     }
   }
 

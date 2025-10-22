@@ -61,9 +61,7 @@ public class RaidData {
 
     // Buscar la primera fase cuyo umbral sea >= vida actual
     for (Map.Entry<Double, String> entry : pokemonPhases.entrySet()) {
-      if (healthPercentage <= entry.getKey()) {
-        return entry.getValue();
-      }
+      if (healthPercentage <= entry.getKey()) return entry.getValue();
     }
 
     // Si no entra en ningún rango, devolvemos la forma base

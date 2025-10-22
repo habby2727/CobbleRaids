@@ -2,10 +2,13 @@ package com.kingpixel.cobbleraids.models;
 
 import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
+import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
+import com.kingpixel.cobblesize.Model.SizeChance;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.UUID;
@@ -30,10 +33,18 @@ public class FightData {
   public void stop(boolean stopBattle) {
     CobbleRaids.server.execute(() -> {
       try {
-        CobbleRaids.raidManager.removeFightingData(battleUUID);
+        var fight = CobbleRaids.raidManager.removeFightingData(battleUUID);
         var battle = Cobblemon.INSTANCE.getBattleRegistry().getBattle(battleUUID);
         if (battle != null && stopBattle) battle.stop();
         if (pokemonEntity != null) pokemonEntity.discard();
+        if (fight != null) {
+          if (FabricLoader.getInstance().isModLoaded("cobblesize")) {
+            var party = Cobblemon.INSTANCE.getStorage().getParty(player);
+            for (Pokemon p : party) {
+              SizeChance.solveSize(p);
+            }
+          }
+        }
       } catch (Exception e) {
         CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error stopping fight for player " + player.getName().getString() + " and raid " + raid.getRaidUUID() + ": " + e.getMessage());
         e.printStackTrace();
@@ -46,7 +57,7 @@ public class FightData {
 
     var world = pokemonEntity.getWorld();
     if (world == null || world.isClient) return;
-    
+
     // Posición base: el Pokémon principal de la FightData
     var basePos = pokemonEntity.getBlockPos();
 

@@ -73,13 +73,13 @@ public class DamageReward {
   @Data
   private static class DamageRewardData {
     private boolean activeCaptureSession;
-    private int chance;
+    private int sessionRate;
     private AdvancedItemChance reward;
     private List<RaidBall> raidBalls;
 
     public DamageRewardData() {
       this.activeCaptureSession = true;
-      this.chance = 1;
+      this.sessionRate = 1;
       this.reward = new AdvancedItemChance();
       this.raidBalls = new ArrayList<>();
       this.raidBalls.add(new RaidBall());
@@ -99,17 +99,17 @@ public class DamageReward {
 
     public void startSessionCapture(ServerPlayerEntity player, Raid raid) {
       // Lógica para iniciar la sesión de captura
-      boolean isOkey = Utils.getRandom().nextInt(chance) == 0;
+      boolean isOkey = Utils.getRandom().nextInt(sessionRate) == 0;
       if (isOkey && activeCaptureSession) {
         raid.getPlayersInitCaptureSession().add(player.getUuid());
-        // raid.getCaptureSessionManager().startSession(player, raid);
         CobbleRaids.captureSessionManager.startSession(
           player,
           raid
         );
       } else {
-        CobbleRaids.language.getMessageNotLuckyCapture().sendMessage(
-          player, CobbleRaids.language.getPrefix(), false
+        var message = CobbleRaids.language.getMessageNotLuckyCapture();
+        message.sendMessage(
+          player, raid.replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false
         );
       }
     }

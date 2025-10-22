@@ -49,9 +49,10 @@ public class RaidManager {
     fightingByPlayers.put(fightData.getPlayer().getUuid(), fightData);
   }
 
-  public void removeFightingData(UUID battleUUID) {
+  public FightData removeFightingData(UUID battleUUID) {
     var fight = fightingByBattleUUID.remove(battleUUID);
     if (fight != null) fightingByPlayers.remove(fight.getPlayer().getUuid());
+    return fight;
   }
 
   public @Nullable FightData getFightingData(UUID battleUUID) {
@@ -66,13 +67,13 @@ public class RaidManager {
   public void stopAllRaids() {
     for (Map.Entry<UUID, Raid> entry : activeRaids.entrySet()) {
       var raid = entry.getValue();
+      if (raid == null) continue;
       raid.finishRaid();
-      if (raid.getRaidEntity() == null) continue;
-      raid.getRaidEntity().discard();
     }
     activeRaids.clear();
     for (Map.Entry<UUID, FightData> entry : fightingByBattleUUID.entrySet()) {
       var fightData = entry.getValue();
+      if (fightData == null) continue;
       fightData.stop(true);
     }
   }
