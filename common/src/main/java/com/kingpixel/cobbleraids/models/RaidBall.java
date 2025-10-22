@@ -39,7 +39,7 @@ public class RaidBall extends ItemModel {
   }
 
   public void giveToPlayer(ServerPlayerEntity player, int amount) {
-    ItemStack stack = getItemStack(amount);
+    ItemStack stack = getItemStack(this.amount);
     player.getInventory().offerOrDrop(stack);
   }
 
@@ -58,6 +58,7 @@ public class RaidBall extends ItemModel {
   }
 
   private void applyNbt(ItemStack itemStack) {
+    itemStack.setCount(this.amount);
     var nbtComponent = itemStack.get(DataComponentTypes.CUSTOM_DATA);
     var nbtCompound = nbtComponent != null ? nbtComponent.copyNbt() : new NbtCompound();
     nbtCompound.putBoolean("raid_ball", true);
