@@ -37,6 +37,7 @@ public class CaptureSessionData {
   private RaidData raidData;
   private PokemonEntity pokemonEntity;
   private ServerPlayerEntity player;
+  private UUID playerUUID;
   private long startTime;
   private long endTime;
 
@@ -45,6 +46,7 @@ public class CaptureSessionData {
     this.battleUUID = UUID.randomUUID(); // Fake UUID, will be replaced when battle starts
     this.pokemonEntity = null;
     this.player = player;
+    this.playerUUID = player.getUuid();
     this.raidData = raid.getRaidData();
     this.startTime = System.currentTimeMillis() + raid.getCategoryRaid().getTimeBeforeStart().toMillis();
     this.endTime = raid.getCategoryRaid().getDurationCapture().toMillis() + startTime;

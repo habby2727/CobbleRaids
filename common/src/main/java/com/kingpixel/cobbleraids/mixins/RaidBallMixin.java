@@ -40,6 +40,8 @@ public abstract class RaidBallMixin {
         var message = CobbleRaids.language.getMessageOutCaptureSession();
         message.sendMessage(player.getUuid(), CobbleRaids.language.getPrefix(), false);
         cancel = true;
+      } else if (captureSession != null && !captureSession.isStarted()) {
+        cancel = true;
       }
       if (cancel) {
         cir.setReturnValue(TypedActionResult.fail(stack));
