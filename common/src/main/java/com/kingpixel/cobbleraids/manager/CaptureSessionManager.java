@@ -22,7 +22,7 @@ public class CaptureSessionManager {
   public void startSession(ServerPlayerEntity player, Raid raid) {
     var session = new CaptureSessionData(raid, player);
     activeSessions.put(session.getBattleUUID(), session);
-    playerSessions.put(player.getUuid(), session);
+    playerSessions.put(session.getPlayerUUID(), session);
   }
 
   public CaptureSessionData finishSession(UUID battleUUID) {
@@ -40,8 +40,8 @@ public class CaptureSessionManager {
     }
   }
 
-  public void finishSessionPlayer(UUID uuid) {
-    var session = playerSessions.remove(uuid);
+  public void finishSessionPlayer(UUID playerUUID) {
+    var session = playerSessions.remove(playerUUID);
     if (session != null) {
       activeSessions.remove(session.getBattleUUID());
       session.finishSession();
@@ -49,10 +49,13 @@ public class CaptureSessionManager {
   }
 
   public void removeSession(UUID battleUUID) {
-    activeSessions.remove(battleUUID);
+    var session = activeSessions.remove(battleUUID);
+    if (session != null) {
+      playerSessions.remove(session.getPlayerUUID());
+    }
   }
 
-  public CaptureSessionData getSessionByPlayer(UUID uuid) {
-    return playerSessions.get(uuid);
+  public CaptureSessionData getSessionByPlayer(UUID playerUUID) {
+    return playerSessions.get(playerUUID);
   }
 }

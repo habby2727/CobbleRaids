@@ -81,7 +81,6 @@ public class RaidManager {
   public void stopRaidPlayer(ServerPlayerEntity player) {
     var fight = fightingByPlayers.get(player.getUuid());
     if (fight != null) fight.stop(true);
-
   }
 
   public FightData getFightingPlayer(UUID playerUUID) {

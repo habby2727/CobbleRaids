@@ -66,7 +66,9 @@ public abstract class InteractRaidMixin {
       PokemonEntity self = (PokemonEntity) (Object) this;
       Pokemon pokemon = self.getPokemon();
       var persistentData = pokemon.getPersistentData();
-      if (cobbleRaids$isRaidPokemon() || persistentData.contains(Raid.RAID_NBT_KEY)) cir.cancel();
+      if (cobbleRaids$isRaidPokemon() || persistentData.contains(Raid.RAID_NBT_KEY)) {
+        cir.cancel();
+      }
     } catch (Exception e) {
       CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error in InteractRaidMixin onDamage: " + e.getMessage());
       e.printStackTrace();
@@ -99,6 +101,6 @@ public abstract class InteractRaidMixin {
       return false;
     }
 
-    return CobbleRaids.raidManager.getFightingData(battleId) != null;
+    return CobbleRaids.raidManager.getFightingData(battleId) != null || CobbleRaids.captureSessionManager.getActiveSessions().get(battleId) != null;
   }
 }

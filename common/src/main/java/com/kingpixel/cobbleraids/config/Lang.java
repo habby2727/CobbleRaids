@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.messages.HiperMessage;
+import com.kingpixel.cobbleutils.Model.messages.HiperMessageBuilder;
+import com.kingpixel.cobbleutils.Model.messages.MessageType;
 import com.kingpixel.cobbleutils.ui.ConfirmMenu;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Getter;
@@ -29,6 +31,8 @@ public class Lang {
   private String leaderBoardLine;
   private String leaderBoardFooter;
 
+  private HiperMessage messageOutCaptureSession;
+  private HiperMessage messageRaidBall;
   // Messages with HiperFormat
   private HiperMessage messagePreStartRaid;
   private HiperMessage messageStartRaid;
@@ -59,6 +63,17 @@ public class Lang {
     leaderBoardTitle = "&6&lRaid Leaderboard\n";
     leaderBoardLine = "&e%position%. &6%player% &e- &6%damage% damage\n";
     leaderBoardFooter = "&eThanks for playing!";
+
+    messageOutCaptureSession = HiperMessageBuilder.builder()
+      .setType(MessageType.TITLE_SUBTITLE)
+      .setTitle("&c&lYou are out of the capture session!")
+      .setSubtitle("&eYou cant use Raid Balls outside the capture session.")
+      .build();
+    messageRaidBall = HiperMessageBuilder.builder()
+      .setType(MessageType.TITLE_SUBTITLE)
+      .setTitle("&6&lRaid Ball")
+      .setSubtitle("&cYou need to use a Raid Ball to capture raid bosses!")
+      .build();
 
     messagePreStartRaid = new HiperMessage("titlesubtitle_broadcast: title:&6&lRaid Incoming! subtitle: &ePrepare for" +
       " battle against &6%pokemon%&e! sound:minecraft:entity.dragon_fireball.explode volume:1.0 pitch:1.0",

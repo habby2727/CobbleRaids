@@ -116,7 +116,11 @@ public class CobbleRaids {
         if (captureSessionManager == null) return;
         var sessions = captureSessionManager.getActiveSessions();
         if (sessions == null || sessions.isEmpty()) return;
-        sessions.forEach((key, value) -> value.checkTimeout());
+        var entries = sessions.entrySet();
+        for (var entry : entries) {
+          var session = entry.getValue();
+          session.checkTimeout();
+        }
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -198,8 +202,8 @@ public class CobbleRaids {
       }));
 
     PlayerEvent.PLAYER_QUIT.register((player) -> {
-      var fightData = raidManager.getFightingPlayer(player.getUuid());
-      if (fightData != null) fightData.stop(true);
+      captureSessionManager.finishSessionPlayer(player.getUuid());
+      raidManager.stopRaidPlayer(player);
       CompletableFuture.runAsync(() -> {
           var userinfo = DataBaseFactory.INSTANCE.findUserByPlayer(player);
           DataBaseFactory.INSTANCE.saveOrUpdateUserInfo(userinfo);
@@ -209,8 +213,6 @@ public class CobbleRaids {
           e.printStackTrace();
           return null;
         });
-      raidManager.stopRaidPlayer(player);
-      captureSessionManager.finishSessionPlayer(player.getUuid());
     });
 
     RaidEvents.register();

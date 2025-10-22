@@ -16,12 +16,14 @@ import net.minecraft.util.collection.DefaultedList;
 public class RaidBall extends ItemModel {
   private String id = "default";
   private double catchChance = 1.0;
+  private int amount = 16;
 
   public RaidBall() {
     super("cobblemon:poke_ball");
   }
 
   public static void removeRaidBalls(ServerPlayerEntity player) {
+    if (CobbleRaids.config.isMaintainRaidBalls()) return;
     for (DefaultedList<ItemStack> list : player.getInventory().combinedInventory) {
       for (ItemStack stack : list) {
         if (RaidBall.isRaidBall(stack)) {
@@ -43,7 +45,7 @@ public class RaidBall extends ItemModel {
 
   @Override
   public ItemStack getItemStack() {
-    ItemStack stack = super.getItemStack();
+    ItemStack stack = super.getItemStack(amount);
     applyNbt(stack);
     return stack;
   }

@@ -31,6 +31,7 @@ public class CategoryConfig {
         }
         String id = file.getName().replace(".json", "");
         category.setId(id);
+        category.checker();
         categorys.put(id, category);
         Utils.writeFileAsync(file, Utils.newGson().toJson(category));
       } catch (Exception e) {
@@ -41,6 +42,7 @@ public class CategoryConfig {
 
   private void createDefaultCategory() {
     var defaultCategory = new CategoryRaid("default");
+    defaultCategory.checker();
     categorys.put("default", defaultCategory);
     Utils.writeFileAsync(PATH_CATEGORIES, "default.json", Utils.newGson().toJson(defaultCategory));
   }

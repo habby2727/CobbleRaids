@@ -28,10 +28,11 @@ public class Config {
   private String lang;
   private boolean healthParty;
   private boolean xpBlock;
-  private boolean raidBallEnabled = true;
-  private RaidBall raidBall = new RaidBall();
-  private DurationValue cooldownBetweenRaids = DurationValue.parse("30m");
-  private DurationValue startSendActionBar = DurationValue.parse("15m");
+  private boolean raidBallEnabled;
+  private boolean maintainRaidBalls;
+  private RaidBall raidBall;
+  private DurationValue cooldownBetweenRaids;
+  private DurationValue startSendActionBar;
   private Set<String> commands;
   private DataBaseConfig database;
   private WebHookData webhook;
@@ -42,8 +43,13 @@ public class Config {
     debug = false;
     lang = "en";
     healthParty = false;
+    raidBallEnabled = true;
+    maintainRaidBalls = false;
     xpBlock = true;
+    raidBall = new RaidBall();
     raidBall.setDisplayname("&6&lRaid Ball");
+    cooldownBetweenRaids = DurationValue.parse("30m");
+    startSendActionBar = DurationValue.parse("15m");
 
     commands = Set.of("raids", "cobbleraids");
     if (database == null) {
@@ -63,13 +69,13 @@ public class Config {
         String data = gson.toJson(CobbleRaids.config);
         CompletableFuture<Boolean> futureWrite = Utils.writeFileAsync(CobbleRaids.PATH, "config.json",
           data);
-        if (!futureWrite.join()) {
+        if (Boolean.FALSE.equals(futureWrite.join())) {
           CobbleUtils.LOGGER.fatal(CobbleRaids.MOD_ID, "Could not write config.json file for " + CobbleRaids.MOD_NAME +
             ".");
         }
       });
 
-    if (!futureRead.join()) {
+    if (Boolean.FALSE.equals(futureRead.join())) {
       CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "No config.json file found for" + CobbleRaids.MOD_NAME + ". Attempting" +
         " to generate one.");
       Gson gson = Utils.newGson();
@@ -77,7 +83,7 @@ public class Config {
       CompletableFuture<Boolean> futureWrite = Utils.writeFileAsync(CobbleRaids.PATH, "config.json",
         data);
 
-      if (!futureWrite.join()) {
+      if (Boolean.FALSE.equals(futureWrite.join())) {
         CobbleUtils.LOGGER.fatal(CobbleRaids.MOD_ID, "Could not write config.json file for " + CobbleRaids.MOD_NAME + ".");
       }
     }

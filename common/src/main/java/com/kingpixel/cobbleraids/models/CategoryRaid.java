@@ -73,6 +73,14 @@ public class CategoryRaid {
     this.id = id;
   }
 
+  public void checker() {
+    if (size <= 0) size = 2;
+    if (health <= 0) health = 100;
+    if (overLevel <= 0) overLevel = 100;
+    if (minLevel < 1) minLevel = 1;
+    if (radio <= 0) radio = 5;
+  }
+
   public int getHealth() {
     if (health <= 0) return 100;
     return health;
@@ -158,11 +166,14 @@ public class CategoryRaid {
     private int x;
     private int y;
     private int z;
-    transient
-    private Vec3d vec3d;
+
+    private transient Vec3d vec3d;
 
     public Coords(int x, int y, int z) {
-      vec3d = new Vec3d(x, y, z);
+      this.x = x;
+      this.y = y;
+      this.z = z;
+      this.vec3d = new Vec3d(x, y, z);
     }
 
     public Vec3d getVec3d() {

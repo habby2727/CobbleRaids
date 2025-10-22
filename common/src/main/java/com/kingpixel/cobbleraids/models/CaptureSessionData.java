@@ -37,6 +37,7 @@ public class CaptureSessionData {
   private RaidData raidData;
   private PokemonEntity pokemonEntity;
   private ServerPlayerEntity player;
+  private UUID playerUUID;
   private long startTime;
   private long endTime;
 
@@ -45,6 +46,7 @@ public class CaptureSessionData {
     this.battleUUID = UUID.randomUUID(); // Fake UUID, will be replaced when battle starts
     this.pokemonEntity = null;
     this.player = player;
+    this.playerUUID = player.getUuid();
     this.raidData = raid.getRaidData();
     this.startTime = System.currentTimeMillis() + raid.getCategoryRaid().getTimeBeforeStart().toMillis();
     this.endTime = raid.getCategoryRaid().getDurationCapture().toMillis() + startTime;
@@ -52,76 +54,81 @@ public class CaptureSessionData {
 
 
   public synchronized void startSession() {
-    HiperMessage message = CobbleRaids.language.getMessageStartCapture();
-    message.sendMessage(player, PokemonUtils.replace(message.getRawMessage(), raidData.getCapturePokemonInstance()), CobbleRaids.language.getPrefix(), false);
-    CobbleRaids.captureSessionManager.removeSession(battleUUID);
-    Pokemon pokemon = PokemonProperties.Companion.parse(raidData.getCapturePokemon()).create();
-    CobbleRaids.server.execute(() -> {
-      pokemonEntity = pokemon.sendOut(
-        (ServerWorld) player.getWorld(),
-        player.getPos(),
-        null,
-        entity -> {
-          entity.getPokemon().setNickname(player.getName().copy());
-          entity.setCustomName(player.getName().copy());
+    try {
+      HiperMessage message = CobbleRaids.language.getMessageStartCapture();
+      message.sendMessage(player, PokemonUtils.replace(message.getRawMessage(), raidData.getCapturePokemonInstance()), CobbleRaids.language.getPrefix(), false);
+      CobbleRaids.captureSessionManager.removeSession(battleUUID);
+      Pokemon pokemon = PokemonProperties.Companion.parse(raidData.getCapturePokemon()).create();
+      CobbleRaids.server.execute(() -> {
+        pokemonEntity = pokemon.sendOut(
+          (ServerWorld) player.getWorld(),
+          player.getPos(),
+          null,
+          entity -> {
+            entity.getPokemon().setNickname(player.getName().copy());
+            entity.setCustomName(player.getName().copy());
+            return Unit.INSTANCE;
+          }
+        );
+        if (pokemonEntity == null) {
+          var msg = AdventureTranslator.toNative(
+            "&c[&4!&c] &cError spawning the raid Pokémon."
+            , CobbleRaids.language.getPrefix()
+          );
+          player.sendMessage(msg, false);
+          CobbleRaids.captureSessionManager.removeSession(battleUUID);
+          return;
+        }
+
+
+        var party = Cobblemon.INSTANCE.getStorage().getParty(player);
+        Pokemon leader = null;
+        for (Pokemon p : party) {
+          if (p != null && !p.isFainted()) {
+            leader = p;
+            break;
+          }
+        }
+        if (leader == null) return;
+
+        Pokemon finalLeader = leader;
+
+        var startBattle = BattleBuilder.INSTANCE.pve(
+          player,
+          pokemonEntity,
+          finalLeader.getUuid(),
+          BattleFormat.Companion.getGEN_9_SINGLES(),
+          false,
+          true,
+          Cobblemon.INSTANCE.getConfig().getDefaultFleeDistance() + 16,
+          party
+        );
+
+        startBattle.ifSuccessful(pokemonBattle -> {
+          this.battleUUID = pokemonBattle.getBattleId();
+          CobbleRaids.captureSessionManager.getActiveSessions().put(this.battleUUID, this);
+          CobbleRaids.captureSessionManager.getPlayerSessions().put(this.playerUUID, this);
+          this.started = true;
+          if (CobbleRaids.config.isRaidBallEnabled()) {
+            CobbleRaids.config.getRaidBall().giveToPlayer(player);
+          }
           return Unit.INSTANCE;
-        }
-      );
-      if (pokemonEntity == null) {
-        var msg = AdventureTranslator.toNative(
-          "&c[&4!&c] &cError spawning the raid Pokémon."
-          , CobbleRaids.language.getPrefix()
-        );
-        player.sendMessage(msg, false);
-        CobbleRaids.captureSessionManager.removeSession(battleUUID);
-        return;
-      }
+        });
+        startBattle.ifErrored(erroredBattleStart -> {
+          var msg = AdventureTranslator.toNative(
+            "&c[&4!&c] &cError starting the session."
+            , CobbleRaids.language.getPrefix()
+          );
+          player.sendMessage(msg, false);
+          CobbleRaids.captureSessionManager.finishSession(battleUUID);
+          return Unit.INSTANCE;
+        });
 
 
-      var party = Cobblemon.INSTANCE.getStorage().getParty(player);
-      Pokemon leader = null;
-      for (Pokemon p : party) {
-        if (p != null && !p.isFainted()) {
-          leader = p;
-          break;
-        }
-      }
-      if (leader == null) return;
-
-      Pokemon finalLeader = leader;
-
-      var startBattle = BattleBuilder.INSTANCE.pve(
-        player,
-        pokemonEntity,
-        finalLeader.getUuid(),
-        BattleFormat.Companion.getGEN_9_SINGLES(),
-        false,
-        true,
-        Cobblemon.INSTANCE.getConfig().getDefaultFleeDistance() + 16,
-        party
-      );
-
-      startBattle.ifSuccessful(pokemonBattle -> {
-        this.battleUUID = pokemonBattle.getBattleId();
-        CobbleRaids.captureSessionManager.getActiveSessions().put(this.battleUUID, this);
-        this.started = true;
-        if (CobbleRaids.config.isRaidBallEnabled()) {
-          CobbleRaids.config.getRaidBall().giveToPlayer(player);
-        }
-        return Unit.INSTANCE;
       });
-      startBattle.ifErrored(erroredBattleStart -> {
-        var msg = AdventureTranslator.toNative(
-          "&c[&4!&c] &cError starting the session."
-          , CobbleRaids.language.getPrefix()
-        );
-        player.sendMessage(msg, false);
-        CobbleRaids.captureSessionManager.finishSession(battleUUID);
-        return Unit.INSTANCE;
-      });
-
-
-    });
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   public void checkTimeout() {
