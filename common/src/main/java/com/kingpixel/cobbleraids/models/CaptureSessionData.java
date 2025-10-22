@@ -116,8 +116,6 @@ public class CaptureSessionData {
         CobbleRaids.captureSessionManager.finishSession(battleUUID);
         return Unit.INSTANCE;
       });
-
-
     });
   }
 

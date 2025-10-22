@@ -91,7 +91,7 @@ public class DamageReward {
       }
       if (raidBalls != null && !raidBalls.isEmpty()) {
         for (RaidBall raidBall : raidBalls) {
-          raidBall.giveToPlayer(player, 1);
+          raidBall.giveToPlayer(player);
         }
       }
       startSessionCapture(player, raid);
@@ -107,6 +107,7 @@ public class DamageReward {
           raid
         );
       } else {
+        RaidBall.removeRaidBalls(player);
         var message = CobbleRaids.language.getMessageNotLuckyCapture();
         message.sendMessage(
           player, raid.replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false

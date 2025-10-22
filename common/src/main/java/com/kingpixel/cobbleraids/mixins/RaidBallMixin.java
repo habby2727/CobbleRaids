@@ -26,7 +26,7 @@ public abstract class RaidBallMixin {
     ItemStack stack = playerEntity.getStackInHand(hand);
     if (captureSession == null) return;
     try {
-      if (!stack.isEmpty() && RaidBall.isRaidBall(stack)) {
+      if (captureSession.isStarted() && !stack.isEmpty() && RaidBall.isRaidBall(stack)) {
         return;
       }
     } catch (Exception e) {
