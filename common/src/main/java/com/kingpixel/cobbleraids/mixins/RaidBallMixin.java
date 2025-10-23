@@ -28,8 +28,8 @@ public abstract class RaidBallMixin {
       if (player == null) return;
       ItemStack stack = player.getStackInHand(hand);
       if (stack == null) return;
-      var captureSession = CobbleRaids.captureSessionManager.getSessionByPlayer(player.getUuid());
       if (stack.isEmpty()) return;
+      var captureSession = CobbleRaids.captureSessionManager.getSessionByPlayer(player.getUuid());
       boolean isRaidBall = RaidBall.isRaidBall(stack);
       boolean cancel = false;
       if (captureSession != null && !isRaidBall) {
