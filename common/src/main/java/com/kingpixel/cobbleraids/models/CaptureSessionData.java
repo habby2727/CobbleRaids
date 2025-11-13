@@ -54,11 +54,11 @@ public class CaptureSessionData {
 
 
   public synchronized void startSession() {
-    HiperMessage message = CobbleRaids.language.getMessageStartCapture();
-    message.sendMessage(player, PokemonUtils.replace(message.getRawMessage(), raidData.getCapturePokemonInstance()), CobbleRaids.language.getPrefix(), false);
-    CobbleRaids.captureSessionManager.removeSession(battleUUID);
-    Pokemon pokemon = PokemonProperties.Companion.parse(raidData.getCapturePokemon()).create();
-    CobbleRaids.server.execute(() -> {
+    CobbleRaids.server.executeSync(() -> {
+      HiperMessage message = CobbleRaids.language.getMessageStartCapture();
+      message.sendMessage(player, PokemonUtils.replace(message.getRawMessage(), raidData.getCapturePokemonInstance()), CobbleRaids.language.getPrefix(), false);
+      CobbleRaids.captureSessionManager.removeSession(battleUUID);
+      Pokemon pokemon = PokemonProperties.Companion.parse(raidData.getCapturePokemon()).create();
       pokemonEntity = pokemon.sendOut(
         (ServerWorld) player.getWorld(),
         player.getPos(),
@@ -99,7 +99,7 @@ public class CaptureSessionData {
         BattleFormat.Companion.getGEN_9_SINGLES(),
         false,
         true,
-        Cobblemon.INSTANCE.getConfig().getDefaultFleeDistance() + 16,
+        999,
         party
       );
 

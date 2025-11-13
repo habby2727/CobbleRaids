@@ -109,7 +109,7 @@ public class RaidEvents {
           " - Level: " + raid.getCategoryRaid().getOverLevel() + "\n" +
           " - MinLevel: " + raid.getCategoryRaid().getMinLevel() + "\n" +
           " - Health Increment: " + raid.getHealth() + "\n" +
-          " - Pokemon: " + raid.getPokemon().getDisplayName().getString() + "\n";
+          " - Pokemon: " + raid.getPokemon().getDisplayName(false).getString() + "\n";
         builder.setDescription(desc);
         embeds.add(builder.build());
         WebhookMessage webhookMessage = WebhookMessage.embeds(
@@ -140,7 +140,7 @@ public class RaidEvents {
           " - Level: " + raid.getCategoryRaid().getOverLevel() + "\n" +
           " - MinLevel: " + raid.getCategoryRaid().getMinLevel() + "\n" +
           " - Health Increment: " + raid.getHealth() + "\n" +
-          " - Pokemon: " + raid.getPokemon().getDisplayName().getString() + "\n";
+          " - Pokemon: " + raid.getPokemon().getDisplayName(false).getString() + "\n";
         builder.setDescription(desc);
         embeds.add(builder.build());
         WebhookMessage webhookMessage = WebhookMessage.embeds(
@@ -167,7 +167,7 @@ public class RaidEvents {
         var builder = new WebhookEmbedBuilder()
           .setTitle(new WebhookEmbed.EmbedTitle("Raid New Phase", ""));
         String desc = "A raid has entered a new phase!\n" +
-          " - New Phase: " + raid.getPokemon().getDisplayName().getString() + "\n";
+          " - New Phase: " + raid.getPokemon().getDisplayName(false).getString() + "\n";
         builder.setDescription(desc);
         embeds.add(builder.build());
         WebhookMessage webhookMessage = WebhookMessage.embeds(

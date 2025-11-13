@@ -157,7 +157,14 @@ public class CategoryRaid {
   public RaidData getRandomRaid() {
     var list = CobbleRaids.raidConfigs.getRaidsByCategory(id);
     if (list == null || list.isEmpty()) return null;
-    return list.get(Utils.getRandom().nextInt(list.size()));
+    var totalChance = list.stream().mapToDouble(RaidData::getChance).sum();
+    var cumulativeChance = 0.0;
+    var random = Utils.getRandom().nextDouble() * totalChance;
+    for (RaidData raid : list) {
+      cumulativeChance += raid.getChance();
+      if (random <= cumulativeChance) return raid;
+    }
+    return list.getFirst();
   }
 
 

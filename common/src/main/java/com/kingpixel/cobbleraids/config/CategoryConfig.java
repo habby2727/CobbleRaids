@@ -52,6 +52,17 @@ public class CategoryConfig {
   }
 
   public @Nullable CategoryRaid getRandomCategory() {
-    return categorys.values().stream().skip((int) (categorys.size() * Math.random())).findFirst().orElse(null);
+    var list = categorys.values().stream().filter(cat -> cat.getChance() > 0).toList();
+    var random = Utils.getRandom();
+    double totalChance = list.stream().mapToDouble(CategoryRaid::getChance).sum();
+    double randomChance = random.nextDouble() * totalChance;
+    double cumulativeChance = 0.0;
+    for (CategoryRaid category : list) {
+      cumulativeChance += category.getChance();
+      if (randomChance <= cumulativeChance) {
+        return category;
+      }
+    }
+    return null;
   }
 }

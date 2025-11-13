@@ -52,6 +52,9 @@ public class RaidData {
   }
 
 
+  private double lowestHealthPercentage = 100.0;
+  private String currentPhase;
+
   public String getActualPhase(Raid raid) {
     if (pokemonPhases.isEmpty()) return pokemon;
 
@@ -59,12 +62,17 @@ public class RaidData {
     double maxHealth = raid.getMaxHealth();
     double healthPercentage = (currentHealth / maxHealth) * 100.0;
 
-    // Buscar la primera fase cuyo umbral sea >= vida actual
-    for (Map.Entry<Double, String> entry : pokemonPhases.entrySet()) {
-      if (healthPercentage <= entry.getKey()) return entry.getValue();
+    if (healthPercentage < lowestHealthPercentage) {
+      lowestHealthPercentage = healthPercentage;
     }
 
-    // Si no entra en ningún rango, devolvemos la forma base
+    for (Map.Entry<Double, String> entry : pokemonPhases.entrySet()) {
+      if (lowestHealthPercentage <= entry.getKey()) {
+        currentPhase = entry.getValue();
+        return currentPhase;
+      }
+    }
+
     return pokemon;
   }
 

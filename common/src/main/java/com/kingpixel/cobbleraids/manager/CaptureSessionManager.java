@@ -7,7 +7,6 @@ import com.kingpixel.cobbleutils.CobbleUtils;
 import lombok.Data;
 import net.minecraft.server.network.ServerPlayerEntity;
 
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,9 +16,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @Data
 public class CaptureSessionManager {
   // UUID Battle - CaptureSessionData
-  private Map<UUID, CaptureSessionData> activeSessions = new ConcurrentHashMap<>();
+  private ConcurrentHashMap<UUID, CaptureSessionData> activeSessions = new ConcurrentHashMap<>();
   // UUID Player - CaptureSessionData
-  private Map<UUID, CaptureSessionData> playerSessions = new ConcurrentHashMap<>();
+  private ConcurrentHashMap<UUID, CaptureSessionData> playerSessions = new ConcurrentHashMap<>();
 
   public void startSession(ServerPlayerEntity player, Raid raid) {
     var session = new CaptureSessionData(raid, player);

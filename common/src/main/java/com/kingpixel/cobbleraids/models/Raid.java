@@ -157,7 +157,7 @@ public class Raid {
       if (phase.equals(actualPhase)) {
         if (CobbleRaids.config.isDebug()) {
           CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Raid Entity phase unchanged: " +
-            raidEntity.getPokemon().getDisplayName().getString() +
+            raidEntity.getPokemon().getDisplayName(false).getString() +
             " Phase: " + actualPhase
           );
         }
@@ -165,7 +165,7 @@ public class Raid {
       }
       if (CobbleRaids.config.isDebug()) {
         CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Raid Entity phase changed: " +
-          raidEntity.getPokemon().getDisplayName().getString() +
+          raidEntity.getPokemon().getDisplayName(false).getString() +
           " From Phase: " + actualPhase + " To Phase: " + phase
         );
       }
@@ -366,7 +366,7 @@ public class Raid {
     if (!fight) {
       if (CobbleRaids.config.isDebug()) {
         CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Raid Entity spawned: " +
-          pokemonEntity.getPokemon().getDisplayName().getString() +
+          pokemonEntity.getPokemon().getDisplayName(false).getString() +
           " at " + pokemonEntity.getPos().toString()
         );
       }

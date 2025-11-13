@@ -21,10 +21,10 @@ public class RaidManager {
   private boolean randomRaidOn;
   private UUID randomRaidUUID;
   // Map<raidUUID, Raid>
-  private final Map<UUID, Raid> activeRaids = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<UUID, Raid> activeRaids = new ConcurrentHashMap<>();
   // Map<BattleUUID, FightData>
-  private final Map<UUID, FightData> fightingByBattleUUID = new ConcurrentHashMap<>();
-  private final Map<UUID, FightData> fightingByPlayers = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<UUID, FightData> fightingByBattleUUID = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<UUID, FightData> fightingByPlayers = new ConcurrentHashMap<>();
 
   public Raid getRaid(UUID raidUUID) {
     return activeRaids.get(raidUUID);
