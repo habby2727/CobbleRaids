@@ -4,6 +4,7 @@ import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
 import com.cobblemon.mod.common.battles.BattleBuilder;
 import com.cobblemon.mod.common.battles.BattleFormat;
+import com.cobblemon.mod.common.battles.BattleRegistry;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
@@ -79,7 +80,6 @@ public class CaptureSessionData {
         return;
       }
 
-
       var party = Cobblemon.INSTANCE.getStorage().getParty(player);
       Pokemon leader = null;
       for (Pokemon p : party) {
@@ -132,7 +132,7 @@ public class CaptureSessionData {
       );
       player.sendMessage(msg, true);
     } else if (!started) {
-      boolean isInBattle = Cobblemon.INSTANCE.getBattleRegistry().getBattleByParticipatingPlayer(player) != null;
+      boolean isInBattle = BattleRegistry.getBattleByParticipatingPlayer(player) != null;
       if (isInBattle) {
         startTime += TimeUnit.SECONDS.toMillis(15);
       } else {
@@ -157,7 +157,7 @@ public class CaptureSessionData {
       HiperMessage message = CobbleRaids.language.getMessageEndCapture();
       message.sendMessage(player, PokemonUtils.replace(message.getRawMessage(), raidData.getCapturePokemonInstance()), CobbleRaids.language.getPrefix(), false);
       CobbleRaids.server.execute(() -> {
-        var battle = Cobblemon.INSTANCE.getBattleRegistry().getBattle(battleUUID);
+        var battle = BattleRegistry.getBattle(battleUUID);
         if (battle != null) battle.stop();
         if (pokemonEntity != null) pokemonEntity.discard();
         RaidBall.removeRaidBalls(player);

@@ -7,7 +7,10 @@ import com.kingpixel.cobbleraids.CobbleRaids;
 import lombok.Data;
 import net.minecraft.item.ItemStack;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 
 /**
  * @author Carlos Varas Alonso - 13/09/2025 2:28
@@ -21,8 +24,6 @@ public class RaidData {
   transient
   private Pokemon capturePokemonInstance;
   private final String pokemon;
-  private final NavigableMap<Double, String> pokemonPhases = new TreeMap<>(Comparator.reverseOrder());
-  // TODO: States raid: Shield, Health regen, Weather, Terrain, Status... <Range health percentage, State>
 
   public RaidData() {
     this.id = "default";
@@ -51,7 +52,7 @@ public class RaidData {
     return CobbleRaids.categorys.getCategory(category);
   }
 
-
+  private final NavigableMap<Double, String> pokemonPhases = new TreeMap<>();
   private double lowestHealthPercentage = 100.0;
   private String currentPhase;
 
@@ -62,18 +63,18 @@ public class RaidData {
     double maxHealth = raid.getMaxHealth();
     double healthPercentage = (currentHealth / maxHealth) * 100.0;
 
-    if (healthPercentage < lowestHealthPercentage) {
+    if (healthPercentage < lowestHealthPercentage)
       lowestHealthPercentage = healthPercentage;
-    }
+
+    String selectedPhase = null;
 
     for (Map.Entry<Double, String> entry : pokemonPhases.entrySet()) {
       if (lowestHealthPercentage <= entry.getKey()) {
-        currentPhase = entry.getValue();
-        return currentPhase;
+        selectedPhase = entry.getValue();
       }
     }
 
-    return pokemon;
+    return selectedPhase != null ? selectedPhase : pokemon;
   }
 
 

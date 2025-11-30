@@ -173,6 +173,8 @@ public class CategoryRaid {
     private int x;
     private int y;
     private int z;
+    private int yaw;
+    private int pitch;
 
     private transient Vec3d vec3d;
 
@@ -180,6 +182,8 @@ public class CategoryRaid {
       this.x = x;
       this.y = y;
       this.z = z;
+      this.yaw = 0;
+      this.pitch = 0;
       this.vec3d = new Vec3d(x, y, z);
     }
 

@@ -1,6 +1,7 @@
 package com.kingpixel.cobbleraids.models;
 
 import com.cobblemon.mod.common.Cobblemon;
+import com.cobblemon.mod.common.battles.BattleRegistry;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
@@ -34,7 +35,7 @@ public class FightData {
     CobbleRaids.server.execute(() -> {
       try {
         var fight = CobbleRaids.raidManager.removeFightingData(battleUUID);
-        var battle = Cobblemon.INSTANCE.getBattleRegistry().getBattle(battleUUID);
+        var battle = BattleRegistry.getBattle(battleUUID);
         if (battle != null && stopBattle) battle.stop();
         if (pokemonEntity != null) pokemonEntity.discard();
         if (fight != null) {

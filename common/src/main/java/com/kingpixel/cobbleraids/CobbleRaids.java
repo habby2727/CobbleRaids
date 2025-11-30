@@ -1,6 +1,7 @@
 package com.kingpixel.cobbleraids;
 
 import com.cobblemon.mod.common.Cobblemon;
+import com.cobblemon.mod.common.battles.BattleRegistry;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.kingpixel.cobbleraids.command.CommandTree;
 import com.kingpixel.cobbleraids.config.CategoryConfig;
@@ -152,7 +153,7 @@ public class CobbleRaids {
           fightData.stop(true);
           continue;
         }
-        var battle = Cobblemon.INSTANCE.getBattleRegistry().getBattleByParticipatingPlayer(player);
+        var battle = BattleRegistry.getBattleByParticipatingPlayer(player);
         if (battle == null) fightData.stop(true);
       }
     }, 0, 10, TimeUnit.SECONDS);

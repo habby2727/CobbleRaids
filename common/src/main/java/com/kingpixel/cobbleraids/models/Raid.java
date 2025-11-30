@@ -2,9 +2,11 @@ package com.kingpixel.cobbleraids.models;
 
 import ca.landonjw.gooeylibs2.api.UIManager;
 import com.cobblemon.mod.common.Cobblemon;
+import com.cobblemon.mod.common.api.drop.DropTable;
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
 import com.cobblemon.mod.common.battles.BattleBuilder;
 import com.cobblemon.mod.common.battles.BattleFormat;
+import com.cobblemon.mod.common.battles.BattleRegistry;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
@@ -223,6 +225,7 @@ public class Raid {
 
       PokemonEntity fightEntity = generateRaidEntity(true);
 
+      fightEntity.setDrops(new DropTable());
       if (!CobbleRaids.config.isDebug()) {
         fightEntity.addStatusEffect(new StatusEffectInstance(StatusEffects.INVISIBILITY, Integer.MAX_VALUE, 255, false,
           false));
@@ -235,7 +238,7 @@ public class Raid {
       var fightData = CobbleRaids.raidManager.getFightingPlayer(player.getUuid());
       if (fightData != null) fightData.stop(true);
 
-      var battle = Cobblemon.INSTANCE.getBattleRegistry().getBattleByParticipatingPlayer(player);
+      var battle = BattleRegistry.getBattleByParticipatingPlayer(player);
       if (battle != null) battle.stop();
       if (!damageMap.containsKey(player.getUuid())) {
         userInfo.removeTicket(categoryRaid);
@@ -352,6 +355,8 @@ public class Raid {
       }
     );
     if (pokemonEntity != null) {
+      pokemonEntity.setYaw(coords.getYaw());
+      pokemonEntity.setPitch(coords.getPitch());
       pokemonEntity.setInvulnerable(true);
       pokemonEntity.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, Integer.MAX_VALUE, 255, false,
         CobbleRaids.config.isDebug()));
@@ -407,7 +412,6 @@ public class Raid {
   }
 
   public void updateHealth(FightData fightData, int damage) {
-
     ServerPlayerEntity player = fightData.getPlayer();
     damageMap.computeIfPresent(player.getUuid(), (k, damageFromMap) -> damageFromMap + damage);
     removeDamage(damage);
