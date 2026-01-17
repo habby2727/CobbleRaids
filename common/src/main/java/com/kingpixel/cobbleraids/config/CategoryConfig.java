@@ -2,6 +2,7 @@ package com.kingpixel.cobbleraids.config;
 
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.CategoryRaid;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +37,7 @@ public class CategoryConfig {
         Utils.writeFileAsync(file, Utils.newGson().toJson(category));
       } catch (Exception e) {
         e.printStackTrace();
+        CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Could not load category file: " + file.getAbsolutePath() + ". Skipping...");
       }
     }
   }

@@ -45,6 +45,7 @@ public class RaidConfigs {
         Utils.writeFileAsync(file, Utils.newGson().toJson(raid));
       } catch (Exception e) {
         e.printStackTrace();
+        CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Could not load raid file: " + file.getAbsolutePath() + ". Skipping...");
       }
     }
   }
