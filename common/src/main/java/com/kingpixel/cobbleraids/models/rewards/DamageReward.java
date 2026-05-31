@@ -3,8 +3,8 @@ package com.kingpixel.cobbleraids.models.rewards;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.Raid;
 import com.kingpixel.cobbleraids.models.RaidBall;
+import com.kingpixel.cobbleraids.util.ModRandom;
 import com.kingpixel.cobbleutils.Model.AdvancedItemChance;
-import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import net.minecraft.server.network.ServerPlayerEntity;
 
@@ -103,7 +103,7 @@ public class DamageReward {
 
     public void startSessionCapture(ServerPlayerEntity player, Raid raid) {
       // Lógica para iniciar la sesión de captura
-      boolean isOkey = Utils.getRandom().nextInt(sessionRate) == 0;
+      boolean isOkey = ModRandom.current().nextInt(sessionRate) == 0;
       if (isOkey && activeCaptureSession) {
         raid.getPlayersInitCaptureSession().add(player.getUuid());
         CobbleRaids.captureSessionManager.startSession(

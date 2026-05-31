@@ -2,7 +2,6 @@ package com.kingpixel.cobbleraids.mixins;
 
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.kingpixel.cobbleraids.CobbleRaids;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.server.world.ServerWorld;
@@ -12,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Evita drops de ítems y maneja interacciones con Pokémon en raids.
+ * Prevents item drops and handles raid Pokemon interactions.
  *
  * @author Carlos
  */
@@ -29,7 +28,7 @@ public abstract class LivingEntityPreventDropMixin {
         }
       }
     } catch (Exception e) {
-      CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error in PreventDropMixin: " + e.getMessage());
+      CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in PreventDropMixin: " + e.getMessage());
       e.printStackTrace();
     }
   }
@@ -46,7 +45,7 @@ public abstract class LivingEntityPreventDropMixin {
         }
       }
     } catch (Exception e) {
-      CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error in PreventDropMixin: " + e.getMessage());
+      CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in PreventDropMixin: " + e.getMessage());
       e.printStackTrace();
     }
   }

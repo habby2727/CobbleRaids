@@ -17,11 +17,12 @@ import com.kingpixel.cobbleraids.manager.RaidHistory;
 import com.kingpixel.cobbleraids.manager.RaidManager;
 import com.kingpixel.cobbleraids.manager.RewardsManager;
 import com.kingpixel.cobbleraids.models.RaidBall;
-import com.kingpixel.cobbleutils.CobbleUtils;
+import com.kingpixel.cobbleutils.util.UtilsLogger;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import net.minecraft.server.MinecraftServer;
+import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.*;
 
@@ -30,6 +31,7 @@ public class CobbleRaids {
   public static final String MOD_NAME = "CobbleRaids";
   public static final String PATH = "/config/" + MOD_ID;
   public static final String PATH_LANG = PATH + "/lang/";
+  public static final Logger LOGGER = UtilsLogger.getLogger(MOD_ID);
   public static MinecraftServer server;
   public static Config config = new Config();
   public static Lang language = new Lang();
@@ -89,7 +91,7 @@ public class CobbleRaids {
         });
       } catch (Exception e) {
         e.printStackTrace();
-        CobbleUtils.LOGGER.error("[BossBarTask] Error during boss bar management: " + e.getMessage());
+        LOGGER.error("[BossBarTask] Error during boss bar management: " + e.getMessage());
       }
     }, 0, 1, TimeUnit.SECONDS);
 

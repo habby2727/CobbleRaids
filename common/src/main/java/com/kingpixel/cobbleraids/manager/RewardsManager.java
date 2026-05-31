@@ -8,10 +8,12 @@ import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.CaptureSessionData;
 import com.kingpixel.cobbleraids.models.Raid;
 import com.kingpixel.cobbleraids.models.rewards.DamageReward;
-import com.kingpixel.cobbleutils.CobbleUtils;
+import com.kingpixel.cobbleraids.util.GsonCompat;
+import com.kingpixel.cobbleraids.util.ModFiles;
 import com.kingpixel.cobbleutils.Model.AdvancedItemChance;
-import com.kingpixel.cobbleutils.util.Utils;
+import com.kingpixel.cobbleutils.util.UtilsFile;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -22,9 +24,10 @@ import java.util.UUID;
  * Manages the rewards configuration for raids, including item chances and other reward-related settings.
  */
 public class RewardsManager {
-  private static final String PATH_REWARDS = CobbleRaids.PATH + "/rewards/";
-  private static final String PATH_DAMAGE_REWARDS = PATH_REWARDS + "damage_rewards/";
-  private static final String PATH_VICTORY_REWARDS = PATH_REWARDS + "victory_rewards/";
+  private static final Path PATH_REWARDS = ModFiles.resolve("rewards");
+  private static final Path PATH_DAMAGE_REWARDS = PATH_REWARDS.resolve("damage_rewards");
+  private static final Path PATH_VICTORY_REWARDS = PATH_REWARDS.resolve("victory_rewards");
+  private static final Path PATH_CAPTURE_REWARDS = PATH_REWARDS.resolve("capture_rewards");
   private static final Map<String, AdvancedItemChance> VICTORY_REWARDS = new HashMap<>();
   private static final Map<String, DamageReward> DAMAGE_REWARDS = new HashMap<>();
   private static final Map<String, AdvancedItemChance> CAPTURE_REWARDS = new HashMap<>();
@@ -41,18 +44,20 @@ public class RewardsManager {
   }
 
   private void findCaptureRewards() {
-    var folder = Utils.getAbsolutePath(PATH_REWARDS + "capture_rewards/");
-    var files = Utils.getFiles(folder);
+    var files = ModFiles.files(PATH_CAPTURE_REWARDS);
     if (files.isEmpty()) {
       createDefaultCaptureReward();
-      files = Utils.getFiles(folder);
+      files = ModFiles.files(PATH_CAPTURE_REWARDS);
     }
     for (var file : files) {
       try {
-        var reward = Utils.newGson().fromJson(Utils.readFileSync(file), AdvancedItemChance.class);
-        String id = file.getName().replace(".json", "");
+        Object parsedReward = GsonCompat.fromJson(ModFiles.gson(), UtilsFile.readText(file), AdvancedItemChance.class);
+        if (!(parsedReward instanceof AdvancedItemChance reward)) {
+          continue;
+        }
+        String id = ModFiles.baseName(file);
         CAPTURE_REWARDS.put(id, reward);
-        Utils.writeFileAsync(file, Utils.newGson().toJson(reward));
+        UtilsFile.writeAsync(file, reward);
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -61,25 +66,27 @@ public class RewardsManager {
 
   private void createDefaultCaptureReward() {
     var defaultReward = new AdvancedItemChance();
-    Utils.writeFileAsync(PATH_REWARDS + "capture_rewards/", "default.json", Utils.newGson().toJson(defaultReward));
+    UtilsFile.writeAsync(PATH_CAPTURE_REWARDS.resolve("default.json"), defaultReward);
   }
 
   private void findDamageRewards() {
-    var folder = Utils.getAbsolutePath(PATH_DAMAGE_REWARDS);
-    var files = Utils.getFiles(folder);
+    var files = ModFiles.files(PATH_DAMAGE_REWARDS);
     if (files.isEmpty()) {
       createDamageReward();
-      files = Utils.getFiles(folder);
+      files = ModFiles.files(PATH_DAMAGE_REWARDS);
     }
     for (var file : files) {
       try {
-        var content = Utils.readFileSync(file);
+        var content = UtilsFile.readText(file);
         var json = JsonParser.parseString(content);
         normalizeLegacyRaidBalls(json);
-        var reward = Utils.newGson().fromJson(json, DamageReward.class);
-        String id = file.getName().replace(".json", "");
+        Object parsedReward = GsonCompat.fromJson(ModFiles.gson(), json, DamageReward.class);
+        if (!(parsedReward instanceof DamageReward reward)) {
+          continue;
+        }
+        String id = ModFiles.baseName(file);
         DAMAGE_REWARDS.put(id, reward);
-        Utils.writeFileAsync(file, Utils.newGson().toJson(reward));
+        UtilsFile.writeAsync(file, reward);
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -88,22 +95,24 @@ public class RewardsManager {
 
   private void createDamageReward() {
     var defaultReward = new DamageReward();
-    Utils.writeFileAsync(PATH_DAMAGE_REWARDS, "default.json", Utils.newGson().toJson(defaultReward));
+    UtilsFile.writeAsync(PATH_DAMAGE_REWARDS.resolve("default.json"), defaultReward);
   }
 
   private void findVictoryRewards() {
-    var folder = Utils.getAbsolutePath(PATH_VICTORY_REWARDS);
-    var files = Utils.getFiles(folder);
+    var files = ModFiles.files(PATH_VICTORY_REWARDS);
     if (files.isEmpty()) {
       createDefaultVictoryReward();
-      files = Utils.getFiles(folder);
+      files = ModFiles.files(PATH_VICTORY_REWARDS);
     }
     for (var file : files) {
       try {
-        var reward = Utils.newGson().fromJson(Utils.readFileSync(file), AdvancedItemChance.class);
-        String id = file.getName().replace(".json", "");
+        Object parsedReward = GsonCompat.fromJson(ModFiles.gson(), UtilsFile.readText(file), AdvancedItemChance.class);
+        if (!(parsedReward instanceof AdvancedItemChance reward)) {
+          continue;
+        }
+        String id = ModFiles.baseName(file);
         VICTORY_REWARDS.put(id, reward);
-        Utils.writeFileAsync(file, Utils.newGson().toJson(reward));
+        UtilsFile.writeAsync(file, reward);
       } catch (Exception e) {
         e.printStackTrace();
       }
@@ -112,7 +121,7 @@ public class RewardsManager {
 
   private void createDefaultVictoryReward() {
     var defaultReward = new AdvancedItemChance();
-    Utils.writeFileAsync(PATH_VICTORY_REWARDS, "default.json", Utils.newGson().toJson(defaultReward));
+    UtilsFile.writeAsync(PATH_VICTORY_REWARDS.resolve("default.json"), defaultReward);
   }
 
   public void giveRewards(Raid raid, Map<UUID, Integer> playerDamageMap) {
@@ -126,14 +135,14 @@ public class RewardsManager {
         victoryReward.giveRewards(player);
       });
     } else {
-      CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "No victory reward found for category " + categoryRaid.getId());
+      CobbleRaids.LOGGER.info("No victory reward found for category " + categoryRaid.getId());
     }
     // Damage rewards
     var damageReward = DAMAGE_REWARDS.get(categoryRaid.getId());
     if (damageReward != null) {
       damageReward.giveReward(playerDamageMap, raid);
     } else {
-      CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "No damage reward found for category " + categoryRaid.getId());
+      CobbleRaids.LOGGER.info("No damage reward found for category " + categoryRaid.getId());
     }
   }
 
@@ -145,7 +154,7 @@ public class RewardsManager {
       if (player == null) return;
       captureReward.giveRewards(player);
     } else {
-      CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "No capture reward found for category " + categoryRaid.getId());
+      CobbleRaids.LOGGER.info("No capture reward found for category " + categoryRaid.getId());
     }
 
   }

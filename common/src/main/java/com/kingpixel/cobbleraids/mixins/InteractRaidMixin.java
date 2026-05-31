@@ -4,14 +4,12 @@ import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.Raid;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -20,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.UUID;
 
 /**
- * Evita drops de ítems y maneja interacciones con Pokémon en raids.
+ * Prevents item drops and handles raid Pokemon interactions.
  *
  * @author Carlos
  */
@@ -29,9 +27,7 @@ public abstract class InteractRaidMixin {
 
   @Unique private boolean cobbleRaids$raid = false;
 
-  @Shadow public abstract Pokemon getPokemon();
-
-  // Manejar interacción con jugador
+  // Handle player interaction.
   @Inject(method = "interactMob", at = @At("HEAD"))
   private void cobbleRaids$onInteract(PlayerEntity player, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
     try {
@@ -55,11 +51,11 @@ public abstract class InteractRaidMixin {
       raid.openStartBattleMenu((ServerPlayerEntity) player);
 
     } catch (Exception e) {
-      CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error in InteractRaidMixin onInteract: " + e.getMessage());
+      CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in InteractRaidMixin onInteract: " + e.getMessage());
     }
   }
 
-  // Evitar que se pueda dañar el Pokémon de raid
+  // Prevent raid Pokemon from being damaged.
   @Inject(method = "damage", at = @At("HEAD"), cancellable = true)
   private void cobbleRaids$onDamage(DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
     try {
@@ -70,7 +66,7 @@ public abstract class InteractRaidMixin {
         cir.cancel();
       }
     } catch (Exception e) {
-      CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error in InteractRaidMixin onDamage: " + e.getMessage());
+      CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in InteractRaidMixin onDamage: " + e.getMessage());
       e.printStackTrace();
     }
   }

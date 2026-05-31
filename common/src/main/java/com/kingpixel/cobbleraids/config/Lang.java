@@ -1,17 +1,16 @@
 package com.kingpixel.cobbleraids.config;
 
-import com.google.gson.Gson;
 import com.kingpixel.cobbleraids.CobbleRaids;
-import com.kingpixel.cobbleutils.CobbleUtils;
+import com.kingpixel.cobbleraids.util.ModFiles;
 import com.kingpixel.cobbleutils.Model.messages.HiperMessage;
 import com.kingpixel.cobbleutils.Model.messages.HiperMessageBuilder;
 import com.kingpixel.cobbleutils.Model.messages.MessageType;
 import com.kingpixel.cobbleutils.ui.ConfirmMenu;
-import com.kingpixel.cobbleutils.util.Utils;
+import com.kingpixel.cobbleutils.util.UtilsFile;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.concurrent.CompletableFuture;
+import java.io.IOException;
 
 @Getter
 @Setter
@@ -106,33 +105,16 @@ public class Lang {
    * Method to initialize the config.
    */
   public void init() {
-    CompletableFuture<Boolean> futureRead = Utils.readFileAsync(CobbleRaids.PATH_LANG, CobbleRaids.config.getLang() + ".json",
-      el -> {
-        Gson gson = Utils.newGson();
-        CobbleRaids.language = gson.fromJson(el, Lang.class);
-        String data = gson.toJson(CobbleRaids.language);
-        CompletableFuture<Boolean> futureWrite = Utils.writeFileAsync(CobbleRaids.PATH_LANG, CobbleRaids.config.getLang() +
-            ".json",
-          data);
-        if (!futureWrite.join()) {
-          CobbleUtils.LOGGER.fatal(CobbleRaids.MOD_ID, "Could not write lang.json file for " + CobbleRaids.MOD_NAME + ".");
-        }
-      });
-
-    if (!futureRead.join()) {
-      CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "No lang.json file found for" + CobbleRaids.MOD_NAME + ". Attempting " +
-        "to generate one.");
-      Gson gson = Utils.newGson();
-      String data = gson.toJson(this);
-      CompletableFuture<Boolean> futureWrite = Utils.writeFileAsync(CobbleRaids.PATH_LANG, CobbleRaids.config.getLang() +
-          ".json",
-        data);
-
-      if (!futureWrite.join()) {
-        CobbleUtils.LOGGER.fatal(CobbleRaids.MOD_ID, "Could not write lang.json file for " + CobbleRaids.MOD_NAME + ".");
-      }
+    var langFile = ModFiles.languageRoot().resolve(CobbleRaids.config.getLang() + ".json");
+    if (!UtilsFile.exists(langFile)) {
+      CobbleRaids.LOGGER.info("No lang.json file found for " + CobbleRaids.MOD_NAME + ". Attempting to generate one.");
+    }
+    try {
+      CobbleRaids.language = UtilsFile.readOrCreate(langFile, Lang.class, Lang::new);
+      UtilsFile.write(langFile, CobbleRaids.language);
+    } catch (IOException e) {
+      CobbleRaids.LOGGER.fatal("Could not load lang.json file for " + CobbleRaids.MOD_NAME + ".", e);
+      throw new IllegalStateException("Could not load lang.json file for " + CobbleRaids.MOD_NAME + ".", e);
     }
   }
-
-
 }

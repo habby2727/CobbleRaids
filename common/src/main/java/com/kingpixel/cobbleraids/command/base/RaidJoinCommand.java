@@ -10,15 +10,12 @@ import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 
-import java.util.List;
 import java.util.UUID;
 
 /**
  * @author Carlos Varas Alonso - 13/09/2025 4:15
  */
 public class RaidJoinCommand {
-  private static final List<String> PERMISSION = List.of("cobbleraids.user");
-
   public static void register(LiteralArgumentBuilder<ServerCommandSource> base) {
     base.then(
       CommandManager.literal("join")
@@ -39,7 +36,14 @@ public class RaidJoinCommand {
             );
             return 1;
           }
-          var first = entities.getFirst();
+          PokemonEntity first = null;
+          for (PokemonEntity entity : entities) {
+            first = entity;
+            break;
+          }
+          if (first == null) {
+            return 1;
+          }
           UUID raidUUID = first.getPokemon().getPersistentData().getUuid(Raid.RAID_NBT_KEY);
           Raid raid = CobbleRaids.raidManager.getRaid(raidUUID);
           if (raid == null) {

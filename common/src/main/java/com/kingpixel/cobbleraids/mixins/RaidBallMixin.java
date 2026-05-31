@@ -2,7 +2,6 @@ package com.kingpixel.cobbleraids.mixins;
 
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.RaidBall;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -57,7 +56,7 @@ public abstract class RaidBallMixin {
         }
       }
     } catch (Exception e) {
-      CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error in UseItemCallback event: " + e.getMessage());
+      CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in UseItemCallback event: " + e.getMessage());
       e.printStackTrace();
     }
   }

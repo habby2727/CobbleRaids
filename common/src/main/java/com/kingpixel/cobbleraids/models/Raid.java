@@ -16,7 +16,6 @@ import com.kingpixel.cobbleraids.events.raids.models.RaidFinished;
 import com.kingpixel.cobbleraids.events.raids.models.RaidNewPhase;
 import com.kingpixel.cobbleraids.events.raids.models.RaidPostStarted;
 import com.kingpixel.cobbleraids.events.raids.models.RaidPreStarted;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.DurationValue;
 import com.kingpixel.cobbleutils.util.AdventureTranslator;
 import com.kingpixel.cobbleutils.util.PlayerUtils;
@@ -160,7 +159,7 @@ public class Raid {
       var phase = raidData.getActualPhase(this);
       if (phase.equals(actualPhase)) {
         if (CobbleRaids.config.isDebug()) {
-          CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Raid Entity phase unchanged: " +
+          CobbleRaids.LOGGER.info(CobbleRaids.MOD_ID, "Raid Entity phase unchanged: " +
             raidEntity.getPokemon().getDisplayName(false).getString() +
             " Phase: " + actualPhase
           );
@@ -168,7 +167,7 @@ public class Raid {
         return;
       }
       if (CobbleRaids.config.isDebug()) {
-        CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Raid Entity phase changed: " +
+        CobbleRaids.LOGGER.info(CobbleRaids.MOD_ID, "Raid Entity phase changed: " +
           raidEntity.getPokemon().getDisplayName(false).getString() +
           " From Phase: " + actualPhase + " To Phase: " + phase
         );
@@ -199,7 +198,7 @@ public class Raid {
       if (categoryRaid.isNeedTicket() && !damageMap.containsKey(player.getUuid()) && !userInfo.hasTicket(categoryRaid)) {
         PlayerUtils.sendMessage(
           player,
-          "§c[§6CobbleRaids§c] §cYou don't have a ticket to join this raid!§r",
+          "Â§c[Â§6CobbleRaidsÂ§c] Â§cYou don't have a ticket to join this raid!Â§r",
           CobbleRaids.language.getPrefix(),
           TypeMessage.CHAT
         );
@@ -286,7 +285,7 @@ public class Raid {
       startBattle.ifErrored(erroredBattleStart -> {
         PlayerUtils.sendMessage(
           player,
-          "§c[§6CobbleRaids§c] §cCould not start the battle, please try again later.§r",
+          "Â§c[Â§6CobbleRaidsÂ§c] Â§cCould not start the battle, please try again later.Â§r",
           CobbleRaids.language.getPrefix(),
           TypeMessage.CHAT
         );
@@ -308,11 +307,11 @@ public class Raid {
     damageMap.put(player.getUuid(), 0);
   }
 
-  // Cache of base Pokémon per result (Pokemon, not PokemonEntity)
+  // Cache of base PokÃ©mon per result (Pokemon, not PokemonEntity)
   private final ConcurrentHashMap<String, Pokemon> cachedPokemons = new ConcurrentHashMap<>();
 
   /**
-   * Generates a raid Pokémon (still returns PokemonEntity)
+   * Generates a raid PokÃ©mon (still returns PokemonEntity)
    * The Pokemon is cached, so cloning can be done in another thread
    */
   private PokemonEntity generateRaidEntity(boolean fight) {
@@ -333,7 +332,7 @@ public class Raid {
     var coords = categoryRaid.getCoords();
     ServerWorld serverWorld = categoryRaid.getWorldInstance();
     if (serverWorld == null) {
-      CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "World " + categoryRaid.getWorld() + " not found for raid " + raidUUID);
+      CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "World " + categoryRaid.getWorld() + " not found for raid " + raidUUID);
       throw new IllegalStateException("World " + categoryRaid.getWorld() + " not found for raid " + raidUUID);
     }
     int x = coords.getX() >> 4;
@@ -344,7 +343,7 @@ public class Raid {
     Vec3d pos = coords.getVec3d();
     if (fight) pos = new Vec3d(pos.x + (Math.random() * 8 - 4), pos.y, pos.z + (Math.random() * 8 - 4));
 
-    // Spawn the Pokémon as an entity
+    // Spawn the PokÃ©mon as an entity
     var pokemonEntity = clonePokemon.sendOut(
       serverWorld,
       pos,
@@ -374,7 +373,7 @@ public class Raid {
     // Post-creation logic if not a fight
     if (!fight) {
       if (CobbleRaids.config.isDebug()) {
-        CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Raid Entity spawned: " +
+        CobbleRaids.LOGGER.info(CobbleRaids.MOD_ID, "Raid Entity spawned: " +
           pokemonEntity.getPokemon().getDisplayName(false).getString() +
           " at " + pokemonEntity.getPos().toString()
         );
@@ -422,7 +421,7 @@ public class Raid {
     if (CobbleRaids.config.isDebug()) {
       PlayerUtils.sendMessage(
         player,
-        "§e[§6CobbleRaids§e] §eRaid Boss Health: " + health + "/" + maxHealth + " (-" + damage + ")§r",
+        "Â§e[Â§6CobbleRaidsÂ§e] Â§eRaid Boss Health: " + health + "/" + maxHealth + " (-" + damage + ")Â§r",
         CobbleRaids.language.getPrefix(),
         TypeMessage.CHAT
       );
@@ -471,7 +470,7 @@ public class Raid {
     if (health <= 0 || finish) {
       PlayerUtils.sendMessage(
         player,
-        "§c[§6CobbleRaids§c] §cThis raid has already finished.§r",
+        "Â§c[Â§6CobbleRaidsÂ§c] Â§cThis raid has already finished.Â§r",
         CobbleRaids.language.getPrefix(),
         TypeMessage.CHAT
       );
@@ -480,7 +479,7 @@ public class Raid {
     if (DataBaseFactory.INSTANCE.findUserByPlayer(player).isBanned(categoryRaid)) {
       PlayerUtils.sendMessage(
         player,
-        "§c[§6CobbleRaids§c] §cYou are banned from this raid category.§r",
+        "Â§c[Â§6CobbleRaidsÂ§c] Â§cYou are banned from this raid category.Â§r",
         CobbleRaids.language.getPrefix(),
         TypeMessage.CHAT
       );
@@ -503,7 +502,7 @@ public class Raid {
           if (PlayerUtils.isBattle(player)) {
             PlayerUtils.sendMessage(
               player,
-              "§c[§6CobbleRaids§c] §cYou are already in a battle.§r",
+              "Â§c[Â§6CobbleRaidsÂ§c] Â§cYou are already in a battle.Â§r",
               CobbleRaids.language.getPrefix(),
               TypeMessage.CHAT
             );
@@ -519,7 +518,7 @@ public class Raid {
       cancel -> {
         PlayerUtils.sendMessage(
           player,
-          "§c[§6CobbleRaids§c] §cYou have cancelled the raid battle.§r",
+          "Â§c[Â§6CobbleRaidsÂ§c] Â§cYou have cancelled the raid battle.Â§r",
           CobbleRaids.language.getPrefix(),
           TypeMessage.CHAT
         );

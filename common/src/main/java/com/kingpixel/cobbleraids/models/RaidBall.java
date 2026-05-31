@@ -14,6 +14,7 @@ import net.minecraft.util.collection.DefaultedList;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
+@SuppressWarnings("deprecation")
 public class RaidBall extends ItemModel {
   private String id = "default";
   @SerializedName(value = "catchChance", alternate = {"rateSuccess"})

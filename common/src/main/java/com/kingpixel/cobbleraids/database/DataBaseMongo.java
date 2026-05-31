@@ -3,8 +3,8 @@ package com.kingpixel.cobbleraids.database;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.Raid;
 import com.kingpixel.cobbleraids.models.UserInfo;
-import com.kingpixel.cobbleutils.CobbleUtils;
-import com.kingpixel.cobbleutils.util.Utils;
+import com.kingpixel.cobbleraids.util.GsonCompat;
+import com.kingpixel.cobbleraids.util.ModFiles;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
@@ -56,13 +56,13 @@ public class DataBaseMongo extends DataBaseClient {
     raidCollection = database.getCollection("raids");
     userInfoCollection = database.getCollection("user_info");
 
-    CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Connected to MongoDB database");
+    CobbleRaids.LOGGER.info("Connected to MongoDB database");
   }
 
   @Override public void disconnect() {
     if (mongoClient != null) {
       mongoClient.close();
-      CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "MongoDB database disconnected");
+      CobbleRaids.LOGGER.info("MongoDB database disconnected");
     }
   }
 
@@ -73,7 +73,10 @@ public class DataBaseMongo extends DataBaseClient {
     var document = userInfoCollection.find().filter(new Document("playerUUID",
       player.getUuid().toString())).first();
     if (document != null) {
-      userInfo = Utils.newWithoutSpacingGson().fromJson(document.toJson(), UserInfo.class);
+      Object parsedUser = GsonCompat.fromJson(ModFiles.gson(), document.toJson(), UserInfo.class);
+      if (parsedUser instanceof UserInfo user) {
+        userInfo = user;
+      }
     }
     if (userInfo != null) {
       cacheUser.put(player.getUuid(), userInfo);
@@ -93,8 +96,8 @@ public class DataBaseMongo extends DataBaseClient {
     if (!list.isEmpty()) {
       var raids = new ArrayList<Raid>();
       for (var doc : list) {
-        var raid = Utils.newWithoutSpacingGson().fromJson(doc.toJson(), Raid.class);
-        if (raid != null) {
+        Object parsedRaid = GsonCompat.fromJson(ModFiles.gson(), doc.toJson(), Raid.class);
+        if (parsedRaid instanceof Raid raid) {
           raids.add(raid);
         }
       }
@@ -107,9 +110,7 @@ public class DataBaseMongo extends DataBaseClient {
   @Override public void saveOrUpdateUserInfo(UserInfo userinfo) {
     userInfoCollection.replaceOne(
       new Document("playerUUID", userinfo.getPlayerUUID().toString()),
-      Document.parse(
-        Utils.newWithoutSpacingGson().toJson(userinfo)
-      ),
+      Document.parse(ModFiles.gson().toJson(userinfo)),
       new ReplaceOptions().upsert(true)
     );
   }
@@ -117,9 +118,7 @@ public class DataBaseMongo extends DataBaseClient {
   @Override public void saveOrUpdateHistoryRaid(Raid raid) {
     raidCollection.replaceOne(
       new Document("raidUUID", raid.getRaidUUID()),
-      Document.parse(
-        Utils.newWithoutSpacingGson().toJson(raid)
-      ),
+      Document.parse(ModFiles.gson().toJson(raid)),
       new ReplaceOptions().upsert(true)
     );
   }

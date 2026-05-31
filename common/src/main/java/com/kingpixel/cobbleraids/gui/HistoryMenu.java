@@ -21,8 +21,6 @@ import java.util.List;
  * @author Carlos Varas Alonso - 16/09/2025 22:01
  */
 public class HistoryMenu {
-  private String title = "Raid History";
-
   public static void open(ServerPlayerEntity player, int numPage) {
     ChestTemplate template = ChestTemplate.builder(6)
       .build();
@@ -54,6 +52,7 @@ public class HistoryMenu {
     UIManager.openUIForcefully(player, page);
   }
 
+  @SuppressWarnings("null")
   private static GooeyButton getButton(Raid raid) {
     long start = raid.getStartTime();
     Instant startInstant = Instant.ofEpochMilli(start);

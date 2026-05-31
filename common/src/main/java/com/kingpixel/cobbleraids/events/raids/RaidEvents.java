@@ -6,7 +6,6 @@ import club.minnced.discord.webhook.send.WebhookEmbedBuilder;
 import club.minnced.discord.webhook.send.WebhookMessage;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.events.raids.models.*;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.WebHookData;
 import com.kingpixel.cobbleutils.Model.messages.HiperMessage;
 import com.kingpixel.cobbleutils.Model.messages.MessageType;
@@ -19,7 +18,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Carlos Varas Alonso - 13/09/2025 18:51
@@ -41,9 +40,8 @@ public class RaidEvents {
           HiperMessage message = CobbleRaids.language.getMessageEndRaidKilled();
           message.sendMessage((UUID) null, raid.replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
           var webHook = CobbleRaids.config.getWebhook();
-          AtomicReference<StringBuilder> desc =
-            new AtomicReference<>(new StringBuilder(CobbleRaids.language.getLeaderBoardTitle()));
-          AtomicReference<Integer> amount = new AtomicReference<>(0);
+          StringBuilder desc = new StringBuilder(CobbleRaids.language.getLeaderBoardTitle());
+          AtomicInteger amount = new AtomicInteger();
           raid.getDamageMap().entrySet().stream()
             .sorted((e1, e2) -> e2.getValue().compareTo(e1.getValue()))
             .forEach(entry -> {
@@ -52,16 +50,16 @@ public class RaidEvents {
               if (userCache == null) return;
               var player = userCache.getByUuid(uuid);
               if (player.isEmpty()) return;
-              amount.getAndSet(amount.get() + 1);
+              int position = amount.incrementAndGet();
               var name = player.get().getName();
-              desc.get().append(CobbleRaids.language.getLeaderBoardLine()
-                .replace("%position%", amount.get().toString())
+              desc.append(CobbleRaids.language.getLeaderBoardLine()
+                .replace("%position%", Integer.toString(position))
                 .replace("%player%", name)
                 .replace("%damage%", entry.getValue().toString()));
             });
-          desc.get().append(CobbleRaids.language.getLeaderBoardFooter());
+          desc.append(CobbleRaids.language.getLeaderBoardFooter());
 
-          String finalDesc = desc.get().toString();
+          String finalDesc = desc.toString();
           finalDesc = PokemonUtils.replace(finalDesc, raid.getPokemon());
           HiperMessage leaderBoardMessage = new HiperMessage("cb:" + finalDesc, MessageType.CHAT_BROADCAST);
           leaderBoardMessage.sendMessage((UUID) null, leaderBoardMessage.getRawMessage(), CobbleRaids.language.getPrefix(), false);
@@ -85,7 +83,7 @@ public class RaidEvents {
           message.sendMessage((UUID) null, raid.replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
         }
       } catch (Exception e) {
-        CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error sending raid finished webhook: " + e.getMessage());
+        CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error sending raid finished webhook: " + e.getMessage());
         e.printStackTrace();
       }
     });
@@ -117,7 +115,7 @@ public class RaidEvents {
         );
         client.send(webhookMessage);
       } catch (Exception e) {
-        CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error sending raid pre-started webhook: " + e.getMessage());
+        CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error sending raid pre-started webhook: " + e.getMessage());
         e.printStackTrace();
       }
     });
@@ -148,7 +146,7 @@ public class RaidEvents {
         );
         client.send(webhookMessage);
       } catch (Exception e) {
-        CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error sending raid started webhook: " + e.getMessage());
+        CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error sending raid started webhook: " + e.getMessage());
         e.printStackTrace();
       }
     });
@@ -175,7 +173,7 @@ public class RaidEvents {
         );
         client.send(webhookMessage);
       } catch (Exception e) {
-        CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error sending raid new phase webhook: " + e.getMessage());
+        CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error sending raid new phase webhook: " + e.getMessage());
         e.printStackTrace();
       }
     });

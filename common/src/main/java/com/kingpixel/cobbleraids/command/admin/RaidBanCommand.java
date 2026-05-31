@@ -43,7 +43,7 @@ public class RaidBanCommand {
                     .suggests(DurationValue.INSTANCE::listSuggestions)
                     .executes(context -> {
                       String categoryId = StringArgumentType.getString(context, "categoryId");
-                      String playerName = context.getArgument("player", String.class);
+                      String playerName = StringArgumentType.getString(context, "player");
                       String timeStr = StringArgumentType.getString(context, "time");
                       long durationMs = DurationValue.parse(timeStr).toMillis();
                       CobbleUtilsSuggests.SUGGESTS_PLAYER_OFFLINE_AND_ONLINE.getPlayer(playerName).ifPresent(result -> {

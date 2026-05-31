@@ -10,7 +10,6 @@ import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.CaptureSessionData;
 import com.kingpixel.cobbleraids.models.Raid;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import kotlin.Unit;
 import net.minecraft.entity.Entity;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -38,7 +37,7 @@ public class BattleStartedPreEvent {
           var persistentData = pokemonEntity.getPokemon().getPersistentData();
           if (!persistentData.contains(CaptureSessionData.CAPTURE_NBT_KEY)) continue;
           if (CobbleRaids.config.isDebug()) {
-            CobbleUtils.LOGGER.info(
+            CobbleRaids.LOGGER.info(
               CobbleRaids.MOD_ID,
               "BATTLE_STARTED_PRE: Capture session battle detected, skipping raid pre-start handling."
             );
@@ -65,18 +64,18 @@ public class BattleStartedPreEvent {
           var categoryRaid = CobbleRaids.categorys.getCategory(categoryId);
           if (categoryRaid == null) {
             if (CobbleRaids.config.isDebug()) {
-              CobbleUtils.LOGGER.warn(CobbleRaids.MOD_ID, "BATTLE_STARTED_PRE: CategoryRaid is null for categoryId " + categoryId);
+              CobbleRaids.LOGGER.warn(CobbleRaids.MOD_ID, "BATTLE_STARTED_PRE: CategoryRaid is null for categoryId " + categoryId);
             }
             return Unit.INSTANCE;
           }
           if (playerBattleActor == null) {
             if (CobbleRaids.config.isDebug()) {
-              CobbleUtils.LOGGER.warn(CobbleRaids.MOD_ID, "BATTLE_STARTED_PRE: PlayerBattleActor is null.");
+              CobbleRaids.LOGGER.warn(CobbleRaids.MOD_ID, "BATTLE_STARTED_PRE: PlayerBattleActor is null.");
             }
             return Unit.INSTANCE;
           }
           if (CobbleRaids.config.isDebug()) {
-            CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "BATTLE_STARTED_PRE: Player " + player.getName().getString() +
+            CobbleRaids.LOGGER.info(CobbleRaids.MOD_ID, "BATTLE_STARTED_PRE: Player " + player.getName().getString() +
               " is starting a raid battle of category " + categoryId);
           }
           var list = playerBattleActor.getPokemonList();
@@ -86,7 +85,7 @@ public class BattleStartedPreEvent {
           list.removeIf(battlePokemon -> categoryRaid.isBlackList(battlePokemon.getOriginalPokemon()));
           if (list.isEmpty()) {
             evt.setReason(Text.literal(
-              "You don't have any Pokémons that can fight this raid. Please check the blacklist configured."
+              "You don't have any Pokemon that can fight this raid. Please check the blacklist configured."
             ));
             evt.cancel();
             return Unit.INSTANCE;
@@ -94,7 +93,7 @@ public class BattleStartedPreEvent {
           return Unit.INSTANCE;
         } else {
           if (CobbleRaids.config.isDebug()) {
-            CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "BATTLE_STARTED_PRE: No categoryId found, normal battle.");
+            CobbleRaids.LOGGER.info(CobbleRaids.MOD_ID, "BATTLE_STARTED_PRE: No categoryId found, normal battle.");
           }
         }
 
@@ -120,13 +119,15 @@ public class BattleStartedPreEvent {
         evt.cancel();
         var raid = CobbleRaids.raidManager.getRaid(raidUUID);
         if (raid == null) {
-          pokemonEntity.remove(Entity.RemovalReason.DISCARDED);
+          if (pokemonEntity != null) {
+            pokemonEntity.remove(Entity.RemovalReason.DISCARDED);
+          }
           return Unit.INSTANCE;
         }
         raid.openStartBattleMenu(player);
         return Unit.INSTANCE;
       } catch (Exception e) {
-        CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error in BATTLE_STARTED_PRE event: " + e.getMessage());
+        CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in BATTLE_STARTED_PRE event: " + e.getMessage());
         e.printStackTrace();
         return Unit.INSTANCE;
       }

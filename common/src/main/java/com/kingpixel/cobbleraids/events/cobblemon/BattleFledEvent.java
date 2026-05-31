@@ -3,7 +3,6 @@ package com.kingpixel.cobbleraids.events.cobblemon;
 import com.cobblemon.mod.common.api.Priority;
 import com.cobblemon.mod.common.api.events.CobblemonEvents;
 import com.kingpixel.cobbleraids.CobbleRaids;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import kotlin.Unit;
 
 /**
@@ -19,23 +18,23 @@ public class BattleFledEvent {
         var captureSession = CobbleRaids.captureSessionManager.finishSession(battleId);
         if (captureSession != null) {
           if (CobbleRaids.config.isDebug()) {
-            CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "BATTLE_FLED: A player has fled a capture session.");
+            CobbleRaids.LOGGER.info(CobbleRaids.MOD_ID, "BATTLE_FLED: A player has fled a capture session.");
           }
           return Unit.INSTANCE;
         }
         var fight = CobbleRaids.raidManager.getFightingData(battleId);
         if (fight == null) {
           if (CobbleRaids.config.isDebug()) {
-            CobbleUtils.LOGGER.warn(CobbleRaids.MOD_ID, "BATTLE_FLED: A player has fled but the fight is null.");
+            CobbleRaids.LOGGER.warn(CobbleRaids.MOD_ID, "BATTLE_FLED: A player has fled but the fight is null.");
           }
           return Unit.INSTANCE;
         }
         if (CobbleRaids.config.isDebug()) {
-          CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "BATTLE_FLED: A player has fled the raid battle.");
+          CobbleRaids.LOGGER.info(CobbleRaids.MOD_ID, "BATTLE_FLED: A player has fled the raid battle.");
         }
         fight.stop(false);
       } catch (Exception e) {
-        CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error in BATTLE_FLED event: " + e.getMessage());
+        CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in BATTLE_FLED event: " + e.getMessage());
         e.printStackTrace();
       }
       return Unit.INSTANCE;

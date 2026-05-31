@@ -2,11 +2,14 @@ package com.kingpixel.cobbleraids.config;
 
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.CategoryRaid;
-import com.kingpixel.cobbleutils.CobbleUtils;
-import com.kingpixel.cobbleutils.util.Utils;
+import com.kingpixel.cobbleraids.util.GsonCompat;
+import com.kingpixel.cobbleraids.util.ModFiles;
+import com.kingpixel.cobbleraids.util.ModRandom;
+import com.kingpixel.cobbleutils.util.UtilsFile;
 import lombok.Data;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -15,29 +18,33 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Data
 public class CategoryConfig {
-  public static final String PATH_CATEGORIES = CobbleRaids.PATH + "/categories/";
+  public static final Path PATH_CATEGORIES = ModFiles.resolve("categories");
   private Map<String, CategoryRaid> categorys = new ConcurrentHashMap<>();
 
   public void init() {
     categorys.clear();
-    var files = Utils.getFiles(Utils.getAbsolutePath(PATH_CATEGORIES));
+    var files = ModFiles.files(PATH_CATEGORIES);
     if (files.isEmpty()) {
       createDefaultCategory();
     }
     for (var file : files) {
       try {
-        var category = Utils.newGson().fromJson(Utils.readFileSync(file), CategoryRaid.class);
+        Object parsedCategory = GsonCompat.fromJson(ModFiles.gson(), UtilsFile.readText(file), CategoryRaid.class);
+        if (!(parsedCategory instanceof CategoryRaid category)) {
+          CobbleRaids.LOGGER.info("Could not deserialize category file: " + file.toAbsolutePath() + ". Skipping...");
+          continue;
+        }
         if (category.getHealth() <= 0) {
           category.setHealth(100);
         }
-        String id = file.getName().replace(".json", "");
+        String id = ModFiles.baseName(file);
         category.setId(id);
         category.checker();
         categorys.put(id, category);
-        Utils.writeFileAsync(file, Utils.newGson().toJson(category));
+        UtilsFile.writeAsync(file, category);
       } catch (Exception e) {
         e.printStackTrace();
-        CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Could not load category file: " + file.getAbsolutePath() + ". Skipping...");
+        CobbleRaids.LOGGER.info("Could not load category file: " + file.toAbsolutePath() + ". Skipping...");
       }
     }
   }
@@ -46,7 +53,7 @@ public class CategoryConfig {
     var defaultCategory = new CategoryRaid("default");
     defaultCategory.checker();
     categorys.put("default", defaultCategory);
-    Utils.writeFileAsync(PATH_CATEGORIES, "default.json", Utils.newGson().toJson(defaultCategory));
+    UtilsFile.writeAsync(PATH_CATEGORIES.resolve("default.json"), defaultCategory);
   }
 
   public CategoryRaid getCategory(String id) {
@@ -55,9 +62,8 @@ public class CategoryConfig {
 
   public @Nullable CategoryRaid getRandomCategory() {
     var list = categorys.values().stream().filter(cat -> cat.getChance() > 0).toList();
-    var random = Utils.getRandom();
     double totalChance = list.stream().mapToDouble(CategoryRaid::getChance).sum();
-    double randomChance = random.nextDouble() * totalChance;
+    double randomChance = ModRandom.current().nextDouble() * totalChance;
     double cumulativeChance = 0.0;
     for (CategoryRaid category : list) {
       cumulativeChance += category.getChance();

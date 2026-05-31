@@ -4,7 +4,6 @@ import com.cobblemon.mod.common.api.Priority;
 import com.cobblemon.mod.common.api.events.CobblemonEvents;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.CaptureSessionData;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import kotlin.Unit;
 
 /**
@@ -20,7 +19,7 @@ public class PokemonCapturedEvent {
           persistentData.remove(key);
         }
       } catch (Exception e) {
-        CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error in POKEMON_CAPTURED event: " + e.getMessage());
+        CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in POKEMON_CAPTURED event: " + e.getMessage());
         e.printStackTrace();
       }
       return Unit.INSTANCE;

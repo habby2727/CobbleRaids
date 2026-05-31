@@ -4,9 +4,9 @@ import com.cobblemon.mod.common.Cobblemon;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
+import com.kingpixel.cobbleraids.util.ModRandom;
 import com.kingpixel.cobbleutils.Model.DurationValue;
 import com.kingpixel.cobbleutils.api.PermissionApi;
-import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import net.minecraft.entity.boss.BossBar;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -42,7 +42,7 @@ public class CategoryRaid {
   private AdvancedBlacklist blacklist;
   private String world;
   private Coords coords;
-  // TODO: Glowing option
+  // Reserved for future glowing customization.
 
   public CategoryRaid() {
     this.chance = 1.0;
@@ -163,7 +163,7 @@ public class CategoryRaid {
     if (list == null || list.isEmpty()) return null;
     var totalChance = list.stream().mapToDouble(RaidData::getChance).sum();
     var cumulativeChance = 0.0;
-    var random = Utils.getRandom().nextDouble() * totalChance;
+    var random = ModRandom.current().nextDouble() * totalChance;
     for (RaidData raid : list) {
       cumulativeChance += raid.getChance();
       if (random <= cumulativeChance) return raid;

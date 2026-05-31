@@ -4,7 +4,6 @@ import com.cobblemon.mod.common.api.Priority;
 import com.cobblemon.mod.common.api.events.CobblemonEvents;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.CaptureSessionData;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import kotlin.Unit;
 import net.minecraft.server.network.ServerPlayerEntity;
 
@@ -42,7 +41,7 @@ public class PokemonCatchRateEvent {
           evt.setCatchRate(catchRate);
         }
       } catch (Exception e) {
-        CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error in POKEMON_CATCH_RATE event: " + e.getMessage());
+        CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in POKEMON_CATCH_RATE event: " + e.getMessage());
         e.printStackTrace();
       }
       return Unit.INSTANCE;

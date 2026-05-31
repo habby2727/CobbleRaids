@@ -3,7 +3,6 @@ package com.kingpixel.cobbleraids.events.cobblemon;
 import com.cobblemon.mod.common.api.Priority;
 import com.cobblemon.mod.common.api.events.CobblemonEvents;
 import com.kingpixel.cobbleraids.CobbleRaids;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import kotlin.Unit;
 
 /**
@@ -22,7 +21,7 @@ public class PokeBallCaptureCompletedEvent {
           CobbleRaids.rewardsManager.giveRewardCapture(captureSession);
         }
       } catch (Exception e) {
-        CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error in POKE_BALL_CAPTURE_CALCULATED event: " + e.getMessage());
+        CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in POKE_BALL_CAPTURE_CALCULATED event: " + e.getMessage());
         e.printStackTrace();
       }
       return Unit.INSTANCE;

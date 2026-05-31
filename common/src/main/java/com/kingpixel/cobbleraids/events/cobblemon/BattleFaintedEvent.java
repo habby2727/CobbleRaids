@@ -3,7 +3,6 @@ package com.kingpixel.cobbleraids.events.cobblemon;
 import com.cobblemon.mod.common.api.Priority;
 import com.cobblemon.mod.common.api.events.CobblemonEvents;
 import com.kingpixel.cobbleraids.CobbleRaids;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import kotlin.Unit;
 
 /**
@@ -26,7 +25,7 @@ public class BattleFaintedEvent {
         if (raid == null) return Unit.INSTANCE;
         raid.updateHealth(fight, pokemonKilled.getMaxHealth());
       } catch (Exception e) {
-        CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error in BATTLE_FAINTED event: " + e.getMessage());
+        CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in BATTLE_FAINTED event: " + e.getMessage());
         e.printStackTrace();
       }
       return Unit.INSTANCE;

@@ -3,7 +3,6 @@ package com.kingpixel.cobbleraids.manager;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.CaptureSessionData;
 import com.kingpixel.cobbleraids.models.Raid;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import lombok.Data;
 import net.minecraft.server.network.ServerPlayerEntity;
 
@@ -30,18 +29,18 @@ public class CaptureSessionManager {
 
   public CaptureSessionData finishSession(UUID battleUUID) {
     if (CobbleRaids.config.isDebug()) {
-      CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Trying to finish capture session for battle UUID: " + battleUUID);
+      CobbleRaids.LOGGER.info(CobbleRaids.MOD_ID, "Trying to finish capture session for battle UUID: " + battleUUID);
     }
     var session = activeSessions.remove(battleUUID);
     if (session != null) {
       playerSessions.remove(session.getPlayer().getUuid());
       clearPendingRaidBallCatchRate(session.getPlayerUUID());
       if (CobbleRaids.config.isDebug()) {
-        CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Capture session found and removed for battle UUID: " + battleUUID);
+        CobbleRaids.LOGGER.info(CobbleRaids.MOD_ID, "Capture session found and removed for battle UUID: " + battleUUID);
       }
       session.finishSession();
     } else if (CobbleRaids.config.isDebug()) {
-      CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "No active capture session found for battle UUID: " + battleUUID);
+      CobbleRaids.LOGGER.info(CobbleRaids.MOD_ID, "No active capture session found for battle UUID: " + battleUUID);
     }
     return session;
   }
@@ -54,7 +53,7 @@ public class CaptureSessionManager {
 
   public void finishSessionPlayer(UUID playerUUID) {
     if (CobbleRaids.config.isDebug()) {
-      CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Finishing capture session for player UUID: " + playerUUID);
+      CobbleRaids.LOGGER.info(CobbleRaids.MOD_ID, "Finishing capture session for player UUID: " + playerUUID);
     }
     var session = playerSessions.remove(playerUUID);
     clearPendingRaidBallCatchRate(playerUUID);
@@ -66,7 +65,7 @@ public class CaptureSessionManager {
 
   public void removeSession(UUID battleUUID) {
     if (CobbleRaids.config.isDebug()) {
-      CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Removing capture session mapping for battle UUID: " + battleUUID);
+      CobbleRaids.LOGGER.info(CobbleRaids.MOD_ID, "Removing capture session mapping for battle UUID: " + battleUUID);
     }
     var session = activeSessions.remove(battleUUID);
     if (session != null) {

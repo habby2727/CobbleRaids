@@ -3,7 +3,6 @@ package com.kingpixel.cobbleraids.events.cobblemon;
 import com.cobblemon.mod.common.api.Priority;
 import com.cobblemon.mod.common.api.events.CobblemonEvents;
 import com.kingpixel.cobbleraids.CobbleRaids;
-import com.kingpixel.cobbleutils.CobbleUtils;
 import kotlin.Unit;
 
 /**
@@ -19,14 +18,14 @@ public class BattleVictoryEvent {
         var captureSession = CobbleRaids.captureSessionManager.finishSession(battleId);
         if (captureSession != null) {
           if (CobbleRaids.config.isDebug()) {
-            CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "BATTLE_VICTORY: A player has won a capture session.");
+            CobbleRaids.LOGGER.info(CobbleRaids.MOD_ID, "BATTLE_VICTORY: A player has won a capture session.");
           }
           return Unit.INSTANCE;
         }
         if (fight != null) fight.stop(false);
         return Unit.INSTANCE;
       } catch (Exception e) {
-        CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error in BATTLE_VICTORY event: " + e.getMessage());
+        CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in BATTLE_VICTORY event: " + e.getMessage());
         e.printStackTrace();
       }
       return Unit.INSTANCE;

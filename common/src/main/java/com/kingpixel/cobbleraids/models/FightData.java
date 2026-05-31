@@ -5,9 +5,8 @@ import com.cobblemon.mod.common.battles.BattleRegistry;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
+import com.kingpixel.cobbleraids.util.ModRandom;
 import com.kingpixel.cobblesize.Model.SizeChance;
-import com.kingpixel.cobbleutils.CobbleUtils;
-import com.kingpixel.cobbleutils.util.Utils;
 import lombok.Data;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -47,7 +46,7 @@ public class FightData {
           }
         }
       } catch (Exception e) {
-        CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error stopping fight for player " + player.getName().getString() + " and raid " + raid.getRaidUUID() + ": " + e.getMessage());
+        CobbleRaids.LOGGER.error("Error stopping fight for player " + player.getName().getString() + " and raid " + raid.getRaidUUID() + ": " + e.getMessage());
         e.printStackTrace();
       }
     });
@@ -64,7 +63,7 @@ public class FightData {
 
     // Calcular desplazamiento aleatorio a unos 32 bloques de distancia
     int distance = 32;
-    double angle = Utils.getRandom().nextDouble() * (2 * Math.PI);
+    double angle = ModRandom.current().nextDouble() * (2 * Math.PI);
     double offsetX = Math.cos(angle) * distance;
     double offsetZ = Math.sin(angle) * distance;
 
