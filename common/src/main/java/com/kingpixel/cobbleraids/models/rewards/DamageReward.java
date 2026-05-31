@@ -89,9 +89,13 @@ public class DamageReward {
       if (reward != null) {
         reward.giveRewards(player);
       }
-      if (raidBalls != null && !raidBalls.isEmpty()) {
-        for (RaidBall raidBall : raidBalls) {
-          raidBall.giveToPlayer(player);
+      if (CobbleRaids.config.isRaidBallEnabled()) {
+        if (raidBalls != null && !raidBalls.isEmpty()) {
+          for (RaidBall raidBall : raidBalls) {
+            raidBall.giveToPlayer(player);
+          }
+        } else if (activeCaptureSession) {
+          new RaidBall().giveToPlayer(player);
         }
       }
       startSessionCapture(player, raid);

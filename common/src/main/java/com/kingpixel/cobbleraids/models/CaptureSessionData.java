@@ -187,7 +187,6 @@ public class CaptureSessionData {
   private void markCapturePokemon(Pokemon pokemon) {
     if (pokemon == null) return;
     var persistentData = pokemon.getPersistentData();
-    persistentData.putString(Raid.RAID_CATEGORY_NBT_KEY, raidData.getCategoryRaid().getId());
     persistentData.putString(CAPTURE_NBT_KEY, playerUUID.toString());
   }
 

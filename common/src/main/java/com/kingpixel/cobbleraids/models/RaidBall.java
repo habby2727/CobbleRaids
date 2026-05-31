@@ -37,7 +37,7 @@ public class RaidBall extends ItemModel {
 
   public void giveToPlayer(ServerPlayerEntity player) {
     ItemStack itemStack = getItemStack();
-    player.getInventory().insertStack(itemStack);
+    player.getInventory().offerOrDrop(itemStack);
   }
 
   public void giveToPlayer(ServerPlayerEntity player, int amount) {

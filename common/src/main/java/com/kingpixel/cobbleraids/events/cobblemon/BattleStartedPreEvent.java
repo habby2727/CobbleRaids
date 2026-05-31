@@ -8,6 +8,7 @@ import com.cobblemon.mod.common.battles.actor.PokemonBattleActor;
 import com.cobblemon.mod.common.battles.pokemon.BattlePokemon;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.kingpixel.cobbleraids.CobbleRaids;
+import com.kingpixel.cobbleraids.models.CaptureSessionData;
 import com.kingpixel.cobbleraids.models.Raid;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import kotlin.Unit;
@@ -29,6 +30,21 @@ public class BattleStartedPreEvent {
         var actors = battle.getActors();
         PlayerBattleActor playerBattleActor = null;
         ServerPlayerEntity player = battle.getPlayers().getFirst();
+        for (BattleActor actor : actors) {
+          if (!(actor instanceof PokemonBattleActor pokemonBattleActor)) continue;
+          var battlePokemon = pokemonBattleActor.getPokemon();
+          var pokemonEntity = battlePokemon.getEntity();
+          if (pokemonEntity == null) continue;
+          var persistentData = pokemonEntity.getPokemon().getPersistentData();
+          if (!persistentData.contains(CaptureSessionData.CAPTURE_NBT_KEY)) continue;
+          if (CobbleRaids.config.isDebug()) {
+            CobbleUtils.LOGGER.info(
+              CobbleRaids.MOD_ID,
+              "BATTLE_STARTED_PRE: Capture session battle detected, skipping raid pre-start handling."
+            );
+          }
+          return Unit.INSTANCE;
+        }
         for (BattleActor actor : actors) {
           if (actor == null) continue;
           if (actor instanceof PlayerBattleActor pActor) {

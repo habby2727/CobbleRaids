@@ -1,5 +1,9 @@
 package com.kingpixel.cobbleraids.manager;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.CaptureSessionData;
 import com.kingpixel.cobbleraids.models.Raid;
@@ -69,7 +73,10 @@ public class RewardsManager {
     }
     for (var file : files) {
       try {
-        var reward = Utils.newGson().fromJson(Utils.readFileSync(file), DamageReward.class);
+        var content = Utils.readFileSync(file);
+        var json = JsonParser.parseString(content);
+        normalizeLegacyRaidBalls(json);
+        var reward = Utils.newGson().fromJson(json, DamageReward.class);
         String id = file.getName().replace(".json", "");
         DAMAGE_REWARDS.put(id, reward);
         Utils.writeFileAsync(file, Utils.newGson().toJson(reward));
@@ -141,5 +148,44 @@ public class RewardsManager {
       CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "No capture reward found for category " + categoryRaid.getId());
     }
 
+  }
+
+  private void normalizeLegacyRaidBalls(JsonElement json) {
+    if (json == null || !json.isJsonObject()) return;
+    JsonObject root = json.getAsJsonObject();
+    JsonObject rewards = root.getAsJsonObject("rewards");
+    if (rewards == null) return;
+
+    for (Map.Entry<String, JsonElement> rewardEntry : rewards.entrySet()) {
+      JsonElement rewardValue = rewardEntry.getValue();
+      if (rewardValue == null || !rewardValue.isJsonObject()) continue;
+      JsonObject rewardObject = rewardValue.getAsJsonObject();
+      JsonElement raidBalls = rewardObject.get("raidBalls");
+      if (raidBalls == null || raidBalls.isJsonNull()) continue;
+
+      JsonArray normalizedRaidBalls = new JsonArray();
+      if (raidBalls.isJsonArray()) {
+        for (JsonElement raidBall : raidBalls.getAsJsonArray()) {
+          normalizedRaidBalls.add(normalizeLegacyRaidBall(raidBall));
+        }
+      } else {
+        normalizedRaidBalls.add(normalizeLegacyRaidBall(raidBalls));
+      }
+      rewardObject.add("raidBalls", normalizedRaidBalls);
+    }
+  }
+
+  private JsonObject normalizeLegacyRaidBall(JsonElement raidBall) {
+    if (raidBall != null && raidBall.isJsonObject()) {
+      return raidBall.getAsJsonObject();
+    }
+
+    JsonObject normalizedRaidBall = new JsonObject();
+    String id = "default";
+    if (raidBall != null && raidBall.isJsonPrimitive() && raidBall.getAsJsonPrimitive().isString()) {
+      id = raidBall.getAsString();
+    }
+    normalizedRaidBall.addProperty("id", id);
+    return normalizedRaidBall;
   }
 }
