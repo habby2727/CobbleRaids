@@ -1,5 +1,6 @@
 package com.kingpixel.cobbleraids.models;
 
+import com.google.gson.annotations.SerializedName;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleutils.Model.ItemModel;
 import lombok.Data;
@@ -15,6 +16,7 @@ import net.minecraft.util.collection.DefaultedList;
 @Data
 public class RaidBall extends ItemModel {
   private String id = "default";
+  @SerializedName(value = "catchChance", alternate = {"rateSuccess"})
   private double catchChance = 1.0;
   private int amount = 16;
 
@@ -39,26 +41,26 @@ public class RaidBall extends ItemModel {
   }
 
   public void giveToPlayer(ServerPlayerEntity player, int amount) {
-    ItemStack stack = getItemStack(this.amount);
+    ItemStack stack = getItemStack(amount);
     player.getInventory().offerOrDrop(stack);
   }
 
   @Override
   public ItemStack getItemStack() {
     ItemStack stack = super.getItemStack(amount);
-    applyNbt(stack);
+    applyNbt(stack, amount);
     return stack;
   }
 
   @Override
   public ItemStack getItemStack(int amount) {
     ItemStack stack = super.getItemStack(amount);
-    applyNbt(stack);
+    applyNbt(stack, amount);
     return stack;
   }
 
-  private void applyNbt(ItemStack itemStack) {
-    itemStack.setCount(this.amount);
+  private void applyNbt(ItemStack itemStack, int amount) {
+    itemStack.setCount(amount);
     var nbtComponent = itemStack.get(DataComponentTypes.CUSTOM_DATA);
     var nbtCompound = nbtComponent != null ? nbtComponent.copyNbt() : new NbtCompound();
     nbtCompound.putBoolean("raid_ball", true);

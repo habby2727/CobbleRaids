@@ -79,6 +79,7 @@ public class Raid {
     this.raidUUID = UUID.randomUUID();
     this.raidData = raidData;
     this.categoryRaid = raidData.getCategoryRaid();
+    this.categoryRaid.checker();
     this.health = categoryRaid.getHealth();
     this.maxHealth = categoryRaid.getHealth();
     actualPhase = raidData.getActualPhase(this);
@@ -93,6 +94,7 @@ public class Raid {
     this.raidUUID = UUID.randomUUID();
     this.raidData = raidData;
     this.categoryRaid = raidData.getCategoryRaid();
+    this.categoryRaid.checker();
     this.health = categoryRaid.getHealth();
     this.maxHealth = categoryRaid.getHealth();
     this.damageMap = new ConcurrentHashMap<>();
@@ -330,8 +332,10 @@ public class Raid {
     // Prepare world and chunk
     var coords = categoryRaid.getCoords();
     ServerWorld serverWorld = categoryRaid.getWorldInstance();
-    if (serverWorld == null)
+    if (serverWorld == null) {
+      CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "World " + categoryRaid.getWorld() + " not found for raid " + raidUUID);
       throw new IllegalStateException("World " + categoryRaid.getWorld() + " not found for raid " + raidUUID);
+    }
     int x = coords.getX() >> 4;
     int z = coords.getZ() >> 4;
 

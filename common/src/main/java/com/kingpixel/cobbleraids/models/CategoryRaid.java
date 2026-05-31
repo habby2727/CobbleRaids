@@ -79,6 +79,9 @@ public class CategoryRaid {
     if (overLevel <= 0) overLevel = 100;
     if (minLevel < 1) minLevel = 1;
     if (radio <= 0) radio = 5;
+    if (world == null || world.isBlank()) world = "minecraft:overworld";
+    if (!world.contains(":")) world = "minecraft:" + world;
+    if (coords == null) coords = new Coords(0, 70, 0);
   }
 
   public int getHealth() {
@@ -111,6 +114,7 @@ public class CategoryRaid {
   }
 
   @Nullable public ServerWorld getWorldInstance() {
+    checker();
     if (worldInstance != null) return worldInstance;
     for (ServerWorld w : CobbleRaids.server.getWorlds()) {
       if (w.getRegistryKey().getValue().toString().equals(this.world)) {

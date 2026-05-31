@@ -21,7 +21,6 @@ public class BattleVictoryEvent {
           if (CobbleRaids.config.isDebug()) {
             CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "BATTLE_VICTORY: A player has won a capture session.");
           }
-          captureSession.finishSession();
           return Unit.INSTANCE;
         }
         if (fight != null) fight.stop(false);
