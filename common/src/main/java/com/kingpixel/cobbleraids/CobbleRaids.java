@@ -217,6 +217,7 @@ public class CobbleRaids {
     });
 
     RaidEvents.register();
+    PokemonCatchRateEvent.register();
     PokeBallCaptureCompletedEvent.register();
     PokeSentEvent.register();
     BattleStartedPreEvent.register();

@@ -19,6 +19,8 @@ public class CaptureSessionManager {
   private ConcurrentHashMap<UUID, CaptureSessionData> activeSessions = new ConcurrentHashMap<>();
   // UUID Player - CaptureSessionData
   private ConcurrentHashMap<UUID, CaptureSessionData> playerSessions = new ConcurrentHashMap<>();
+  // UUID Player - RaidBall catch rate prepared on item use
+  private ConcurrentHashMap<UUID, Float> pendingRaidBallCatchRates = new ConcurrentHashMap<>();
 
   public void startSession(ServerPlayerEntity player, Raid raid) {
     var session = new CaptureSessionData(raid, player);
@@ -33,6 +35,7 @@ public class CaptureSessionManager {
     var session = activeSessions.remove(battleUUID);
     if (session != null) {
       playerSessions.remove(session.getPlayer().getUuid());
+      clearPendingRaidBallCatchRate(session.getPlayerUUID());
       if (CobbleRaids.config.isDebug()) {
         CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Capture session found and removed for battle UUID: " + battleUUID);
       }
@@ -54,6 +57,7 @@ public class CaptureSessionManager {
       CobbleUtils.LOGGER.info(CobbleRaids.MOD_ID, "Finishing capture session for player UUID: " + playerUUID);
     }
     var session = playerSessions.remove(playerUUID);
+    clearPendingRaidBallCatchRate(playerUUID);
     if (session != null) {
       activeSessions.remove(session.getBattleUUID());
       session.finishSession();
@@ -67,10 +71,23 @@ public class CaptureSessionManager {
     var session = activeSessions.remove(battleUUID);
     if (session != null) {
       playerSessions.remove(session.getPlayerUUID());
+      clearPendingRaidBallCatchRate(session.getPlayerUUID());
     }
   }
 
   public CaptureSessionData getSessionByPlayer(UUID playerUUID) {
     return playerSessions.get(playerUUID);
+  }
+
+  public void setPendingRaidBallCatchRate(UUID playerUUID, float catchRate) {
+    pendingRaidBallCatchRates.put(playerUUID, catchRate);
+  }
+
+  public Float consumePendingRaidBallCatchRate(UUID playerUUID) {
+    return pendingRaidBallCatchRates.remove(playerUUID);
+  }
+
+  public void clearPendingRaidBallCatchRate(UUID playerUUID) {
+    pendingRaidBallCatchRates.remove(playerUUID);
   }
 }

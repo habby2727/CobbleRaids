@@ -76,4 +76,12 @@ public class RaidBall extends ItemModel {
     var nbt = nbtComponent.getNbt();
     return nbt != null && nbt.contains("raid_ball");
   }
+
+  public static Float getCatchChance(ItemStack stack) {
+    var nbtComponent = stack.get(DataComponentTypes.CUSTOM_DATA);
+    if (nbtComponent == null) return null;
+    var nbt = nbtComponent.getNbt();
+    if (nbt == null || !nbt.contains("raid_ball_chance")) return null;
+    return (float) nbt.getDouble("raid_ball_chance");
+  }
 }

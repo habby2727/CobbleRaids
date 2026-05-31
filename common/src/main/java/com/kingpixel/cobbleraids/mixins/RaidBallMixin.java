@@ -24,8 +24,7 @@ public abstract class RaidBallMixin {
                                  CallbackInfoReturnable<TypedActionResult<ItemStack>> cir) {
     try {
       if (!CobbleRaids.config.isRaidBallEnabled()) return;
-      ServerPlayerEntity player = (ServerPlayerEntity) playerEntity;
-      if (player == null) return;
+      if (!(playerEntity instanceof ServerPlayerEntity player)) return;
       ItemStack stack = player.getStackInHand(hand);
       if (stack == null) return;
       if (stack.isEmpty()) return;
@@ -44,8 +43,18 @@ public abstract class RaidBallMixin {
         cancel = true;
       }
       if (cancel) {
+        CobbleRaids.captureSessionManager.clearPendingRaidBallCatchRate(player.getUuid());
         cir.setReturnValue(TypedActionResult.fail(stack));
         cir.cancel();
+        return;
+      }
+      if (captureSession != null && captureSession.isStarted() && isRaidBall) {
+        var catchChance = RaidBall.getCatchChance(stack);
+        if (catchChance != null) {
+          CobbleRaids.captureSessionManager.setPendingRaidBallCatchRate(player.getUuid(), catchChance);
+        } else {
+          CobbleRaids.captureSessionManager.clearPendingRaidBallCatchRate(player.getUuid());
+        }
       }
     } catch (Exception e) {
       CobbleUtils.LOGGER.error(CobbleRaids.MOD_ID, "Error in UseItemCallback event: " + e.getMessage());

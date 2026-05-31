@@ -86,7 +86,7 @@ public class CaptureSessionData {
       var party = Cobblemon.INSTANCE.getStorage().getParty(player);
       Pokemon leader = null;
       for (Pokemon p : party) {
-        if (p != null && !p.isFainted()) {
+        if (p != null && !p.isFainted() && !raidData.isBannedPokemon(p)) {
           leader = p;
           break;
         }
@@ -167,6 +167,7 @@ public class CaptureSessionData {
         if (pokemonEntity != null) pokemonEntity.discard();
         RaidBall.removeRaidBalls(player);
       });
+      CobbleRaids.captureSessionManager.clearPendingRaidBallCatchRate(playerUUID);
       CobbleRaids.captureSessionManager.removeSession(battleUUID);
     } catch (Exception e) {
       e.printStackTrace();
@@ -193,6 +194,7 @@ public class CaptureSessionData {
   private void cleanupFailedStart() {
     started = false;
     CobbleRaids.captureSessionManager.removeSession(battleUUID);
+    CobbleRaids.captureSessionManager.clearPendingRaidBallCatchRate(playerUUID);
     if (pokemonEntity != null) {
       pokemonEntity.discard();
       pokemonEntity = null;
