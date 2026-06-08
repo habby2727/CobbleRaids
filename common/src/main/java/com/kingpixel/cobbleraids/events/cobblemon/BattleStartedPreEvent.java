@@ -29,13 +29,29 @@ public class BattleStartedPreEvent {
         var actors = battle.getActors();
         PlayerBattleActor playerBattleActor = null;
         ServerPlayerEntity player = battle.getPlayers().getFirst();
+        boolean isCaptureSessionBattle = false;
+
         for (BattleActor actor : actors) {
+          if (actor instanceof PlayerBattleActor pActor) {
+            playerBattleActor = pActor;
+            continue;
+          }
           if (!(actor instanceof PokemonBattleActor pokemonBattleActor)) continue;
           var battlePokemon = pokemonBattleActor.getPokemon();
           var pokemonEntity = battlePokemon.getEntity();
           if (pokemonEntity == null) continue;
           var persistentData = pokemonEntity.getPokemon().getPersistentData();
-          if (!persistentData.contains(CaptureSessionData.CAPTURE_NBT_KEY)) continue;
+          if (persistentData.contains(CaptureSessionData.CAPTURE_NBT_KEY)) {
+            isCaptureSessionBattle = true;
+          }
+          if (categoryId != null && !categoryId.isEmpty()) continue;
+          String currentCategoryId = persistentData.getString(Raid.RAID_CATEGORY_NBT_KEY);
+          if (currentCategoryId != null && !currentCategoryId.isEmpty()) {
+            categoryId = currentCategoryId;
+          }
+        }
+
+        if (isCaptureSessionBattle) {
           if (CobbleRaids.config.isDebug()) {
             CobbleRaids.LOGGER.info(
               CobbleRaids.MOD_ID,
@@ -44,6 +60,7 @@ public class BattleStartedPreEvent {
           }
           return Unit.INSTANCE;
         }
+
         for (BattleActor actor : actors) {
           if (actor == null) continue;
           if (actor instanceof PlayerBattleActor pActor) {
@@ -56,7 +73,9 @@ public class BattleStartedPreEvent {
           if (pokemonEntity == null) continue;
           var pokemon = pokemonEntity.getPokemon();
           var persistentData = pokemon.getPersistentData();
-          categoryId = persistentData.getString(Raid.RAID_CATEGORY_NBT_KEY);
+          if (categoryId == null || categoryId.isEmpty()) {
+            categoryId = persistentData.getString(Raid.RAID_CATEGORY_NBT_KEY);
+          }
           if (categoryId != null && !categoryId.isEmpty()) break;
         }
 

@@ -74,7 +74,9 @@ class RewardsManagerTest {
       .getAsJsonArray("raidBalls"))
       .allSatisfy(raidBall -> assertThat(raidBall.isJsonObject()).isTrue());
 
-    DamageReward reward = assertDoesNotThrow(() -> GSON.fromJson(json, DamageReward.class));
+    Object rewardValue = assertDoesNotThrow(() -> (Object) GSON.fromJson(json, DamageReward.class));
+    assertThat(rewardValue).isInstanceOf(DamageReward.class);
+    DamageReward reward = (DamageReward) rewardValue;
     assertThat(reward).isNotNull();
     assertThat(assertDoesNotThrow(() -> GSON.toJson(reward))).isNotBlank();
   }

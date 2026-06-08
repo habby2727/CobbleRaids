@@ -5,9 +5,12 @@ import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.UtilsFile;
 
+import java.nio.file.DirectoryStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public final class ModFiles {
@@ -37,7 +40,16 @@ public final class ModFiles {
   public static List<Path> files(Path directory) {
     try {
       ensureDirectory(directory);
-      return UtilsFile.getAllFiles(directory);
+      List<Path> files = new ArrayList<>();
+      try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory, "*.json")) {
+        for (Path path : stream) {
+          if (Files.isRegularFile(path)) {
+            files.add(path);
+          }
+        }
+      }
+      files.sort(Comparator.comparing(path -> path.getFileName().toString()));
+      return files;
     } catch (IOException e) {
       throw new IllegalStateException("Could not list files in " + directory + ".", e);
     }

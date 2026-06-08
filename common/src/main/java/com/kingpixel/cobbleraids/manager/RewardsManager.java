@@ -3,7 +3,6 @@ package com.kingpixel.cobbleraids.manager;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.CaptureSessionData;
 import com.kingpixel.cobbleraids.models.Raid;
@@ -24,10 +23,6 @@ import java.util.UUID;
  * Manages the rewards configuration for raids, including item chances and other reward-related settings.
  */
 public class RewardsManager {
-  private static final Path PATH_REWARDS = ModFiles.resolve("rewards");
-  private static final Path PATH_DAMAGE_REWARDS = PATH_REWARDS.resolve("damage_rewards");
-  private static final Path PATH_VICTORY_REWARDS = PATH_REWARDS.resolve("victory_rewards");
-  private static final Path PATH_CAPTURE_REWARDS = PATH_REWARDS.resolve("capture_rewards");
   private static final Map<String, AdvancedItemChance> VICTORY_REWARDS = new HashMap<>();
   private static final Map<String, DamageReward> DAMAGE_REWARDS = new HashMap<>();
   private static final Map<String, AdvancedItemChance> CAPTURE_REWARDS = new HashMap<>();
@@ -44,14 +39,19 @@ public class RewardsManager {
   }
 
   private void findCaptureRewards() {
-    var files = ModFiles.files(PATH_CAPTURE_REWARDS);
+    var path = getCaptureRewardsPath();
+    var files = ModFiles.files(path);
     if (files.isEmpty()) {
       createDefaultCaptureReward();
-      files = ModFiles.files(PATH_CAPTURE_REWARDS);
+      files = ModFiles.files(path);
     }
     for (var file : files) {
       try {
-        Object parsedReward = GsonCompat.fromJson(ModFiles.gson(), UtilsFile.readText(file), AdvancedItemChance.class);
+        String content = UtilsFile.readText(file);
+        if (content == null || content.isBlank()) {
+          continue;
+        }
+        Object parsedReward = GsonCompat.fromJson(ModFiles.gson(), content, AdvancedItemChance.class);
         if (!(parsedReward instanceof AdvancedItemChance reward)) {
           continue;
         }
@@ -59,26 +59,33 @@ public class RewardsManager {
         CAPTURE_REWARDS.put(id, reward);
         UtilsFile.writeAsync(file, reward);
       } catch (Exception e) {
-        e.printStackTrace();
+        CobbleRaids.LOGGER.error("Error loading capture reward file: " + file.toAbsolutePath(), e);
       }
     }
   }
 
   private void createDefaultCaptureReward() {
     var defaultReward = new AdvancedItemChance();
-    UtilsFile.writeAsync(PATH_CAPTURE_REWARDS.resolve("default.json"), defaultReward);
+    UtilsFile.writeAsync(getCaptureRewardsPath().resolve("default.json"), defaultReward);
   }
 
   private void findDamageRewards() {
-    var files = ModFiles.files(PATH_DAMAGE_REWARDS);
+    var path = getDamageRewardsPath();
+    var files = ModFiles.files(path);
     if (files.isEmpty()) {
       createDamageReward();
-      files = ModFiles.files(PATH_DAMAGE_REWARDS);
+      files = ModFiles.files(path);
     }
     for (var file : files) {
       try {
-        var content = UtilsFile.readText(file);
-        var json = JsonParser.parseString(content);
+        String content = UtilsFile.readText(file);
+        if (content == null || content.isBlank()) {
+          continue;
+        }
+        Object parsedJson = GsonCompat.fromJson(ModFiles.gson(), content, JsonObject.class);
+        if (!(parsedJson instanceof JsonObject json)) {
+          continue;
+        }
         normalizeLegacyRaidBalls(json);
         Object parsedReward = GsonCompat.fromJson(ModFiles.gson(), json, DamageReward.class);
         if (!(parsedReward instanceof DamageReward reward)) {
@@ -88,25 +95,30 @@ public class RewardsManager {
         DAMAGE_REWARDS.put(id, reward);
         UtilsFile.writeAsync(file, reward);
       } catch (Exception e) {
-        e.printStackTrace();
+        CobbleRaids.LOGGER.error("Error loading damage reward file: " + file.toAbsolutePath(), e);
       }
     }
   }
 
   private void createDamageReward() {
     var defaultReward = new DamageReward();
-    UtilsFile.writeAsync(PATH_DAMAGE_REWARDS.resolve("default.json"), defaultReward);
+    UtilsFile.writeAsync(getDamageRewardsPath().resolve("default.json"), defaultReward);
   }
 
   private void findVictoryRewards() {
-    var files = ModFiles.files(PATH_VICTORY_REWARDS);
+    var path = getVictoryRewardsPath();
+    var files = ModFiles.files(path);
     if (files.isEmpty()) {
       createDefaultVictoryReward();
-      files = ModFiles.files(PATH_VICTORY_REWARDS);
+      files = ModFiles.files(path);
     }
     for (var file : files) {
       try {
-        Object parsedReward = GsonCompat.fromJson(ModFiles.gson(), UtilsFile.readText(file), AdvancedItemChance.class);
+        String content = UtilsFile.readText(file);
+        if (content == null || content.isBlank()) {
+          continue;
+        }
+        Object parsedReward = GsonCompat.fromJson(ModFiles.gson(), content, AdvancedItemChance.class);
         if (!(parsedReward instanceof AdvancedItemChance reward)) {
           continue;
         }
@@ -114,14 +126,14 @@ public class RewardsManager {
         VICTORY_REWARDS.put(id, reward);
         UtilsFile.writeAsync(file, reward);
       } catch (Exception e) {
-        e.printStackTrace();
+        CobbleRaids.LOGGER.error("Error loading victory reward file: " + file.toAbsolutePath(), e);
       }
     }
   }
 
   private void createDefaultVictoryReward() {
     var defaultReward = new AdvancedItemChance();
-    UtilsFile.writeAsync(PATH_VICTORY_REWARDS.resolve("default.json"), defaultReward);
+    UtilsFile.writeAsync(getVictoryRewardsPath().resolve("default.json"), defaultReward);
   }
 
   public void giveRewards(Raid raid, Map<UUID, Integer> playerDamageMap) {
@@ -196,5 +208,21 @@ public class RewardsManager {
     }
     normalizedRaidBall.addProperty("id", id);
     return normalizedRaidBall;
+  }
+
+  private static Path getRewardsPath() {
+    return ModFiles.resolve("rewards");
+  }
+
+  private static Path getDamageRewardsPath() {
+    return getRewardsPath().resolve("damage_rewards");
+  }
+
+  private static Path getVictoryRewardsPath() {
+    return getRewardsPath().resolve("victory_rewards");
+  }
+
+  private static Path getCaptureRewardsPath() {
+    return getRewardsPath().resolve("capture_rewards");
   }
 }

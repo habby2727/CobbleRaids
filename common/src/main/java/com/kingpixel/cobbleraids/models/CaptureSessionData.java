@@ -5,6 +5,7 @@ import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
 import com.cobblemon.mod.common.battles.BattleBuilder;
 import com.cobblemon.mod.common.battles.BattleFormat;
 import com.cobblemon.mod.common.battles.BattleRegistry;
+import com.cobblemon.mod.common.battles.BattleStartError;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
@@ -56,19 +57,28 @@ public class CaptureSessionData {
   }
 
   public synchronized void startSession() {
-    CobbleRaids.server.executeSync(() -> {
+    CobbleRaids.server.execute(() -> {
       HiperMessage message = CobbleRaids.language.getMessageStartCapture();
       message.sendMessage(player, PokemonUtils.replace(message.getRawMessage(), raidData.getCapturePokemonInstance()), CobbleRaids.language.getPrefix(), false);
       CobbleRaids.captureSessionManager.removeSession(battleUUID);
+      if (!(player.getWorld() instanceof ServerWorld serverWorld)) {
+        var msg = AdventureTranslator.toNative(
+          "&c[&4!&c] &cError loading the world for the capture battle.",
+          CobbleRaids.language.getPrefix()
+        );
+        player.sendMessage(msg, false);
+        cleanupFailedStart();
+        return;
+      }
       Pokemon pokemon = PokemonProperties.Companion.parse(raidData.getCapturePokemon()).create();
       markCapturePokemon(pokemon);
       pokemonEntity = pokemon.sendOut(
-        (ServerWorld) player.getWorld(),
-        player.getPos(),
+        serverWorld,
+        player.getPos().add(1, 0, 1),
         null,
         entity -> {
           markCapturePokemon(entity.getPokemon());
-          entity.getPokemon().setNickname(player.getName().copy());
+          entity.setAiDisabled(true);
           entity.setCustomName(player.getName().copy());
           return Unit.INSTANCE;
         }
@@ -82,6 +92,8 @@ public class CaptureSessionData {
         cleanupFailedStart();
         return;
       }
+      pokemonEntity.heal(pokemonEntity.getMaxHealth());
+      pokemonEntity.getPokemon().heal();
 
       var party = Cobblemon.INSTANCE.getStorage().getParty(player);
       Pokemon leader = null;
@@ -104,7 +116,7 @@ public class CaptureSessionData {
         BattleFormat.Companion.getGEN_9_SINGLES(),
         false,
         true,
-        999,
+        Cobblemon.INSTANCE.getConfig().getDefaultFleeDistance(),
         party
       );
 
@@ -113,9 +125,23 @@ public class CaptureSessionData {
         CobbleRaids.captureSessionManager.getActiveSessions().put(this.battleUUID, this);
         CobbleRaids.captureSessionManager.getPlayerSessions().put(player.getUuid(), this);
         this.started = true;
+        if (CobbleRaids.config.isDebug()) {
+          CobbleRaids.LOGGER.info(
+            CobbleRaids.MOD_ID,
+            "CAPTURE_SESSION: Battle started successfully for player " + player.getName().getString() + " with battle UUID " + this.battleUUID
+          );
+        }
         return Unit.INSTANCE;
       });
       startBattle.ifErrored(erroredBattleStart -> {
+        CobbleRaids.LOGGER.error(
+          CobbleRaids.MOD_ID,
+          "CAPTURE_SESSION: Error starting capture battle for player " + player.getName().getString() + ": " + describeBattleErrors(erroredBattleStart.getErrors())
+        );
+        var activeBattle = BattleRegistry.getBattleByParticipatingPlayer(player);
+        if (activeBattle != null) {
+          activeBattle.stop();
+        }
         var msg = AdventureTranslator.toNative(
           "&c[&4!&c] &cError starting the session.",
           CobbleRaids.language.getPrefix()
@@ -199,5 +225,16 @@ public class CaptureSessionData {
       pokemonEntity = null;
     }
     RaidBall.removeRaidBalls(player);
+  }
+
+  private String describeBattleErrors(Iterable<BattleStartError> errors) {
+    StringBuilder builder = new StringBuilder();
+    for (BattleStartError error : errors) {
+      if (builder.length() > 0) {
+        builder.append(", ");
+      }
+      builder.append(error);
+    }
+    return builder.isEmpty() ? "unknown error" : builder.toString();
   }
 }

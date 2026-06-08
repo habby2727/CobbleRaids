@@ -17,12 +17,11 @@ import com.kingpixel.cobbleraids.manager.RaidHistory;
 import com.kingpixel.cobbleraids.manager.RaidManager;
 import com.kingpixel.cobbleraids.manager.RewardsManager;
 import com.kingpixel.cobbleraids.models.RaidBall;
-import com.kingpixel.cobbleutils.util.UtilsLogger;
+import com.kingpixel.cobbleraids.util.ModLogger;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import net.minecraft.server.MinecraftServer;
-import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.*;
 
@@ -31,7 +30,7 @@ public class CobbleRaids {
   public static final String MOD_NAME = "CobbleRaids";
   public static final String PATH = "/config/" + MOD_ID;
   public static final String PATH_LANG = PATH + "/lang/";
-  public static final Logger LOGGER = UtilsLogger.getLogger(MOD_ID);
+  public static final ModLogger LOGGER = new ModLogger(MOD_ID);
   public static MinecraftServer server;
   public static Config config = new Config();
   public static Lang language = new Lang();
@@ -61,44 +60,33 @@ public class CobbleRaids {
 
   private static void tasks() {
     // Task to teleport out players that are fighting but are no longer in the raid area.
-    COBBLE_RAIDS_SCHEDULER.scheduleWithFixedDelay(() -> {
-        try {
-          if (server == null) return;
-          if (raidManager == null) return;
-          var fights = raidManager.getFightingByBattleUUID();
-          if (fights == null || fights.isEmpty()) return;
-          fights.forEach((key, value) -> {
-            var player = value.getPlayer();
-            var raid = value.getRaid();
-            if (player == null || raid == null) return;
-            raid.teleportPlayerOut(player);
-          });
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-      }, 0, 50, TimeUnit.MILLISECONDS
+    COBBLE_RAIDS_SCHEDULER.scheduleWithFixedDelay(() ->
+      runOnServerThread("TeleportRaidPlayersTask", () -> {
+        if (raidManager == null) return;
+        var fights = raidManager.getFightingByBattleUUID();
+        if (fights == null || fights.isEmpty()) return;
+        fights.forEach((key, value) -> {
+          var player = value.getPlayer();
+          var raid = value.getRaid();
+          if (player == null || raid == null) return;
+          raid.teleportPlayerOut(player);
+        });
+      }), 0, 50, TimeUnit.MILLISECONDS
     );
 
     // Task to update the boss bar of all active raids.
     COBBLE_RAIDS_SCHEDULER.scheduleWithFixedDelay(() -> {
-      try {
-        if (server == null) return;
+      runOnServerThread("BossBarTask", () -> {
         if (raidManager == null) return;
         var activeRaids = raidManager.getActiveRaids();
         if (activeRaids == null || activeRaids.isEmpty()) return;
-        activeRaids.forEach((key, value) -> {
-          value.getCategoryRaid().manageBossBar(value);
-        });
-      } catch (Exception e) {
-        e.printStackTrace();
-        LOGGER.error("[BossBarTask] Error during boss bar management: " + e.getMessage());
-      }
+        activeRaids.forEach((key, value) -> value.getCategoryRaid().manageBossBar(value));
+      });
     }, 0, 1, TimeUnit.SECONDS);
 
     // Task to finish raids that finish by time.
     COBBLE_RAIDS_SCHEDULER.scheduleWithFixedDelay(() -> {
-      try {
-        if (server == null) return;
+      runOnServerThread("RaidTickTask", () -> {
         if (raidManager == null) return;
         var activeRaids = raidManager.getActiveRaids();
         if (activeRaids == null || activeRaids.isEmpty()) return;
@@ -108,57 +96,61 @@ public class CobbleRaids {
             value.finishRaid();
           }
         });
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+      });
     }, 0, 1, TimeUnit.SECONDS);
     // Task Capture session timeout
     COBBLE_RAIDS_SCHEDULER.scheduleWithFixedDelay(() -> {
-      try {
-        if (server == null) return;
+      runOnServerThread("CaptureSessionTask", () -> {
         if (captureSessionManager == null) return;
         var sessions = captureSessionManager.getActiveSessions();
         if (sessions == null || sessions.isEmpty()) return;
-        var entries = sessions.entrySet();
-        for (var entry : entries) {
+        for (var entry : sessions.entrySet()) {
           var session = entry.getValue();
           session.checkTimeout();
         }
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+      });
     }, 0, 1, TimeUnit.SECONDS);
 
     // Task to Init a random raid if no raid is active.
     COBBLE_RAIDS_SCHEDULER.scheduleWithFixedDelay(() -> {
-      try {
-        if (server == null) return;
+      runOnServerThread("RandomRaidTask", () -> {
         if (raidManager == null) return;
         if (!raidManager.isRandomRaidOn()) {
           raidManager.initRandomRaid();
         }
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
+      });
     }, 0, 1, TimeUnit.SECONDS);
 
     // Task to check if the player continue in a battle if the player disconnect and reconnect.
     COBBLE_RAIDS_SCHEDULER.scheduleWithFixedDelay(() -> {
-      if (server == null) return;
-      if (raidManager == null) return;
-      var entries = raidManager.getFightingByPlayers().entrySet();
-      if (entries.isEmpty()) return;
-      for (var entry : entries) {
-        var fightData = entry.getValue();
-        var player = fightData.getPlayer();
-        if (player == null) {
-          fightData.stop(true);
-          continue;
+      runOnServerThread("ReconnectFightCheckTask", () -> {
+        if (raidManager == null) return;
+        var entries = raidManager.getFightingByPlayers().entrySet();
+        if (entries.isEmpty()) return;
+        for (var entry : entries) {
+          var fightData = entry.getValue();
+          var player = fightData.getPlayer();
+          if (player == null) {
+            fightData.stop(true);
+            continue;
+          }
+          var battle = BattleRegistry.getBattleByParticipatingPlayer(player);
+          if (battle == null) fightData.stop(true);
         }
-        var battle = BattleRegistry.getBattleByParticipatingPlayer(player);
-        if (battle == null) fightData.stop(true);
-      }
+      });
     }, 0, 10, TimeUnit.SECONDS);
+  }
+
+  private static void runOnServerThread(String taskName, Runnable runnable) {
+    var currentServer = server;
+    if (currentServer == null) return;
+    currentServer.execute(() -> {
+      try {
+        runnable.run();
+      } catch (Exception e) {
+        LOGGER.error("[" + taskName + "] Error: " + e.getMessage(), e);
+      }
+    });
   }
 
   public static void load() {
