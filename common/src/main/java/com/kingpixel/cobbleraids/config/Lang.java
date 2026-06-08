@@ -1,7 +1,7 @@
 package com.kingpixel.cobbleraids.config;
 
 import com.kingpixel.cobbleraids.CobbleRaids;
-import com.kingpixel.cobbleraids.util.ModFiles;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.messages.HiperMessage;
 import com.kingpixel.cobbleutils.Model.messages.HiperMessageBuilder;
 import com.kingpixel.cobbleutils.Model.messages.MessageType;
@@ -105,7 +105,7 @@ public class Lang {
    * Method to initialize the config.
    */
   public void init() {
-    var langFile = ModFiles.languageRoot().resolve(CobbleRaids.config.getLang() + ".json");
+    var langFile = CobbleUtils.getPath().resolve(CobbleRaids.MOD_ID).resolve("lang").resolve(CobbleRaids.config.getLang() + ".json");
     if (!UtilsFile.exists(langFile)) {
       CobbleRaids.LOGGER.info("No lang.json file found for " + CobbleRaids.MOD_NAME + ". Attempting to generate one.");
     }

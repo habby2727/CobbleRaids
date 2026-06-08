@@ -19,7 +19,7 @@ public class PokemonCapturedEvent {
           persistentData.remove(key);
         }
       } catch (Exception e) {
-        CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in POKEMON_CAPTURED event: " + e.getMessage());
+        CobbleRaids.LOGGER.error("Error in POKEMON_CAPTURED event: " + e.getMessage());
         e.printStackTrace();
       }
       return Unit.INSTANCE;

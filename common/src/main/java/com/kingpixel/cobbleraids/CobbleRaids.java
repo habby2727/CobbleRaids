@@ -17,20 +17,24 @@ import com.kingpixel.cobbleraids.manager.RaidHistory;
 import com.kingpixel.cobbleraids.manager.RaidManager;
 import com.kingpixel.cobbleraids.manager.RewardsManager;
 import com.kingpixel.cobbleraids.models.RaidBall;
-import com.kingpixel.cobbleraids.util.ModLogger;
+import com.kingpixel.cobbleutils.util.UtilsLogger;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.event.events.common.PlayerEvent;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.network.ServerPlayerEntity;
+import org.apache.logging.log4j.Logger;
 
+import java.util.UUID;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CobbleRaids {
   public static final String MOD_ID = "cobbleraids";
   public static final String MOD_NAME = "CobbleRaids";
   public static final String PATH = "/config/" + MOD_ID;
   public static final String PATH_LANG = PATH + "/lang/";
-  public static final ModLogger LOGGER = new ModLogger(MOD_ID);
+  public static final Logger LOGGER = UtilsLogger.getLogger(MOD_ID);
   public static MinecraftServer server;
   public static Config config = new Config();
   public static Lang language = new Lang();
@@ -51,6 +55,12 @@ public class CobbleRaids {
       .setDaemon(true)
       .build()
     );
+  private static final AtomicBoolean TELEPORT_RAID_PLAYERS_TASK_QUEUED = new AtomicBoolean();
+  private static final AtomicBoolean BOSS_BAR_TASK_QUEUED = new AtomicBoolean();
+  private static final AtomicBoolean RAID_TICK_TASK_QUEUED = new AtomicBoolean();
+  private static final AtomicBoolean CAPTURE_SESSION_TASK_QUEUED = new AtomicBoolean();
+  private static final AtomicBoolean RANDOM_RAID_TASK_QUEUED = new AtomicBoolean();
+  private static final AtomicBoolean RECONNECT_FIGHT_CHECK_TASK_QUEUED = new AtomicBoolean();
 
   public static void init() {
     events();
@@ -61,7 +71,7 @@ public class CobbleRaids {
   private static void tasks() {
     // Task to teleport out players that are fighting but are no longer in the raid area.
     COBBLE_RAIDS_SCHEDULER.scheduleWithFixedDelay(() ->
-      runOnServerThread("TeleportRaidPlayersTask", () -> {
+      runOnServerThread("TeleportRaidPlayersTask", TELEPORT_RAID_PLAYERS_TASK_QUEUED, () -> {
         if (raidManager == null) return;
         var fights = raidManager.getFightingByBattleUUID();
         if (fights == null || fights.isEmpty()) return;
@@ -76,7 +86,7 @@ public class CobbleRaids {
 
     // Task to update the boss bar of all active raids.
     COBBLE_RAIDS_SCHEDULER.scheduleWithFixedDelay(() -> {
-      runOnServerThread("BossBarTask", () -> {
+      runOnServerThread("BossBarTask", BOSS_BAR_TASK_QUEUED, () -> {
         if (raidManager == null) return;
         var activeRaids = raidManager.getActiveRaids();
         if (activeRaids == null || activeRaids.isEmpty()) return;
@@ -86,7 +96,7 @@ public class CobbleRaids {
 
     // Task to finish raids that finish by time.
     COBBLE_RAIDS_SCHEDULER.scheduleWithFixedDelay(() -> {
-      runOnServerThread("RaidTickTask", () -> {
+      runOnServerThread("RaidTickTask", RAID_TICK_TASK_QUEUED, () -> {
         if (raidManager == null) return;
         var activeRaids = raidManager.getActiveRaids();
         if (activeRaids == null || activeRaids.isEmpty()) return;
@@ -100,7 +110,7 @@ public class CobbleRaids {
     }, 0, 1, TimeUnit.SECONDS);
     // Task Capture session timeout
     COBBLE_RAIDS_SCHEDULER.scheduleWithFixedDelay(() -> {
-      runOnServerThread("CaptureSessionTask", () -> {
+      runOnServerThread("CaptureSessionTask", CAPTURE_SESSION_TASK_QUEUED, () -> {
         if (captureSessionManager == null) return;
         var sessions = captureSessionManager.getActiveSessions();
         if (sessions == null || sessions.isEmpty()) return;
@@ -113,7 +123,7 @@ public class CobbleRaids {
 
     // Task to Init a random raid if no raid is active.
     COBBLE_RAIDS_SCHEDULER.scheduleWithFixedDelay(() -> {
-      runOnServerThread("RandomRaidTask", () -> {
+      runOnServerThread("RandomRaidTask", RANDOM_RAID_TASK_QUEUED, () -> {
         if (raidManager == null) return;
         if (!raidManager.isRandomRaidOn()) {
           raidManager.initRandomRaid();
@@ -123,7 +133,7 @@ public class CobbleRaids {
 
     // Task to check if the player continue in a battle if the player disconnect and reconnect.
     COBBLE_RAIDS_SCHEDULER.scheduleWithFixedDelay(() -> {
-      runOnServerThread("ReconnectFightCheckTask", () -> {
+      runOnServerThread("ReconnectFightCheckTask", RECONNECT_FIGHT_CHECK_TASK_QUEUED, () -> {
         if (raidManager == null) return;
         var entries = raidManager.getFightingByPlayers().entrySet();
         if (entries.isEmpty()) return;
@@ -141,7 +151,59 @@ public class CobbleRaids {
     }, 0, 10, TimeUnit.SECONDS);
   }
 
-  private static void runOnServerThread(String taskName, Runnable runnable) {
+  private static void runOnServerThread(String taskName, AtomicBoolean queued, Runnable runnable) {
+    var currentServer = server;
+    if (currentServer == null) return;
+    if (!queued.compareAndSet(false, true)) return;
+    try {
+      currentServer.execute(() -> {
+        try {
+          runnable.run();
+        } catch (Exception e) {
+          LOGGER.error("[" + taskName + "] Error: " + e.getMessage(), e);
+        } finally {
+          queued.set(false);
+        }
+      });
+    } catch (RuntimeException e) {
+      queued.set(false);
+      LOGGER.error("[" + taskName + "] Could not enqueue task: " + e.getMessage(), e);
+    }
+  }
+
+  public static boolean stopBattleSafely(UUID battleUUID, String reason) {
+    if (battleUUID == null) return false;
+    var battle = BattleRegistry.getBattle(battleUUID);
+    if (battle == null) return false;
+    try {
+      if (config.isDebug()) {
+        LOGGER.info("Stopping battle " + battleUUID + " reason=" + reason + " thread=" + Thread.currentThread().getName());
+      }
+      battle.stop();
+      return true;
+    } catch (Throwable throwable) {
+      LOGGER.error("Could not stop battle " + battleUUID + " reason=" + reason, throwable);
+      return false;
+    }
+  }
+
+  public static boolean stopPlayerBattleSafely(ServerPlayerEntity player, String reason) {
+    if (player == null) return false;
+    var battle = BattleRegistry.getBattleByParticipatingPlayer(player);
+    if (battle == null) return false;
+    try {
+      if (config.isDebug()) {
+        LOGGER.info("Stopping player battle player=" + player.getUuid() + " reason=" + reason + " thread=" + Thread.currentThread().getName());
+      }
+      battle.stop();
+      return true;
+    } catch (Throwable throwable) {
+      LOGGER.error("Could not stop player battle player=" + player.getUuid() + " reason=" + reason, throwable);
+      return false;
+    }
+  }
+
+  public static void executeOnServerThread(String taskName, Runnable runnable) {
     var currentServer = server;
     if (currentServer == null) return;
     currentServer.execute(() -> {

@@ -15,26 +15,26 @@ public class BattleFledEvent {
         var battle = evt.getBattle();
         var battleId = battle.getBattleId();
 
-        var captureSession = CobbleRaids.captureSessionManager.finishSession(battleId);
+        var captureSession = CobbleRaids.captureSessionManager.finishSession(battleId, false, "battle-fled");
         if (captureSession != null) {
           if (CobbleRaids.config.isDebug()) {
-            CobbleRaids.LOGGER.info(CobbleRaids.MOD_ID, "BATTLE_FLED: A player has fled a capture session.");
+            CobbleRaids.LOGGER.info("BATTLE_FLED: A player has fled a capture session.");
           }
           return Unit.INSTANCE;
         }
         var fight = CobbleRaids.raidManager.getFightingData(battleId);
         if (fight == null) {
           if (CobbleRaids.config.isDebug()) {
-            CobbleRaids.LOGGER.warn(CobbleRaids.MOD_ID, "BATTLE_FLED: A player has fled but the fight is null.");
+            CobbleRaids.LOGGER.warn("BATTLE_FLED: A player has fled but the fight is null.");
           }
           return Unit.INSTANCE;
         }
         if (CobbleRaids.config.isDebug()) {
-          CobbleRaids.LOGGER.info(CobbleRaids.MOD_ID, "BATTLE_FLED: A player has fled the raid battle.");
+          CobbleRaids.LOGGER.info("BATTLE_FLED: A player has fled the raid battle.");
         }
         fight.stop(false);
       } catch (Exception e) {
-        CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in BATTLE_FLED event: " + e.getMessage());
+        CobbleRaids.LOGGER.error("Error in BATTLE_FLED event: " + e.getMessage());
         e.printStackTrace();
       }
       return Unit.INSTANCE;

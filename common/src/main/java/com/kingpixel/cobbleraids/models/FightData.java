@@ -1,7 +1,6 @@
 package com.kingpixel.cobbleraids.models;
 
 import com.cobblemon.mod.common.Cobblemon;
-import com.cobblemon.mod.common.battles.BattleRegistry;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
@@ -34,8 +33,7 @@ public class FightData {
     CobbleRaids.server.execute(() -> {
       try {
         var fight = CobbleRaids.raidManager.removeFightingData(battleUUID);
-        var battle = BattleRegistry.getBattle(battleUUID);
-        if (battle != null && stopBattle) battle.stop();
+        if (stopBattle) CobbleRaids.stopBattleSafely(battleUUID, "fight-stop");
         if (pokemonEntity != null) pokemonEntity.discard();
         if (fight != null) {
           if (FabricLoader.getInstance().isModLoaded("cobblesize")) {
@@ -46,7 +44,9 @@ public class FightData {
           }
         }
       } catch (Exception e) {
-        CobbleRaids.LOGGER.error("Error stopping fight for player " + player.getName().getString() + " and raid " + raid.getRaidUUID() + ": " + e.getMessage());
+        String playerName = player == null ? "unknown" : player.getName().getString();
+        String raidId = raid == null ? "unknown" : raid.getRaidUUID().toString();
+        CobbleRaids.LOGGER.error("Error stopping fight for player " + playerName + " and raid " + raidId + ": " + e.getMessage());
         e.printStackTrace();
       }
     });

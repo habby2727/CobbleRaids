@@ -2,7 +2,7 @@ package com.kingpixel.cobbleraids.config;
 
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.AdvancedBlacklist;
-import com.kingpixel.cobbleraids.util.ModFiles;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.Model.DataBaseConfig;
 import com.kingpixel.cobbleutils.Model.DataBaseType;
 import com.kingpixel.cobbleutils.Model.DurationValue;
@@ -57,7 +57,7 @@ public class Config {
   }
 
   public void init() {
-    var configFile = ModFiles.resolve("config.json");
+    var configFile = CobbleUtils.getPath().resolve(CobbleRaids.MOD_ID).resolve("config.json");
     if (!UtilsFile.exists(configFile)) {
       CobbleRaids.LOGGER.info("No config.json file found for " + CobbleRaids.MOD_NAME + ". Attempting to generate one.");
     }

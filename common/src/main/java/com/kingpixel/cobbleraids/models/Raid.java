@@ -6,7 +6,6 @@ import com.cobblemon.mod.common.api.drop.DropTable;
 import com.cobblemon.mod.common.api.pokemon.PokemonProperties;
 import com.cobblemon.mod.common.battles.BattleBuilder;
 import com.cobblemon.mod.common.battles.BattleFormat;
-import com.cobblemon.mod.common.battles.BattleRegistry;
 import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.kingpixel.cobbleraids.CobbleRaids;
@@ -159,7 +158,7 @@ public class Raid {
       var phase = raidData.getActualPhase(this);
       if (phase.equals(actualPhase)) {
         if (CobbleRaids.config.isDebug()) {
-          CobbleRaids.LOGGER.info(CobbleRaids.MOD_ID, "Raid Entity phase unchanged: " +
+          CobbleRaids.LOGGER.info("Raid Entity phase unchanged: " +
             raidEntity.getPokemon().getDisplayName(false).getString() +
             " Phase: " + actualPhase
           );
@@ -167,7 +166,7 @@ public class Raid {
         return;
       }
       if (CobbleRaids.config.isDebug()) {
-        CobbleRaids.LOGGER.info(CobbleRaids.MOD_ID, "Raid Entity phase changed: " +
+        CobbleRaids.LOGGER.info("Raid Entity phase changed: " +
           raidEntity.getPokemon().getDisplayName(false).getString() +
           " From Phase: " + actualPhase + " To Phase: " + phase
         );
@@ -239,8 +238,7 @@ public class Raid {
       var fightData = CobbleRaids.raidManager.getFightingPlayer(player.getUuid());
       if (fightData != null) fightData.stop(true);
 
-      var battle = BattleRegistry.getBattleByParticipatingPlayer(player);
-      if (battle != null) battle.stop();
+      CobbleRaids.stopPlayerBattleSafely(player, "raid-start-existing-battle");
       if (!damageMap.containsKey(player.getUuid())) {
         userInfo.removeTicket(categoryRaid);
         incrementHealth(player);
@@ -332,7 +330,7 @@ public class Raid {
     var coords = categoryRaid.getCoords();
     ServerWorld serverWorld = categoryRaid.getWorldInstance();
     if (serverWorld == null) {
-      CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "World " + categoryRaid.getWorld() + " not found for raid " + raidUUID);
+      CobbleRaids.LOGGER.error("World " + categoryRaid.getWorld() + " not found for raid " + raidUUID);
       throw new IllegalStateException("World " + categoryRaid.getWorld() + " not found for raid " + raidUUID);
     }
     int x = coords.getX() >> 4;
@@ -373,7 +371,7 @@ public class Raid {
     // Post-creation logic if not a fight
     if (!fight) {
       if (CobbleRaids.config.isDebug()) {
-        CobbleRaids.LOGGER.info(CobbleRaids.MOD_ID, "Raid Entity spawned: " +
+        CobbleRaids.LOGGER.info("Raid Entity spawned: " +
           pokemonEntity.getPokemon().getDisplayName(false).getString() +
           " at " + pokemonEntity.getPos().toString()
         );

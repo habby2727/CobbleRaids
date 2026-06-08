@@ -28,8 +28,9 @@ public class BattleStartedPreEvent {
         String categoryId = null;
         var actors = battle.getActors();
         PlayerBattleActor playerBattleActor = null;
-        ServerPlayerEntity player = battle.getPlayers().getFirst();
+        ServerPlayerEntity player = battle.getPlayers().isEmpty() ? null : battle.getPlayers().getFirst();
         boolean isCaptureSessionBattle = false;
+        debugBattle("received BATTLE_STARTED_PRE", battle.getBattleId(), player, actors, categoryId, false);
 
         for (BattleActor actor : actors) {
           if (actor instanceof PlayerBattleActor pActor) {
@@ -52,12 +53,7 @@ public class BattleStartedPreEvent {
         }
 
         if (isCaptureSessionBattle) {
-          if (CobbleRaids.config.isDebug()) {
-            CobbleRaids.LOGGER.info(
-              CobbleRaids.MOD_ID,
-              "BATTLE_STARTED_PRE: Capture session battle detected, skipping raid pre-start handling."
-            );
-          }
+          debugBattle("capture session battle detected; skipping raid pre-start handling", battle.getBattleId(), player, actors, categoryId, true);
           return Unit.INSTANCE;
         }
 
@@ -83,18 +79,19 @@ public class BattleStartedPreEvent {
           var categoryRaid = CobbleRaids.categorys.getCategory(categoryId);
           if (categoryRaid == null) {
             if (CobbleRaids.config.isDebug()) {
-              CobbleRaids.LOGGER.warn(CobbleRaids.MOD_ID, "BATTLE_STARTED_PRE: CategoryRaid is null for categoryId " + categoryId);
+              CobbleRaids.LOGGER.warn("BATTLE_STARTED_PRE: CategoryRaid is null for categoryId " + categoryId);
             }
             return Unit.INSTANCE;
           }
           if (playerBattleActor == null) {
             if (CobbleRaids.config.isDebug()) {
-              CobbleRaids.LOGGER.warn(CobbleRaids.MOD_ID, "BATTLE_STARTED_PRE: PlayerBattleActor is null.");
+              CobbleRaids.LOGGER.warn("BATTLE_STARTED_PRE: PlayerBattleActor is null.");
             }
             return Unit.INSTANCE;
           }
           if (CobbleRaids.config.isDebug()) {
-            CobbleRaids.LOGGER.info(CobbleRaids.MOD_ID, "BATTLE_STARTED_PRE: Player " + player.getName().getString() +
+            String playerName = player == null ? "unknown" : player.getName().getString();
+            CobbleRaids.LOGGER.info("BATTLE_STARTED_PRE: Player " + playerName +
               " is starting a raid battle of category " + categoryId);
           }
           var list = playerBattleActor.getPokemonList();
@@ -112,7 +109,7 @@ public class BattleStartedPreEvent {
           return Unit.INSTANCE;
         } else {
           if (CobbleRaids.config.isDebug()) {
-            CobbleRaids.LOGGER.info(CobbleRaids.MOD_ID, "BATTLE_STARTED_PRE: No categoryId found, normal battle.");
+            CobbleRaids.LOGGER.info("BATTLE_STARTED_PRE: No categoryId found, normal battle.");
           }
         }
 
@@ -146,10 +143,63 @@ public class BattleStartedPreEvent {
         raid.openStartBattleMenu(player);
         return Unit.INSTANCE;
       } catch (Exception e) {
-        CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in BATTLE_STARTED_PRE event: " + e.getMessage());
+        CobbleRaids.LOGGER.error("Error in BATTLE_STARTED_PRE event: " + e.getMessage());
         e.printStackTrace();
         return Unit.INSTANCE;
       }
     });
+  }
+
+  private static void debugBattle(String message, UUID battleId, ServerPlayerEntity player, Iterable<BattleActor> actors,
+                                  String categoryId, boolean capture) {
+    if (!CobbleRaids.config.isDebug()) return;
+    String playerInfo = player == null
+      ? "player=null"
+      : "player=" + player.getName().getString() + "/" + player.getUuid() + " world=" + player.getWorld().getRegistryKey().getValue();
+    CobbleRaids.LOGGER.info(
+      CobbleRaids.MOD_ID,
+      "BATTLE_STARTED_PRE: " + message +
+        " battleId=" + battleId +
+        " capture=" + capture +
+        " categoryId=" + categoryId +
+        " thread=" + Thread.currentThread().getName() +
+        " " + playerInfo +
+        " actors=" + describeActors(actors)
+    );
+  }
+
+  private static String describeActors(Iterable<BattleActor> actors) {
+    StringBuilder builder = new StringBuilder("[");
+    for (BattleActor actor : actors) {
+      if (builder.length() > 1) builder.append("; ");
+      if (actor instanceof PlayerBattleActor playerActor) {
+        builder.append("PlayerBattleActor pokemonCount=").append(playerActor.getPokemonList().size());
+        continue;
+      }
+      if (actor instanceof PokemonBattleActor pokemonActor) {
+        builder.append("PokemonBattleActor");
+        try {
+          var battlePokemon = pokemonActor.getPokemon();
+          var entity = battlePokemon.getEntity();
+          if (entity == null) {
+            builder.append(" entity=null");
+          } else {
+            var data = entity.getPokemon().getPersistentData();
+            builder.append(" entityId=").append(entity.getId())
+              .append(" uuid=").append(entity.getUuid())
+              .append(" world=").append(entity.getWorld().getRegistryKey().getValue())
+              .append(" capture=").append(data.contains(CaptureSessionData.CAPTURE_NBT_KEY))
+              .append(" cat=").append(data.getString(Raid.RAID_CATEGORY_NBT_KEY))
+              .append(" raid=").append(data.contains(Raid.RAID_NBT_KEY));
+          }
+        } catch (Exception e) {
+          builder.append(" describeError=").append(e.getMessage());
+        }
+        continue;
+      }
+      builder.append(actor == null ? "null" : actor.getClass().getSimpleName());
+    }
+    builder.append("]");
+    return builder.toString();
   }
 }

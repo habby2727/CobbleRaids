@@ -51,7 +51,7 @@ public abstract class InteractRaidMixin {
       raid.openStartBattleMenu((ServerPlayerEntity) player);
 
     } catch (Exception e) {
-      CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in InteractRaidMixin onInteract: " + e.getMessage());
+      CobbleRaids.LOGGER.error("Error in InteractRaidMixin onInteract: " + e.getMessage());
     }
   }
 
@@ -66,7 +66,7 @@ public abstract class InteractRaidMixin {
         cir.cancel();
       }
     } catch (Exception e) {
-      CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in InteractRaidMixin onDamage: " + e.getMessage());
+      CobbleRaids.LOGGER.error("Error in InteractRaidMixin onDamage: " + e.getMessage());
       e.printStackTrace();
     }
   }

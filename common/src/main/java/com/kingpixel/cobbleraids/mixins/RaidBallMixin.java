@@ -56,7 +56,7 @@ public abstract class RaidBallMixin {
         }
       }
     } catch (Exception e) {
-      CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in UseItemCallback event: " + e.getMessage());
+      CobbleRaids.LOGGER.error("Error in UseItemCallback event: " + e.getMessage());
       e.printStackTrace();
     }
   }

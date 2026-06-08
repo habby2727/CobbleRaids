@@ -4,11 +4,12 @@ import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.Raid;
 import com.kingpixel.cobbleraids.models.UserInfo;
 import com.kingpixel.cobbleraids.util.GsonCompat;
-import com.kingpixel.cobbleraids.util.ModFiles;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.UtilsFile;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.UUID;
@@ -17,11 +18,11 @@ import java.util.UUID;
  * @author Carlos Varas Alonso - 13/09/2025 17:53
  */
 public class DataBaseJson extends DataBaseClient {
-  private static final Path PATH_DATA = ModFiles.resolve("data");
+  private static final Path PATH_DATA = CobbleUtils.getPath().resolve(CobbleRaids.MOD_ID).resolve("data");
 
   @Override public void connect() {
     try {
-      ModFiles.ensureDirectory(PATH_DATA);
+      Files.createDirectories(PATH_DATA);
     } catch (IOException e) {
       throw new IllegalStateException("Could not create JSON database directory.", e);
     }
@@ -39,7 +40,7 @@ public class DataBaseJson extends DataBaseClient {
     var file = PATH_DATA.resolve(uuid + ".json");
     if (UtilsFile.exists(file)) {
       try {
-        Object parsedUser = GsonCompat.fromJson(ModFiles.gson(), UtilsFile.readText(file), UserInfo.class);
+        Object parsedUser = GsonCompat.fromJson(UtilsFile.getGson(), UtilsFile.readText(file), UserInfo.class);
         if (parsedUser instanceof UserInfo user) {
           userinfo = user;
         }

@@ -28,7 +28,7 @@ public abstract class LivingEntityPreventDropMixin {
         }
       }
     } catch (Exception e) {
-      CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in PreventDropMixin: " + e.getMessage());
+      CobbleRaids.LOGGER.error("Error in PreventDropMixin: " + e.getMessage());
       e.printStackTrace();
     }
   }
@@ -45,7 +45,7 @@ public abstract class LivingEntityPreventDropMixin {
         }
       }
     } catch (Exception e) {
-      CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in PreventDropMixin: " + e.getMessage());
+      CobbleRaids.LOGGER.error("Error in PreventDropMixin: " + e.getMessage());
       e.printStackTrace();
     }
   }

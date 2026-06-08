@@ -28,7 +28,7 @@ public abstract class PokemonPreventDropMixin {
         cir.setReturnValue(new DropTable());
       }
     } catch (Exception e) {
-      CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in PreventDropMixin getDrops: " + e.getMessage());
+      CobbleRaids.LOGGER.error("Error in PreventDropMixin getDrops: " + e.getMessage());
       e.printStackTrace();
     }
   }
@@ -42,7 +42,7 @@ public abstract class PokemonPreventDropMixin {
         pokemonEntity.teleport(pokemonEntity.getX(), -1000, pokemonEntity.getZ(), false);
       }
     } catch (Exception e) {
-      CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in PreventDropMixin: " + e.getMessage());
+      CobbleRaids.LOGGER.error("Error in PreventDropMixin: " + e.getMessage());
       e.printStackTrace();
     }
   }
@@ -59,7 +59,7 @@ public abstract class PokemonPreventDropMixin {
         }
       }
     } catch (Exception e) {
-      CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in PreventDropMixin: " + e.getMessage());
+      CobbleRaids.LOGGER.error("Error in PreventDropMixin: " + e.getMessage());
       e.printStackTrace();
     }
   }

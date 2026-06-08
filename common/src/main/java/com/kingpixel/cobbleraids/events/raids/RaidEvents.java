@@ -83,7 +83,7 @@ public class RaidEvents {
           message.sendMessage((UUID) null, raid.replace(message.getRawMessage()), CobbleRaids.language.getPrefix(), false);
         }
       } catch (Exception e) {
-        CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error sending raid finished webhook: " + e.getMessage());
+        CobbleRaids.LOGGER.error("Error sending raid finished webhook: " + e.getMessage());
         e.printStackTrace();
       }
     });
@@ -115,7 +115,7 @@ public class RaidEvents {
         );
         client.send(webhookMessage);
       } catch (Exception e) {
-        CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error sending raid pre-started webhook: " + e.getMessage());
+        CobbleRaids.LOGGER.error("Error sending raid pre-started webhook: " + e.getMessage());
         e.printStackTrace();
       }
     });
@@ -146,7 +146,7 @@ public class RaidEvents {
         );
         client.send(webhookMessage);
       } catch (Exception e) {
-        CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error sending raid started webhook: " + e.getMessage());
+        CobbleRaids.LOGGER.error("Error sending raid started webhook: " + e.getMessage());
         e.printStackTrace();
       }
     });
@@ -173,7 +173,7 @@ public class RaidEvents {
         );
         client.send(webhookMessage);
       } catch (Exception e) {
-        CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error sending raid new phase webhook: " + e.getMessage());
+        CobbleRaids.LOGGER.error("Error sending raid new phase webhook: " + e.getMessage());
         e.printStackTrace();
       }
     });

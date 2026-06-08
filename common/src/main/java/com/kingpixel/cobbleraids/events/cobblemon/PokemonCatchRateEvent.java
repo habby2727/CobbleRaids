@@ -41,7 +41,7 @@ public class PokemonCatchRateEvent {
           evt.setCatchRate(catchRate);
         }
       } catch (Exception e) {
-        CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in POKEMON_CATCH_RATE event: " + e.getMessage());
+        CobbleRaids.LOGGER.error("Error in POKEMON_CATCH_RATE event: " + e.getMessage());
         e.printStackTrace();
       }
       return Unit.INSTANCE;

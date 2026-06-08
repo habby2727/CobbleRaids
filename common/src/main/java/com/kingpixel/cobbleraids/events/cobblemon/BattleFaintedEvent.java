@@ -16,8 +16,12 @@ public class BattleFaintedEvent {
         var battle = evt.getBattle();
         var pokemonEntity = pokemonKilled.getEntity();
         if (pokemonEntity == null) return Unit.INSTANCE;
-        var captureSession = CobbleRaids.captureSessionManager.finishSession(battle.getBattleId());
-        if (captureSession != null) return Unit.INSTANCE;
+        var captureSession = CobbleRaids.captureSessionManager.getActiveSessions().get(battle.getBattleId());
+        if (captureSession != null) {
+          if (!pokemonEntity.equals(captureSession.getPokemonEntity())) return Unit.INSTANCE;
+          CobbleRaids.captureSessionManager.finishSession(battle.getBattleId(), false, "capture-pokemon-fainted");
+          return Unit.INSTANCE;
+        }
         var fight = CobbleRaids.raidManager.getFightingData(battle.getBattleId());
         if (fight == null) return Unit.INSTANCE;
         if (!fight.getPokemonEntity().equals(pokemonEntity)) return Unit.INSTANCE;
@@ -25,7 +29,7 @@ public class BattleFaintedEvent {
         if (raid == null) return Unit.INSTANCE;
         raid.updateHealth(fight, pokemonKilled.getMaxHealth());
       } catch (Exception e) {
-        CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in BATTLE_FAINTED event: " + e.getMessage());
+        CobbleRaids.LOGGER.error("Error in BATTLE_FAINTED event: " + e.getMessage());
         e.printStackTrace();
       }
       return Unit.INSTANCE;

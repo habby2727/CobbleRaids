@@ -4,11 +4,13 @@ import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.CategoryRaid;
 import com.kingpixel.cobbleraids.models.RaidData;
 import com.kingpixel.cobbleraids.util.GsonCompat;
-import com.kingpixel.cobbleraids.util.ModFiles;
 import com.kingpixel.cobbleraids.util.ModRandom;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.UtilsFile;
 import lombok.Data;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,26 +22,26 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Data
 public class RaidConfigs {
-  private static final Path PATH_RAIDS = ModFiles.resolve("raids");
+  private static final Path PATH_RAIDS = CobbleUtils.getPath().resolve(CobbleRaids.MOD_ID).resolve("raids");
   private Map<String, RaidData> raids = new ConcurrentHashMap<>();
   private Map<String, List<RaidData>> raidsByCategory = new ConcurrentHashMap<>();
 
   public void init() {
     raids.clear();
     raidsByCategory.clear();
-    var files = ModFiles.files(PATH_RAIDS);
+    var files = jsonFiles(PATH_RAIDS);
     if (files.isEmpty()) {
       createDefaultRaid();
-      return;
+      files = jsonFiles(PATH_RAIDS);
     }
     for (var file : files) {
       try {
-        Object parsedRaid = GsonCompat.fromJson(ModFiles.gson(), UtilsFile.readText(file), RaidData.class);
+        Object parsedRaid = GsonCompat.fromJson(UtilsFile.getGson(), UtilsFile.readText(file), RaidData.class);
         if (!(parsedRaid instanceof RaidData raid)) {
           CobbleRaids.LOGGER.warn("Raid file " + file.toAbsolutePath() + " could not be deserialized.");
           continue;
         }
-        String id = ModFiles.baseName(file);
+        String id = baseName(file);
         raid.setId(id);
         raids.put(id, raid);
         CategoryRaid category = raid.getCategoryRaid();
@@ -84,5 +86,29 @@ public class RaidConfigs {
     var defaultRaid = new RaidData("default", "default");
     raids.put("default", defaultRaid);
     UtilsFile.writeAsync(PATH_RAIDS.resolve("default.json"), defaultRaid);
+  }
+
+  private String baseName(Path path) {
+    String name = path.getFileName().toString();
+    int extensionIndex = name.lastIndexOf('.');
+    return extensionIndex >= 0 ? name.substring(0, extensionIndex) : name;
+  }
+
+  private List<Path> jsonFiles(Path path) {
+    try {
+      Files.createDirectories(path);
+      List<Path> files = new java.util.ArrayList<>();
+      try (var stream = Files.newDirectoryStream(path, "*.json")) {
+        for (Path file : stream) {
+          if (Files.isRegularFile(file)) {
+            files.add(file);
+          }
+        }
+      }
+      files.sort(java.util.Comparator.comparing(file -> file.getFileName().toString()));
+      return files;
+    } catch (IOException e) {
+      throw new IllegalStateException("Could not list raid files in " + path + ".", e);
+    }
   }
 }

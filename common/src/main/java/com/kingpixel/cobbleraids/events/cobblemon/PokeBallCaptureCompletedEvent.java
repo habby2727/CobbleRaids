@@ -21,7 +21,7 @@ public class PokeBallCaptureCompletedEvent {
           CobbleRaids.rewardsManager.giveRewardCapture(captureSession);
         }
       } catch (Exception e) {
-        CobbleRaids.LOGGER.error(CobbleRaids.MOD_ID, "Error in POKE_BALL_CAPTURE_CALCULATED event: " + e.getMessage());
+        CobbleRaids.LOGGER.error("Error in POKE_BALL_CAPTURE_CALCULATED event: " + e.getMessage());
         e.printStackTrace();
       }
       return Unit.INSTANCE;

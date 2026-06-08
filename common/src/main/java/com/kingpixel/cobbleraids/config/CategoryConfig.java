@@ -3,13 +3,16 @@ package com.kingpixel.cobbleraids.config;
 import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.CategoryRaid;
 import com.kingpixel.cobbleraids.util.GsonCompat;
-import com.kingpixel.cobbleraids.util.ModFiles;
 import com.kingpixel.cobbleraids.util.ModRandom;
+import com.kingpixel.cobbleutils.CobbleUtils;
 import com.kingpixel.cobbleutils.util.UtilsFile;
 import lombok.Data;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -18,18 +21,19 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Data
 public class CategoryConfig {
-  public static final Path PATH_CATEGORIES = ModFiles.resolve("categories");
+  public static final Path PATH_CATEGORIES = CobbleUtils.getPath().resolve(CobbleRaids.MOD_ID).resolve("categories");
   private Map<String, CategoryRaid> categorys = new ConcurrentHashMap<>();
 
   public void init() {
     categorys.clear();
-    var files = ModFiles.files(PATH_CATEGORIES);
+    var files = jsonFiles(PATH_CATEGORIES);
     if (files.isEmpty()) {
       createDefaultCategory();
+      files = jsonFiles(PATH_CATEGORIES);
     }
     for (var file : files) {
       try {
-        Object parsedCategory = GsonCompat.fromJson(ModFiles.gson(), UtilsFile.readText(file), CategoryRaid.class);
+        Object parsedCategory = GsonCompat.fromJson(UtilsFile.getGson(), UtilsFile.readText(file), CategoryRaid.class);
         if (!(parsedCategory instanceof CategoryRaid category)) {
           CobbleRaids.LOGGER.info("Could not deserialize category file: " + file.toAbsolutePath() + ". Skipping...");
           continue;
@@ -37,7 +41,7 @@ public class CategoryConfig {
         if (category.getHealth() <= 0) {
           category.setHealth(100);
         }
-        String id = ModFiles.baseName(file);
+        String id = baseName(file);
         category.setId(id);
         category.checker();
         categorys.put(id, category);
@@ -72,5 +76,29 @@ public class CategoryConfig {
       }
     }
     return null;
+  }
+
+  private String baseName(Path path) {
+    String name = path.getFileName().toString();
+    int extensionIndex = name.lastIndexOf('.');
+    return extensionIndex >= 0 ? name.substring(0, extensionIndex) : name;
+  }
+
+  private List<Path> jsonFiles(Path path) {
+    try {
+      Files.createDirectories(path);
+      List<Path> files = new java.util.ArrayList<>();
+      try (var stream = Files.newDirectoryStream(path, "*.json")) {
+        for (Path file : stream) {
+          if (Files.isRegularFile(file)) {
+            files.add(file);
+          }
+        }
+      }
+      files.sort(java.util.Comparator.comparing(file -> file.getFileName().toString()));
+      return files;
+    } catch (IOException e) {
+      throw new IllegalStateException("Could not list category files in " + path + ".", e);
+    }
   }
 }

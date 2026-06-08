@@ -4,7 +4,7 @@ import com.kingpixel.cobbleraids.CobbleRaids;
 import com.kingpixel.cobbleraids.models.Raid;
 import com.kingpixel.cobbleraids.models.UserInfo;
 import com.kingpixel.cobbleraids.util.GsonCompat;
-import com.kingpixel.cobbleraids.util.ModFiles;
+import com.kingpixel.cobbleutils.util.UtilsFile;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
@@ -73,7 +73,7 @@ public class DataBaseMongo extends DataBaseClient {
     var document = userInfoCollection.find().filter(new Document("playerUUID",
       player.getUuid().toString())).first();
     if (document != null) {
-      Object parsedUser = GsonCompat.fromJson(ModFiles.gson(), document.toJson(), UserInfo.class);
+      Object parsedUser = GsonCompat.fromJson(UtilsFile.getGson(), document.toJson(), UserInfo.class);
       if (parsedUser instanceof UserInfo user) {
         userInfo = user;
       }
@@ -96,7 +96,7 @@ public class DataBaseMongo extends DataBaseClient {
     if (!list.isEmpty()) {
       var raids = new ArrayList<Raid>();
       for (var doc : list) {
-        Object parsedRaid = GsonCompat.fromJson(ModFiles.gson(), doc.toJson(), Raid.class);
+        Object parsedRaid = GsonCompat.fromJson(UtilsFile.getGson(), doc.toJson(), Raid.class);
         if (parsedRaid instanceof Raid raid) {
           raids.add(raid);
         }
@@ -110,7 +110,7 @@ public class DataBaseMongo extends DataBaseClient {
   @Override public void saveOrUpdateUserInfo(UserInfo userinfo) {
     userInfoCollection.replaceOne(
       new Document("playerUUID", userinfo.getPlayerUUID().toString()),
-      Document.parse(ModFiles.gson().toJson(userinfo)),
+      Document.parse(UtilsFile.getGson().toJson(userinfo)),
       new ReplaceOptions().upsert(true)
     );
   }
@@ -118,7 +118,7 @@ public class DataBaseMongo extends DataBaseClient {
   @Override public void saveOrUpdateHistoryRaid(Raid raid) {
     raidCollection.replaceOne(
       new Document("raidUUID", raid.getRaidUUID()),
-      Document.parse(ModFiles.gson().toJson(raid)),
+      Document.parse(UtilsFile.getGson().toJson(raid)),
       new ReplaceOptions().upsert(true)
     );
   }
